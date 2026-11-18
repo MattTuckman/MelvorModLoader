@@ -184,7 +184,7 @@ static class Tests
         foreach (Node n in queueWindow.Panel.FindChildren("*", "OptionButton", true, false))
         {
             var pick = (OptionButton)n;
-            if (pick.ItemCount == 4 && pick.GetItemText(1).StartsWith("I own"))
+            if (pick.ItemCount == 5 && pick.GetItemText(1).StartsWith("I own"))
             {
                 pick.Select(1);
                 pick.EmitSignal(OptionButton.SignalName.ItemSelected, 1);
@@ -651,6 +651,255 @@ static class Tests
         yield return 5;
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // Action Queue 0.4.0: saved queues, share codes, and the goal that counts down.
+    static string PackCode(string json)
+    {
+        using var buffer = new MemoryStream();
+        using (var deflate = new System.IO.Compression.DeflateStream(buffer, System.IO.Compression.CompressionLevel.SmallestSize, leaveOpen: true))
+        {
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            deflate.Write(bytes, 0, bytes.Length);
+        }
+        return "AQ1:" + Convert.ToBase64String(buffer.ToArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    static IEnumerator<int> SavedQueueTests(Game game, ModContext ctx)
+    {
+        Out("=== 5m. Kayitli siralar, paylasim kodu, asagi sayan hedef ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        foreach (string old in ActionQueue.Queue.PresetNames) ActionQueue.Queue.DeletePreset(old, out _);
+        var makers = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).ToList();
+        ActionQueue.Maker Open(string skill) => makers.First(m => m.Entity.DisplayName.Text == skill && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void SetQty(Item i, int n) { int now = Qty(i); if (now > n) s_bank.Inventory.RemoveQuantity(i, now - n); else if (now < n) s_bank.Inventory.AddQuantity(i, n - now); }
+        void Ticks(int n) { for (int i = 0; i < n; i++) game.PropagateTick(); }
+        ActionQueue.Step QStep(ActionQueue.Maker m, ActionQueue.Until until, double amount = 0, Item? subject = null) => new()
+        {
+            Entity = m.Entity.Id, TargetId = m.Target.Id, Extra = m.Target.Extra, Name = m.Name, Until = until, Amount = amount,
+            Subject = subject?.Id ?? "", SubjectName = subject?.DisplayName.GetPluralText(1) ?? "",
+        };
+        ActionQueue.Maker wood = Open("Woodcutting"), ore = Open("Mining"), fishSpot = Open("Fishing");
+        const string A = "Wood then stone", B = "Fishing loop";
+
+        // ---- 1. two queues kept under a name
+        ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 5));
+        ActionQueue.Queue.Add(QStep(ore, ActionQueue.Until.Minutes, 5));
+        bool savedA = ActionQueue.Queue.SavePreset("   Wood then stone  ", out _);   // spaces around a name are dropped
+        ActionQueue.Queue.Clear();
+        bool emptyRefused = !ActionQueue.Queue.SavePreset("Empty", out string emptyWhy);
+        ActionQueue.Queue.Add(QStep(fishSpot, ActionQueue.Until.Minutes, 5));
+        ActionQueue.Queue.SetRepeat(true);
+        bool savedB = ActionQueue.Queue.SavePreset(B, out _);
+        bool noNameRefused = !ActionQueue.Queue.SavePreset("   ", out string noNameWhy);
+        Check("siralar adla kaydediliyor", savedA && savedB && emptyRefused && noNameRefused && ActionQueue.Queue.PresetNames.SequenceEqual(new[] { B, A })
+              && ActionQueue.Queue.Name == B && !ActionQueue.Queue.Modified,
+              $"kayitli: {string.Join(", ", ActionQueue.Queue.PresetNames)}; yuklu olan: '{ActionQueue.Queue.Name}'; bos sira: '{emptyWhy}'; adsiz: '{noNameWhy}'");
+
+        // ---- 2. loading brings the steps back exactly; unsaved changes are not lost
+        ActionQueue.Queue.LoadPreset(A, out _);
+        bool exact = ActionQueue.Queue.Steps.Count == 2 && ActionQueue.Queue.Steps[0].TargetId == wood.Target.Id && ActionQueue.Queue.Steps[1].TargetId == ore.Target.Id
+                     && ActionQueue.Queue.Steps[0].Amount == 5 && !ActionQueue.Queue.Repeat && ActionQueue.Queue.Name == A && !ActionQueue.Queue.Modified;
+        ActionQueue.Queue.Add(QStep(fishSpot, ActionQueue.Until.Minutes, 1));
+        bool marked = ActionQueue.Queue.Modified;
+        ActionQueue.Queue.LoadPreset(B, out string loadMessage);
+        bool stashed = ActionQueue.Queue.GetPreset(ActionQueue.Queue.AutoName)?.Steps.Count == 3 && ActionQueue.Queue.GetPreset(A)!.Steps.Count == 2
+                       && ActionQueue.Queue.Steps.Count == 1 && ActionQueue.Queue.Repeat && ActionQueue.Queue.Name == B;
+        Check("yukleyince adimlar aynen geliyor; kaydedilmemis degisiklik kaybolmuyor", exact && marked && stashed, $"aynen geldi: {exact}; degisiklik isaretlendi: {marked}; '{loadMessage}'");
+
+        // ---- 3. switching while the queue runs
+        ActionQueue.Queue.Start();
+        ActionQueue.Queue.Tick(game, 0.5);
+        bool wasFishing = fishSpot.Action.IsStarted && ActionQueue.Queue.Running;
+        ActionQueue.Queue.LoadPreset(A, out string flyMessage);
+        bool keptRunning = ActionQueue.Queue.Running;
+        ActionQueue.Queue.Tick(game, 0.5);
+        bool switched = wood.Action.IsStarted && !fishSpot.Action.IsStarted && ActionQueue.Queue.Index == 0 && ActionQueue.Queue.Steps[0].State.StartsWith("running");
+        Check("sira calisirken baska siraya geciliyor", wasFishing && keptRunning && switched, $"once balik tutuyordu: {wasFishing}; '{flyMessage}'; simdi odun kesiyor: {wood.Action.IsStarted}");
+        ActionQueue.Queue.Pause("test");
+        game.ActionManager.TryStopActive(force: true);
+
+        // ---- 4. a share code brings a queue back exactly
+        string code = ActionQueue.Queue.ExportCode(B)!;
+        ActionQueue.Queue.DeletePreset(B, out _);
+        bool gone = ActionQueue.Queue.GetPreset(B) == null;
+        string messy = "  " + code.Insert(20, "\n   ") + " \r\n";   // pasted from a chat: line breaks and spaces
+        bool imported = ActionQueue.Queue.ImportCode(messy, out string importedName, out string importMessage);
+        ActionQueue.Preset? back = ActionQueue.Queue.GetPreset(B);
+        bool same = back != null && back.Repeat && back.Steps.Count == 1 && back.Steps[0].Entity == fishSpot.Entity.Id && back.Steps[0].TargetId == fishSpot.Target.Id
+                    && back.Steps[0].Until == ActionQueue.Until.Minutes && back.Steps[0].Amount == 5 && back.Steps[0].Name == fishSpot.Name;
+        bool twice = ActionQueue.Queue.ImportCode(code, out string secondName, out _) && secondName == B + " (2)";
+        Check("paylasim kodu sirayi aynen geri getiriyor", code.StartsWith("AQ1:") && code.Length < 400 && gone && imported && importedName == B && same && twice,
+              $"kod {code.Length} karakter: {code[..Math.Min(36, code.Length)]}...; '{importMessage}'; ikinci kez yuklenince adi: '{secondName}'");
+        ActionQueue.Queue.DeletePreset(B + " (2)", out _);
+
+        // ---- 5. codes that must be refused, and one for things this game does not have
+        int before = ActionQueue.Queue.PresetNames.Count;
+        string many = "{\"N\":\"x\",\"S\":[" + string.Join(",", Enumerable.Repeat("{\"E\":\"a\",\"T\":\"b\",\"U\":0,\"A\":0}", 300)) + "]}";
+        var bad = new (string What, string Code)[]
+        {
+            ("bos", ""), ("duz yazi", "hello there"), ("yalniz onek", "AQ1:"), ("gecersiz harfler", "AQ1:!!!!$$$$"),
+            ("yarisi kesik", code[..(code.Length / 2)]), ("baska onek", "AQ2:" + code[4..]), ("30.000 harf", new string('A', 30000)),
+            ("adimsiz", PackCode("{\"N\":\"x\",\"S\":[]}")), ("bilinmeyen hedef turu", PackCode("{\"N\":\"x\",\"S\":[{\"E\":\"a\",\"T\":\"b\",\"U\":9,\"A\":1}]}")),
+            ("eksi miktar", PackCode("{\"N\":\"x\",\"S\":[{\"E\":\"a\",\"T\":\"b\",\"U\":1,\"A\":-5}]}")), ("yanlis bicim", PackCode("[1,2,3]")),
+            ("300 adim", PackCode(many)), ("sisirilmis (2 MB bosluk)", PackCode(new string(' ', 2_000_000) + "{}")),
+        };
+        var accepted = bad.Where(b => ActionQueue.Queue.ImportCode(b.Code, out _, out _)).Select(b => b.What).ToList();
+        bool untouched = ActionQueue.Queue.PresetNames.Count == before;
+        bool foreign = ActionQueue.Queue.ImportCode(PackCode("{\"N\":\"From another game\",\"S\":[{\"E\":\"Mod:Nope\",\"T\":\"x\",\"N\":\"Nope: x\",\"U\":0,\"A\":0}]}"), out string foreignName, out string foreignMessage);
+        Check("bozuk kodlar reddediliyor", accepted.Count == 0 && untouched && foreign && foreignMessage.Contains("does not have"),
+              $"{bad.Length} bozuk koddan kabul edilen: {(accepted.Count == 0 ? "yok" : string.Join(", ", accepted))}; kayitli siralar degismedi: {untouched}; bu oyunda olmayan is: '{foreignMessage}'");
+        ActionQueue.Queue.DeletePreset(foreignName, out _);
+
+        // ---- 6. the goal that counts down
+        ActionQueue.Maker? cook = makers.FirstOrDefault(m => m.Entity.DisplayName.Text == "Cooking" && m.Costs.Count == 1 && m.Costs[0].Quantity == 1 && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+        game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combatEntity);
+        var combat = (CombatEntity)combatEntity!;
+        if (cook == null) Out("  asagi sayan hedef: pisirilecek tarif bulunamadi");
+        else
+        {
+            // (a) a recipe eats its ingredient down to the number asked for
+            Item rawFood = cook.Costs[0].Item, food = cook.Product;
+            int rawBefore = Qty(rawFood), foodBefore = Qty(food);
+            SetQty(rawFood, 12);
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(QStep(cook, ActionQueue.Until.ItemLeft, 5, rawFood));
+            ActionQueue.Queue.Add(QStep(cook, ActionQueue.Until.ItemLeft, 8, rawFood));   // already at or below 8 by then: skipped
+            string goalText = ActionQueue.Queue.Steps[0].Goal;
+            ActionQueue.Queue.Start();
+            string progress = "";
+            for (int i = 0; i < 400 && ActionQueue.Queue.Running; i++)
+            {
+                Ticks(30);
+                ActionQueue.Queue.Tick(game, 0.5);
+                if (ActionQueue.Queue.Running && ActionQueue.Queue.Index == 0 && ActionQueue.Queue.Steps[0].State.Contains("left")) progress = ActionQueue.Queue.Steps[0].State;
+            }
+            int rawLeft = Qty(rawFood);
+            bool down = !ActionQueue.Queue.Running && rawLeft == 5 && ActionQueue.Queue.Steps[0].State == "done" && ActionQueue.Queue.Steps[1].State.Contains("already") && !cook.Action.IsStarted;
+            Check("asagi sayan hedef: malzeme istenen sayiya inince duruyor", down,
+                  $"{cook.Name}, '{goalText}': 12 {rawFood.DisplayName.GetPluralText(1)} -> {rawLeft} kaldi; calisirken: '{progress}'; adimlar: {ActionQueue.Queue.Steps[0].State} | {ActionQueue.Queue.Steps[1].State}");
+
+            // (b) the case from the bug report: fight until only five of the food are left
+            var cbSkill = ActionQueue.Targets.Skills(game).First(s => s.Entity.Id == "MelvorBase:Combat");
+            CombatArea area = game.Data.GetDataRegistryOutput<CombatArea>().GetAllObjects().First(a => a.Enemies.Count > 0 && a.UnlockRequirements.AreMet);
+            var monster = new ActionQueue.Target(area.Enemies[0].Id, $"{area.Enemies[0].DisplayName.Text}  ({area.DisplayName.Text})", area.Id);
+            SetQty(food, 12);
+            combat.Food.SelectFood(food);
+            Engine.SetValue("combat.god", 1);
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(new ActionQueue.Step
+            {
+                Entity = cbSkill.Entity.Id, TargetId = monster.Id, Extra = monster.Extra, Name = $"Combat: {monster.Name}",
+                Until = ActionQueue.Until.ItemLeft, Amount = 5, Subject = food.Id, SubjectName = food.DisplayName.GetPluralText(1),
+            });
+            ActionQueue.Queue.Start();
+            ActionQueue.Queue.Tick(game, 0.5);
+            bool fighting = combat.Action.IsStarted;
+            int eaten = 0, loops = 0;
+            for (; loops < 200 && ActionQueue.Queue.Running; loops++)
+            {
+                Ticks(60);
+                // The character gets hurt and eats, the way auto eat or a click would.
+                int had = Qty(food);
+                combat.Player.Health.Set(Math.Max(1, combat.Player.Health.Max / 2));
+                combat.Food.ManualEat();
+                eaten += had - Qty(food);
+                ActionQueue.Queue.Tick(game, 0.5);
+            }
+            int foodLeft = Qty(food);
+            Check("hata bildirimindeki durum: yemek 5'e inene kadar savas", fighting && !ActionQueue.Queue.Running && !combat.Action.IsStarted && foodLeft == 5 && ActionQueue.Queue.Steps[0].State == "done",
+                  $"12 {food.DisplayName.GetPluralText(1)} ile savas basladi: {fighting}; {eaten} tane yendi, {foodLeft} kalinca savas durdu; adim: {ActionQueue.Queue.Steps[0].State}; not: '{ActionQueue.Queue.Note}'");
+            game.ActionManager.TryStopActive(force: true);
+            Engine.ResetAll();
+            Engine.SetValue("bank.slots", 10000);
+            combat.Player.Health.Set(combat.Player.Health.Max);
+
+            // (c) the window offers the food being eaten when the count-down goal is chosen for a fight
+            ActionQueue.ActionQueueMod queueMod0 = ActionQueue.ActionQueueMod.Instance!;
+            if (queueMod0.Window is not { Visible: true }) queueMod0.ToggleWindow();
+            yield return 5;
+            queueMod0.Window!.ShowStepForm();
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.Stops);
+            bool choseFight = queueMod0.Window.Choose(cbSkill.Entity.Id, monster.Id);
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.ItemLeft);
+            Item? offered = queueMod0.Window.CountedItem;
+            Check("asagi sayan hedef secilince yenen yemek oneriliyor", offered == food && queueMod0.Window.AmountShown == 5,
+                  $"savas secili: {choseFight}; onerilen esya: {(offered == null ? "-" : offered.DisplayName.GetPluralText(1))}; sayi: {queueMod0.Window.AmountShown}");
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.Stops);
+            queueMod0.ToggleWindow();
+            combat.Food.UnselectFood();
+            SetQty(rawFood, rawBefore);
+            SetQty(food, foodBefore);
+        }
+
+        // ---- 7. the window: the saved-queues face and the quick list in the header
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.LoadPreset(A, out _);
+        ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+        queueMod.ToggleWindow();
+        yield return 5;
+        ActionQueue.QueueWindow w = queueMod.Window!;
+        w.ShowSavedFace();
+        yield return 5;
+        Rect2 rect = w.Panel.GetGlobalRect();
+        Vector2 min = w.Panel.GetCombinedMinimumSize(), screen = ctx.Tree.Root.GetVisibleRect().Size;
+        bool fits = rect.Position.X >= 0 && rect.Position.Y >= 0 && rect.End.X <= screen.X && rect.End.Y <= screen.Y && min.X <= rect.Size.X + 0.5f && min.Y <= rect.Size.Y + 0.5f;
+        int rowsAtStart = w.SavedRows;
+        string quickAtStart = w.QuickSelected;
+        w.PickQuick(B);                                    // the list in the header: one click switches
+        bool quickLoaded = ActionQueue.Queue.Name == B && ActionQueue.Queue.Steps.Count == 1 && w.QuickSelected == "Queue: " + B;
+        ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 2));
+        string quickChanged = w.QuickSelected;             // a star marks unsaved changes
+        w.TypeNameAndSave("Fish and wood");
+        bool savedThird = ActionQueue.Queue.GetPreset("Fish and wood")?.Steps.Count == 2 && ActionQueue.Queue.Name == "Fish and wood";
+        w.SelectSaved(A);
+        string copied = w.PressCopy();
+        w.SelectSaved("Fish and wood");
+        w.PressDelete();
+        bool notYet = ActionQueue.Queue.GetPreset("Fish and wood") != null;   // the first click only asks
+        w.PressDelete();
+        bool deleted = ActionQueue.Queue.GetPreset("Fish and wood") == null && ActionQueue.Queue.Steps.Count == 2;
+        w.PasteAndImport(copied);
+        bool pasted = ActionQueue.Queue.GetPreset(A + " (2)")?.Steps.Count == 2;
+        string status = w.StatusText;
+        w.SelectSaved(A);
+        w.PressLoad();
+        bool loadedByButton = ActionQueue.Queue.Name == A && ActionQueue.Queue.Steps.Count == 2;
+        Check("kayitli siralar penceresi", fits && rowsAtStart >= 2 && quickAtStart == "Queue: " + A && quickLoaded && quickChanged.EndsWith("*") && savedThird && copied.StartsWith("AQ1:")
+              && notYet && deleted && pasted && loadedByButton,
+              $"pencere {rect.Size.X}x{rect.Size.Y} (en kucuk {min.X}x{min.Y}); {rowsAtStart} kayit; ustteki liste: '{quickAtStart}' -> secince '{ActionQueue.Queue.Name}' yuklendi: {quickLoaded}; degisince '{quickChanged}'; " +
+              $"yeni adla kayit: {savedThird}; silme iki tikla: {notYet && deleted}; kopyala-yapistir: {pasted} ('{status}'); Load dugmesi: {loadedByButton}");
+        if (DisplayServer.GetName() != "headless")
+        {
+            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Directory.CreateDirectory(shotDir);
+            ActionQueue.Queue.LoadPreset(B, out _);
+            ActionQueue.Queue.SavePreset("Combat grind", out _);
+            ActionQueue.Queue.LoadPreset(A, out _);
+            w.SelectSaved(A);
+            w.PressCopy();
+            yield return 30;
+            Out($"  goruntu sira-4-kayitli.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "sira-4-kayitli.png"))}");
+        }
+
+        string queueFile = Path.Combine(Path.GetDirectoryName(typeof(ActionQueue.ActionQueueMod).Assembly.Location)!, "queue.json");
+        string onDisk = File.ReadAllText(queueFile);
+        Check("kayitli siralar dosyaya yaziliyor", onDisk.Contains("\"Presets\"") && onDisk.Contains(A) && onDisk.Contains(B), Path.GetFileName(queueFile));
+
+        w.ShowStepForm();
+        queueMod.ToggleWindow();
+        foreach (string name in ActionQueue.Queue.PresetNames) ActionQueue.Queue.DeletePreset(name, out _);
+        ActionQueue.Queue.Clear();
+        game.ActionManager.TryStopActive(force: true);
+        Engine.ResetAll();
+        combat.Player.Health.Set(combat.Player.Health.Max);
+    }
+
     public static IEnumerator<int> Run(Game game, ModContext ctx)
     {
         s_game = game;
@@ -663,6 +912,12 @@ static class Tests
         {
             IEnumerator<int> shots = Screenshots(game, ctx);
             while (shots.MoveNext()) yield return shots.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "saved")
+        {
+            IEnumerator<int> savedOnly = SavedQueueTests(game, ctx);
+            while (savedOnly.MoveNext()) yield return savedOnly.Current;
             yield break;
         }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") is "multi" or "multi-save" or "multi-load")
@@ -1601,6 +1856,11 @@ static class Tests
         // ---------- 5l. Multitask ----------
         IEnumerator<int> multiTests = MultiTests(game, ctx);
         while (multiTests.MoveNext()) yield return multiTests.Current;
+        Engine.Bind(game);
+
+        // ---------- 5m. saved queues, share codes, the count-down goal ----------
+        IEnumerator<int> savedTests = SavedQueueTests(game, ctx);
+        while (savedTests.MoveNext()) yield return savedTests.Current;
         Engine.Bind(game);
 
         // ---------- 6. the menu itself ----------

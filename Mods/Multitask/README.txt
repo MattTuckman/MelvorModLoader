@@ -51,7 +51,7 @@ GOOD TO KNOW
   that runs out of materials while the game is closed stays stopped until you are back.
 - It never bypasses the game's requirements: a slot cannot do what you cannot do yet.
 - Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
-- Works together with Action Queue 0.3.1 or newer: the queue runs your main action, the
+- Works together with Action Queue 0.4.0 or newer: the queue runs your main action, the
   slots keep running beside it.
 - The game's bottom bar shows your main action. The slots are shown in this window.
 - The slots are remembered per character in "multitask.json" next to the mod.
@@ -67,6 +67,6 @@ start anything in the game.)
 HELP AND UPDATES
 ----------------
 Discord: https://discord.gg/q6aexZZSAf
-GitHub:  https://github.com/falorfrozen-cmd
+GitHub:  https://github.com/falorfrozen-cmd/MelvorModLoader  (source code, MIT license)
 When something does not work, look at "MelvorModLoader.log" in the game folder
 (it is rewritten on every start) and include it when you ask for help.

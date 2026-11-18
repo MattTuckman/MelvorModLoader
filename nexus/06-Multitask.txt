@@ -32,7 +32,7 @@ UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
 Fish while you cook the catch. Mine while you fight. Cut wood while you smith.
 Two slots keep extra actions running beside the one you choose in the game.[/center]
 
-[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
 This is Multitask [b]0.1.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F5[/b].
@@ -65,7 +65,7 @@ This is Multitask [b]0.1.0[/b], tested on game version [b]0.11.6-alpha.1[/b] wit
 [/list]
 
 [size=5][b]Works with Action Queue[/b][/size]
-With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.3.1 or newer, the queue runs your main action step by step and the slots keep running beside it.
+With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.4.0 or newer, the queue runs your main action step by step and the slots keep running beside it.
 
 [size=5][b]Good to know[/b][/size]
 [list]
@@ -98,4 +98,4 @@ Switch the slots OFF and delete the folder [b]mods\Multitask[/b]. Your save need
 [size=5][b]Help[/b][/size]
 When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
 
-[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]

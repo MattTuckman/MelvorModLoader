@@ -1,10 +1,11 @@
-Action Queue 0.3.1  -  a mod for Melvor Idle 2
+Action Queue 0.4.0  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
 cut oak until you own 1,000 logs, burn them all, fish until level 30, then fight for 45 minutes.
 Works with 16 skills including combat, dungeons and slayer tasks. Not a cheat.
-New in 0.3.0: the planner. Say "I want 100 Steel Platebodies" and the steps are worked out for you.
+It also plans for you ("I want 100 Steel Platebodies" -> the steps), keeps several queues
+under a name, and turns a queue into a short code you can share.
 
 Tested with game version 0.11.6-alpha.1 and Melvor Mod Loader 0.1.3.
 
@@ -28,7 +29,8 @@ HOW TO USE
 Open a character and press F6.
   1. Pick a skill and what to do (or press "Use what I am doing now").
   2. Pick when the step ends: when it stops by itself, when you own a number of an item,
-     when a skill reaches a level, or after a number of minutes.
+     when a skill reaches a level, after a number of minutes, or when only a number of an
+     item are left (for example: fight until only 5 of your food are left).
      For the item goal, the item is filled in with what the chosen action makes
      (Smithing: Gold Bar -> Gold Bar). Type in the search box to count another item.
   3. "Add step". Repeat for the next steps, then "Start the queue".
@@ -48,6 +50,22 @@ make and use up, so two plans never count on the same ore.
 Red lines are actions you have not unlocked yet. Yellow lines are items no skill makes
 (monster drops, shop items): bring those yourself.
 Times are for normal game speed and are a forecast, not a promise.
+
+
+SAVED QUEUES AND SHARE CODES
+----------------------------
+Press "Saved queues" at the top of the window.
+  - Type a name and press Save: the queue below is kept under that name.
+  - Select a saved queue and press Load (or double-click it) to put it in place of the
+    queue below. The list at the very top of the window does the same in one click.
+  - A queue that is running keeps running when you switch: it goes on from the first step
+    of the new one.
+  - If the queue on screen was never saved, or was changed, it is kept as
+    "Unsaved queue (auto)" when you load another one. Nothing is lost by switching.
+  - "Copy share code" turns a queue into a short text (AQ1:...). Paste it in a chat.
+  - To use somebody's code: paste it into the box and press Import, then Load it.
+    A code only holds names and numbers. Steps for things your game does not have are
+    skipped, and so are steps you have not unlocked yet.
 
 
 GOOD TO KNOW
@@ -72,6 +90,6 @@ Delete the folder "mods\ActionQueue".
 HELP AND UPDATES
 ----------------
 Discord: https://discord.gg/q6aexZZSAf
-GitHub:  https://github.com/falorfrozen-cmd
+GitHub:  https://github.com/falorfrozen-cmd/MelvorModLoader  (source code, MIT license)
 When something does not work, look at "MelvorModLoader.log" in the game folder
 (it is rewritten on every start) and include it when you ask for help.

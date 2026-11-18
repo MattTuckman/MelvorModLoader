@@ -15,18 +15,19 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.3.1.zip   (name: Action Queue, version 0.3.1)
+MAIN FILE:  dist\ActionQueue-0.4.0.zip   (name: Action Queue, version 0.4.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
-Dev\shots\sira-2-pencere.png (main image), sira-3-plan.png, sira-1-ekran-seridi.png
+Dev\shots\sira-2-pencere.png (main image), sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
-0.3.1
-- Works together with the Multitask mod: its slots keep running beside the queue
-- A step that reaches its goal now stops only its own action
-
-0.3.0
+0.4.0
 - New: the planner. Name an item and how many you want; the steps to get there are worked out and added to the queue
+- New: saved queues. Keep several queues under a name and switch between them in one click, also while the queue is running
+- New: share codes. Turn a queue into a short text, paste it in a chat, import someone else's
+- New goal: "only this many of an item are left" (counts down: fight until only 5 of your food are left)
+- Works together with the Multitask mod: its slots keep running beside the queue
+- A step that reaches its goal stops only its own action
 - The window is a little taller
 
 0.2.2
@@ -50,10 +51,10 @@ UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
 Line up actions with a goal each and let the game work through them.
 Not a cheat: it only presses the buttons you would press, at the moment you would press them.[/center]
 
-[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.3.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+This is Action Queue [b]0.4.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
 
 [size=5][b]An example[/b][/size]
 [list=1]
@@ -82,10 +83,19 @@ Press [b]Plan an item[/b], type how many you want to own and pick the item. For 
 [/list]
 Plans cover Woodcutting, Mining, Fishing, Hunting, Smithing, Cooking, Crafting, Runecrafting, Fletching, Beastcrafting, Herblore and Firemaking: more than 1,000 items.
 
+[size=5][b]New: saved queues and share codes[/b][/size]
+[list]
+[*][b]Keep several queues.[/b] "Smithing day", "Fishing loop", "Combat grind": save each under a name.
+[*][b]Switch in one click.[/b] The list at the top of the window loads a saved queue. A running queue keeps running, from the first step of the new one.
+[*][b]Nothing is lost by switching.[/b] A queue you never saved, or changed, is kept as "Unsaved queue (auto)".
+[*][b]Share a queue.[/b] "Copy share code" turns it into a short text like [font=Courier New]AQ1:q1byU7JSc...[/font]. Paste it in Discord. Anyone can paste it into the box and press Import.
+[*][b]Codes are safe to take.[/b] A code holds only names and numbers. Steps for things your game does not have, or that you have not unlocked, are simply skipped.
+[/list]
+
 [size=5][b]How it works[/b][/size]
 [list]
 [*][b]Pick what to do:[/b] choose a skill and an action from the lists, or press "Use what I am doing now".
-[*][b]Pick when it ends:[/b] when it stops by itself, when you own a number of an item, when a skill reaches a level, or after a number of minutes. For the item goal the item is filled in with what the action makes (Smithing: Gold Bar counts Gold Bars); you can still pick another one.
+[*][b]Pick when it ends:[/b] when it stops by itself, when you own a number of an item, when a skill reaches a level, after a number of minutes, or when only a number of an item are left (fight until only 5 of your food are left). For the item goal the item is filled in with what the action makes (Smithing: Gold Bar counts Gold Bars); you can still pick another one.
 [*][b]Start the queue.[/b] One line at the top of the screen shows the current step and its progress.
 [*][b]Start over at the end[/b] turns the queue into a loop.
 [/list]
@@ -111,7 +121,7 @@ With the [b]Multitask[/b] mod (same author) you can keep extra actions running i
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.3.1.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.4.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
@@ -122,11 +132,11 @@ Delete the folder [b]mods\ActionQueue[/b].
 [size=5][b]Safe to download[/b][/size]
 [list]
 [*]One file: [b]ActionQueue.dll[/b]. No .exe, no .bat, no installer.
-[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/ea2d7f59aae5a338be56f3b3c3de3bda157a388c2f7f86ab7bd25f1e64c22d29]0 detections[/url].
+[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/TARAMA-BEKLIYOR]0 detections[/url].
 [*]None of the game's own files are changed or included.
 [/list]
 
 [size=5][b]Help[/b][/size]
 When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
 
-[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]

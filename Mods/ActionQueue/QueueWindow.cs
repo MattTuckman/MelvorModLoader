@@ -16,6 +16,7 @@ public sealed class QueueWindow
     static readonly string[] UntilNames =
     {
         "it stops by itself", "I own this many of an item", "a skill reaches this level", "this many minutes have passed",
+        "only this many of an item are left",
     };
 
     readonly CanvasLayer _layer = new() { Layer = 118, Name = "ActionQueue", Visible = false };
@@ -46,18 +47,33 @@ public sealed class QueueWindow
     PlanResult? _plan;
     string _planShown = "";
 
+    // The third face of the card: queues kept under a name, and share codes.
+    readonly Button _savedMode = new() { Text = "Saved queues", ToggleMode = true };
+    readonly VBoxContainer _savedForm = new() { Visible = false };
+    readonly LineEdit _presetName = new() { PlaceholderText = "Name, e.g. Smithing day", CustomMinimumSize = new Vector2(260, 0), MaxLength = 40 };
+    readonly LineEdit _code = new() { PlaceholderText = "Share code (AQ1:...)", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+    readonly Button _deletePreset = new() { Text = "Delete" };
+    readonly OptionButton _quick = new() { CustomMinimumSize = new Vector2(230, 0), FitToLongestItem = false, ClipText = true };
+    Tree _presetTable = null!;
+    List<string> _quickNames = new();
+    string _armedDelete = "";
+    int _armToken;
+    SceneTree _tree = null!;
+
     Game? _game;
     List<(GameEntity Entity, ActionComponent Action)> _skills = new();
     List<Target> _targets = new();
     List<Item> _items = new(), _shownItems = new();
     List<string> _levelSkills = new();
     bool _syncing;
+    Until _lastKind;
 
     public bool Visible => _layer.Visible;
     public Control Panel { get; }
 
     public QueueWindow(SceneTree tree)
     {
+        _tree = tree;
         var shade = new ColorRect { Color = new Color(0, 0, 0, 0.25f), MouseFilter = Control.MouseFilterEnum.Ignore };
         shade.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _layer.AddChild(shade);
@@ -87,7 +103,7 @@ public sealed class QueueWindow
         var header = new HBoxContainer();
         header.AddThemeConstantOverride("separation", 12);
         header.AddChild(Style.Label("ACTION QUEUE", Style.Accent, 20));
-        Label hint = Style.Label("Do one thing until a goal is reached, then the next. Runs while the game is open.", Style.Muted);
+        Label hint = Style.Label("Do this, then that, then that.", Style.Muted);
         hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         hint.VerticalAlignment = VerticalAlignment.Center;
         hint.SizeFlagsVertical = Control.SizeFlags.Fill;
@@ -97,6 +113,9 @@ public sealed class QueueWindow
         _run.AddThemeStyleboxOverride("normal", go);
         _run.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 5));
         _run.Pressed += () => { if (Queue.Running) Queue.Pause("Paused."); else Queue.Start(); };
+        _quick.TooltipText = "Switch to one of your saved queues. A running queue keeps running, from the first step of the new one.";
+        _quick.ItemSelected += QuickPicked;
+        header.AddChild(_quick);
         header.AddChild(_run);
         header.AddChild(MakeButton("Close  (F6)", Hide));
         head.AddChild(header);
@@ -122,7 +141,7 @@ public sealed class QueueWindow
         var modes = new HBoxContainer();
         modes.AddThemeConstantOverride("separation", 6);
         var group = new ButtonGroup();
-        foreach (Button mode in new[] { _stepMode, _planMode })
+        foreach (Button mode in new[] { _stepMode, _planMode, _savedMode })
         {
             mode.ButtonGroup = group;
             StyleBoxFlat picked = Style.Box(Style.AccentDim, 5, Style.Accent, 1, 12, 5);
@@ -133,9 +152,10 @@ public sealed class QueueWindow
         _stepMode.ButtonPressed = true;
         _stepMode.TooltipText = "Choose one action and when it is over.";
         _planMode.TooltipText = "Say which item you want and how many. The steps to get there are worked out for you.";
-        _planMode.Toggled += ShowPlanFace;
+        _savedMode.TooltipText = "Keep several queues under a name, switch between them, and share one as a short code.";
+        foreach (Button mode in new[] { _stepMode, _planMode, _savedMode }) mode.Toggled += _ => ShowFace();
         Label modeHint = Style.Label("", Style.Muted, 12);
-        modeHint.Text = "A plan follows the recipes back to what must be gathered and adds every step to the end of the queue.";
+        modeHint.Text = "Build the queue step by step, let a plan work the steps out, or keep whole queues under a name.";
         modeHint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         modeHint.HorizontalAlignment = HorizontalAlignment.Right;
         modeHint.ClipText = true;
@@ -174,6 +194,7 @@ public sealed class QueueWindow
         _stepForm.AddChild(_now);
         form.AddChild(_stepForm);
         BuildPlanForm(form);
+        BuildSavedForm(form);
 
         // -- the queue
         _table = new Tree
@@ -266,6 +287,64 @@ public sealed class QueueWindow
         form.AddChild(_planForm);
     }
 
+    void BuildSavedForm(VBoxContainer form)
+    {
+        _savedForm.AddThemeConstantOverride("separation", 8);
+        var top = new HBoxContainer();
+        top.AddThemeConstantOverride("separation", 10);
+        top.AddChild(Fixed("Name", 50));
+        _presetName.TextSubmitted += _ => SaveNamed();
+        top.AddChild(_presetName);
+        Button save = MakeButton("Save the queue below under this name", SaveNamed);
+        StyleBoxFlat go = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
+        save.AddThemeStyleboxOverride("normal", go);
+        save.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 5));
+        top.AddChild(save);
+        Label tip = Style.Label("To switch quickly, use the list at the top of the window.", Style.Muted, 12);
+        tip.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        tip.HorizontalAlignment = HorizontalAlignment.Right;
+        tip.ClipText = true;
+        top.AddChild(tip);
+        _savedForm.AddChild(top);
+
+        _presetTable = new Tree
+        {
+            Columns = 3, HideRoot = true, SelectMode = Tree.SelectModeEnum.Row, ColumnTitlesVisible = true,
+            CustomMinimumSize = new Vector2(0, 150)
+        };
+        string[] titles = { "Saved queue", "Steps", "What it does" };
+        for (int c = 0; c < titles.Length; c++)
+        {
+            _presetTable.SetColumnTitle(c, titles[c]);
+            _presetTable.SetColumnTitleAlignment(c, HorizontalAlignment.Left);
+            _presetTable.SetColumnExpand(c, c == 2);
+        }
+        _presetTable.SetColumnCustomMinimumWidth(0, 250);
+        _presetTable.SetColumnCustomMinimumWidth(1, 70);
+        _presetTable.ItemSelected += () => { if (SelectedPreset() is { } name) _presetName.Text = name == Queue.AutoName ? "" : name; Disarm(); };
+        _presetTable.ItemActivated += LoadSelected;
+        _savedForm.AddChild(_presetTable);
+
+        var bottom = new HBoxContainer();
+        bottom.AddThemeConstantOverride("separation", 10);
+        Button load = MakeButton("Load", LoadSelected);
+        load.TooltipText = "Puts the selected queue in place of the one below. A double-click does the same.";
+        bottom.AddChild(load);
+        _deletePreset.Pressed += DeleteSelected;
+        bottom.AddChild(_deletePreset);
+        bottom.AddChild(new VSeparator());
+        Button copy = MakeButton("Copy share code", CopyCode);
+        copy.TooltipText = "Turns the selected saved queue (or, with none selected, the queue below) into a short text and copies it.";
+        bottom.AddChild(copy);
+        _code.TooltipText = "A share code somebody gave you. Paste it here and press Import.";
+        bottom.AddChild(_code);
+        Button import = MakeButton("Import", ImportCode);
+        import.TooltipText = "Reads the code in the box (or, when the box is empty, the clipboard) and adds it to your saved queues.";
+        bottom.AddChild(import);
+        _savedForm.AddChild(bottom);
+        form.AddChild(_savedForm);
+    }
+
     static Button MakeButton(string text, Action onPressed)
     {
         var b = new Button { Text = text };
@@ -326,12 +405,173 @@ public sealed class QueueWindow
 
     // ---------------------------------------------------------------- the planner
 
-    void ShowPlanFace(bool plan)
+    void ShowFace()
     {
-        _stepForm.Visible = !plan;
+        bool plan = _planMode.ButtonPressed, saved = _savedMode.ButtonPressed;
+        bool planWasShown = _planForm.Visible;
+        _stepForm.Visible = !plan && !saved;
         _planForm.Visible = plan;
-        if (plan) { _planShown = ""; Replan(); }
+        _savedForm.Visible = saved;
+        if (plan && !planWasShown) { _planShown = ""; Replan(); }
+        if (saved) PaintSaved();
     }
+
+    // ---------------------------------------------------------------- saved queues and share codes
+
+    string? SelectedPreset() => _presetTable.GetSelected() is { } row ? row.GetMetadata(0).AsString() : null;
+
+    static string Summary(Preset preset)
+    {
+        string text = string.Join("  >  ", preset.Steps.Take(3).Select(s => s.Name));
+        if (preset.Steps.Count > 3) text += $"  >  ... (+{preset.Steps.Count - 3})";
+        return preset.Repeat ? text + "   (starts over)" : text;
+    }
+
+    void PaintSaved()
+    {
+        string? selected = SelectedPreset();
+        _presetTable.Clear();
+        TreeItem root = _presetTable.CreateItem();
+        foreach (string name in Queue.PresetNames)
+        {
+            Preset preset = Queue.GetPreset(name)!;
+            TreeItem row = _presetTable.CreateItem(root);
+            row.SetMetadata(0, name);
+            bool current = name == Queue.Name;
+            row.SetText(0, current ? (Queue.Modified ? name + "   (loaded, changed since)" : name + "   (loaded)") : name);
+            row.SetText(1, preset.Steps.Count.ToString());
+            row.SetText(2, Summary(preset));
+            row.SetCustomColor(0, current ? Style.Good : name == Queue.AutoName ? Style.Muted : Style.Text);
+            row.SetCustomColor(1, Style.Muted);
+            row.SetCustomColor(2, Style.Muted);
+            if (name == selected) row.Select(0);
+        }
+        if (Queue.PresetNames.Count == 0)
+        {
+            TreeItem row = _presetTable.CreateItem(root);
+            row.SetMetadata(0, "");
+            row.SetText(0, "Nothing saved yet");
+            row.SetText(2, "Build a queue below, type a name above and press Save.");
+            row.SetSelectable(0, false); row.SetSelectable(1, false); row.SetSelectable(2, false);
+            for (int c = 0; c < 3; c++) row.SetCustomColor(c, Style.Muted);
+        }
+    }
+
+    void SaveNamed()
+    {
+        string name = _presetName.Text;
+        if (Share.CleanName(name) == "" && Queue.Name != "") name = Queue.Name;   // no name typed: save over the loaded one
+        Queue.SavePreset(name, out string message);
+        Say(message);
+    }
+
+    void LoadSelected()
+    {
+        Disarm();
+        string? name = SelectedPreset();
+        if (string.IsNullOrEmpty(name)) { Say("Select a saved queue in the list first."); return; }
+        Queue.LoadPreset(name, out string message);
+        Say(message);
+    }
+
+    void DeleteSelected()
+    {
+        string? name = SelectedPreset();
+        if (string.IsNullOrEmpty(name)) { Say("Select a saved queue in the list first."); return; }
+        if (_armedDelete != name)
+        {
+            // Two clicks, so a slip of the mouse does not throw a queue away.
+            _armedDelete = name;
+            _deletePreset.Text = "Really delete?";
+            int token = ++_armToken;
+            _tree.CreateTimer(4).Timeout += () => { if (token == _armToken) Disarm(); };
+            Say($"Press Delete again to remove '{name}' for good.");
+            return;
+        }
+        Disarm();
+        Queue.DeletePreset(name, out string message);
+        Say(message);
+    }
+
+    void Disarm()
+    {
+        _armToken++;
+        _armedDelete = "";
+        _deletePreset.Text = "Delete";
+    }
+
+    void CopyCode()
+    {
+        string? name = SelectedPreset();
+        if (name == "") name = null;
+        string? code = Queue.ExportCode(name);
+        if (code == null) { Say("There is nothing to share yet: build or select a queue first."); return; }
+        _code.Text = code;
+        try { DisplayServer.ClipboardSet(code); } catch { }
+        Say($"Share code of {(name == null ? "the queue below" : $"'{name}'")} copied ({code.Length} characters). Paste it in a chat; it is also in the box.");
+    }
+
+    void ImportCode()
+    {
+        string text = _code.Text.Trim();
+        if (text == "") { try { text = DisplayServer.ClipboardGet(); } catch { text = ""; } }
+        if (Queue.ImportCode(text, out string imported, out string message))
+        {
+            _code.Text = "";
+            PaintSaved();
+            SelectPreset(imported);
+        }
+        Say(message);
+    }
+
+    void SelectPreset(string name)
+    {
+        for (TreeItem? row = _presetTable.GetRoot()?.GetFirstChild(); row != null; row = row.GetNext())
+            if (row.GetMetadata(0).AsString() == name) { row.Select(0); _presetName.Text = name; return; }
+    }
+
+    void QuickPicked(long index)
+    {
+        if (_syncing || index < 0 || index >= _quickNames.Count) return;
+        string name = _quickNames[(int)index];
+        if (name == "") return;
+        Queue.LoadPreset(name, out string message);
+        Say(message);
+    }
+
+    void PaintQuick()
+    {
+        _syncing = true;
+        _quick.Clear();
+        _quickNames = new List<string>();
+        if (Queue.Name == "")
+        {
+            _quick.AddItem(Queue.PresetNames.Count == 0 ? "Queue: not saved" : "Queue: not saved (pick one)");
+            _quickNames.Add("");
+        }
+        foreach (string name in Queue.PresetNames)
+        {
+            _quick.AddItem(name == Queue.Name ? (Queue.Modified ? $"Queue: {name} *" : $"Queue: {name}") : name);
+            _quickNames.Add(name);
+        }
+        int at = Queue.Name == "" ? 0 : _quickNames.IndexOf(Queue.Name);
+        if (at >= 0) _quick.Select(at);
+        _syncing = false;
+    }
+
+    /// <summary>For tests: the saved-queues face, its rows, and the controls a player would use.</summary>
+    public void ShowSavedFace() => _savedMode.ButtonPressed = true;
+    public int SavedRows => Queue.PresetNames.Count == 0 ? 0 : _presetTable.GetRoot()?.GetChildCount() ?? 0;
+    public List<string> QuickTexts => Enumerable.Range(0, _quick.ItemCount).Select(i => _quick.GetItemText(i)).ToList();
+    public string QuickSelected => _quick.Selected >= 0 ? _quick.GetItemText(_quick.Selected) : "";
+    public void PickQuick(string name) { int at = _quickNames.IndexOf(name); if (at >= 0) { _quick.Select(at); QuickPicked(at); } }
+    public void TypeNameAndSave(string name) { _presetName.Text = name; SaveNamed(); }
+    public void SelectSaved(string name) => SelectPreset(name);
+    public void PressLoad() => LoadSelected();
+    public void PressDelete() => DeleteSelected();
+    public string PressCopy() { CopyCode(); return _code.Text; }
+    public void PasteAndImport(string code) { _code.Text = code; ImportCode(); }
+    public string StatusText => _status.Text;
 
     void FilterMakeable(string text)
     {
@@ -477,6 +717,7 @@ public sealed class QueueWindow
     void SuggestItem()
     {
         if (_skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _targetPick.Selected < 0 || _targetPick.Selected >= _targets.Count) return;
+        if ((Until)_untilPick.Selected == Until.ItemLeft) return;   // counting down: the item was chosen on purpose
         Item? product = Targets.Product(_skills[_skillPick.Selected].Action, _targets[_targetPick.Selected]);
         if (product == null) return;
         string name = product.DisplayName.GetPluralText(1);
@@ -485,6 +726,22 @@ public sealed class QueueWindow
         int at = _shownItems.IndexOf(product);
         if (at >= 0) _itemPick.Select(at);
     }
+
+    void SuggestFood()
+    {
+        if (_game == null || !_game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? e) || e is not GamesByMalcs.Melvor2.Entities.Combat.CombatEntity combat) return;
+        Item? food = combat.Food.SelectedFood?.Item;
+        if (food == null) return;
+        string name = food.DisplayName.GetPluralText(1);
+        _itemSearch.Text = name;
+        FilterItems(name);
+        int at = _shownItems.IndexOf(food);
+        if (at >= 0) _itemPick.Select(at);
+    }
+
+    /// <summary>For tests: pick how a step ends, the way the list does.</summary>
+    public void ChooseUntil(Until kind) { _untilPick.Select((int)kind); UntilChanged(); }
+    public double AmountShown => _amount.Value;
 
     /// <summary>For tests: choose a skill and one of its actions the way the two lists do.</summary>
     public bool Choose(string entityId, string targetId)
@@ -515,7 +772,16 @@ public sealed class QueueWindow
     {
         var kind = (Until)_untilPick.Selected;
         _amount.Visible = kind != Until.Stops;
-        _itemSearch.Visible = _itemPick.Visible = kind == Until.Item;
+        _itemSearch.Visible = _itemPick.Visible = kind is Until.Item or Until.ItemLeft;
+        _amount.MinValue = kind == Until.ItemLeft ? 0 : 1;
+        if (kind == Until.ItemLeft && kind != _lastKind)
+        {
+            // Counting down is mostly about food in a fight: offer the food the character is eating.
+            if (_amount.Value == 1000) _amount.Value = 5;
+            SuggestFood();
+        }
+        else if (kind == Until.Item && _lastKind == Until.ItemLeft) SuggestItem();
+        _lastKind = kind;
         _levelPick.Visible = kind == Until.Level;
         _amount.Suffix = kind == Until.Minutes ? " min" : "";
         _amount.MaxValue = kind == Until.Level ? 999 : 100_000_000;
@@ -541,7 +807,7 @@ public sealed class QueueWindow
             Name = $"{entity.DisplayName.Text}: {target.Name}",
             Until = (Until)_untilPick.Selected, Amount = _amount.Value,
         };
-        if (step.Until == Until.Item)
+        if (step.Until is Until.Item or Until.ItemLeft)
         {
             if (_itemPick.Selected < 0 || _itemPick.Selected >= _shownItems.Count) { Say("Pick the item to count first."); return; }
             Item item = _shownItems[_itemPick.Selected];
@@ -608,5 +874,7 @@ public sealed class QueueWindow
         _repeat.Text = Queue.Repeat ? "Start over at the end: ON" : "Start over at the end: OFF";
         if (Queue.Note != "") Say(Queue.Note);
         else if (Queue.Running) Say(Queue.Headline);
+        PaintQuick();
+        if (_savedForm.Visible) PaintSaved();
     }
 }
