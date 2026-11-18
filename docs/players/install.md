@@ -52,7 +52,8 @@ Start the game from Steam as usual. For about 15 seconds a small green line appe
 
 ![The loader's line in the top-left corner of the game](../assets/img/loader-banner.png)
 
-`Melvor Mod Loader 0.1.3 - 0 mod` means the loader works and no mods are installed yet. That is the right
+The number at the end counts the mods it found (the picture was taken with 7 installed). Right now you will
+see `Melvor Mod Loader 0.1.3 - 0 mod`: the loader works and no mods are installed yet. That is the right
 result at this point.
 
 No green line? See [When something goes wrong](troubleshooting).

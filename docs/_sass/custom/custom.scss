@@ -13,6 +13,8 @@
   background-color: #8a6b22 !important;
 }
 
+// Long type names in tables wrap instead of pushing the table off the page.
 table td code, table th code {
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }

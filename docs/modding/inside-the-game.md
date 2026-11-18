@@ -47,7 +47,7 @@ game reads the same way.
 | `string CharacterName` | The open character's name. Use it to keep settings per character. |
 | `bool IsSaveLoaded` | `true` once the character is fully loaded. Check it before anything else. |
 | `DataRegistry<GameEntity> Entities` | All entities, by id: `Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? e)`. |
-| `ReadOnlyCollection<ILeveledEntity<ExperienceComponent>> LeveledEntities` | Every skill with a level (25 in this version), in the game's own order. |
+| `LeveledEntities` | Every skill with a level (25 in this version), in the game's own order. Each has `.Id` and `.Experience`. |
 | `DataManager Data` | Items, monsters, areas, currencies, recipes: see [Data](#data-items-monsters-currencies). |
 | `ActiveActionManager ActionManager` | The running action(s): see [Actions](#actions-what-the-character-is-doing). |
 | `PassiveActionManager PassiveActionManager` | Passive skills that run on their own (Farming, Ranching). |

@@ -1289,6 +1289,15 @@ static class Tests
         Out($"  TICKS PER SECOND: {GamesByMalcs.Melvor2.Core.Constants.TicksPerSecond}");
         Out($"  USER DIR: {ProjectSettings.GlobalizePath("user://")}");
 
+        // the "first mod" tutorial, only when it was built into the game for this run; before any window opens
+        if (DisplayServer.GetName() != "headless" && Loader.LoadedMods.Any(m => m.ToString()!.Contains("HelloMelvor")))
+        {
+            for (int i = 0; i < 180; i++) yield return 1;
+            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Directory.CreateDirectory(shotDir);
+            Out($"  goruntu wiki-ilk-mod.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "wiki-ilk-mod.png"))}");
+        }
+
         BankEntity bank0() => DocsRecipes.Bank(game)!;
         // the bank button recipe, for real: open the bank the way the game's menu does and look for the button
         var bankRecipe = new DocsMod();
@@ -1370,15 +1379,6 @@ static class Tests
         Check("harita sayfasi ornekleri", true, DocsRecipes.MapSnippets(game));
 
         Out($"  LOADED MODS: {string.Join(", ", Loader.LoadedMods)}; loader {Loader.Version}");
-
-        // the "first mod" tutorial, if it was built into the game for this run
-        if (DisplayServer.GetName() != "headless")
-        {
-            for (int i = 0; i < 180; i++) yield return 1;
-            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
-            Directory.CreateDirectory(shotDir);
-            Out($"  goruntu wiki-ilk-mod.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "wiki-ilk-mod.png"))}");
-        }
         yield return 5;
     }
 
