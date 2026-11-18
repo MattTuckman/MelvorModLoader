@@ -769,14 +769,16 @@ static class Tests
         mt::Multitask.Slots.Bind(game);
         var makers = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).ToList();
         ActionQueue.Maker First(string skill) => makers.First(m => m.Entity.DisplayName.Text == skill && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
-        ActionQueue.Maker wood = First("Woodcutting"), ore = First("Mining");
-        mt::Multitask.Slots.SetOn(1, false);
+        ActionQueue.Maker wood = First("Woodcutting"), ore = First("Mining"), fishing = First("Fishing");
         mt::Multitask.Slots.SetOn(0, true);
+        mt::Multitask.Slots.SetOn(1, true);
         ActionQueue.Targets.Start(game, ore.Action, ore.Target, out _);
         yield return 60;   // the mod itself notices (no help from the test)
         ActionQueue.Targets.Start(game, wood.Action, wood.Target, out _);
         yield return 90;
-        Check("kapatmadan once iki is calisiyor (modun kendi saatiyle)", wood.Action.IsStarted && ore.Action.IsStarted && game.ActionManager.ActiveActions.Count == 2,
+        ActionQueue.Targets.Start(game, fishing.Action, fishing.Target, out _);
+        yield return 90;
+        Check("kapatmadan once uc is calisiyor (modun kendi saatiyle)", wood.Action.IsStarted && ore.Action.IsStarted && fishing.Action.IsStarted && game.ActionManager.ActiveActions.Count == 3,
               string.Join(" + ", game.ActionManager.ActiveActions.Select(a => a.Entity.DisplayName.Text)));
     }
 
@@ -787,11 +789,11 @@ static class Tests
         var running = game.ActionManager.ActiveActions.Select(a => $"{a.Entity.DisplayName.Text}: {ActionQueue.Targets.Current(a)?.Name ?? "?"}").ToList();
         int startsByMod = mt::Multitask.Slots.Starts;
         string kept = string.Join(" > ", mt::Multitask.Slots.Recent.Select(k => $"{k.Title} [{k.State}]"));
-        Check("oyun yeniden acilinca iki is de suruyor", running.Count == 2 && mt::Multitask.Slots.IsOn(0) && mt::Multitask.Slots.Recent.Count == 2 && mt::Multitask.Slots.Recent.All(k => k.State == "running") && startsByMod == 0,
+        Check("oyun yeniden acilinca uc is de suruyor", running.Count == 3 && mt::Multitask.Slots.IsOn(0) && mt::Multitask.Slots.IsOn(1) && mt::Multitask.Slots.Recent.Count == 3 && mt::Multitask.Slots.Recent.All(k => k.State == "running") && startsByMod == 0,
               $"calisan: {string.Join(" + ", running)}; mod: {kept}; modun yeniden baslatmasi gerekti mi: {(startsByMod == 0 ? "hayir, oyun kendi acti" : startsByMod + " kez")}");
         int before = s_bank.Inventory.Stacks.Sum(s => s.Quantity);
         for (int i = 0; i < 3600; i++) game.PropagateTick();
-        Check("yeniden acildiktan sonra ikisi de uretiyor", s_bank.Inventory.Stacks.Sum(s => s.Quantity) > before && game.ActionManager.ActiveActions.Count == 2, $"bir dakikada +{s_bank.Inventory.Stacks.Sum(s => s.Quantity) - before} esya");
+        Check("yeniden acildiktan sonra ucu de calisiyor", s_bank.Inventory.Stacks.Sum(s => s.Quantity) > before && game.ActionManager.ActiveActions.Count == 3, $"bir dakikada +{s_bank.Inventory.Stacks.Sum(s => s.Quantity) - before} esya");
         for (int i = 0; i < mt::Multitask.Slots.Count; i++) mt::Multitask.Slots.SetOn(i, false);
         game.ActionManager.TryStopActive(force: true);
         yield return 5;
