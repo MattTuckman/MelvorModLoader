@@ -1,5 +1,7 @@
 # Melvor Mod Loader
 
+**Wiki: [falorfrozen-cmd.github.io/MelvorModLoader](https://falorfrozen-cmd.github.io/MelvorModLoader/)** - installing mods, writing your own, the full API, tested recipes.
+
 An unofficial mod loader for **Melvor Idle 2** (Steam, Windows), plus the mods built on it.
 
 The loader lets the game load C# mods from a `mods` folder. It changes none of the game's own files, ships no `.exe` and no script, and is removed by deleting two items.
@@ -28,11 +30,12 @@ Ready-to-use zips are on Nexus Mods. Extract each into the game folder.
 | `ModdersKit` | [`MODDING.md`](ModdersKit/MODDING.md), the guide for mod authors, and a complete example mod. |
 | `Dev` | The automated test rig: starts the game hidden on a test character and checks every feature. |
 | `nexus` | The page texts used on Nexus Mods. |
+| `docs` | The wiki (GitHub Pages). Its code examples are checked by `Dev/TestHarness/DocsRecipes.cs` and `DocsMod.cs`. |
 | `README.txt` | The readme that ships inside the loader zip. |
 
 ## Writing your own mod
 
-Start with [`ModdersKit/MODDING.md`](ModdersKit/MODDING.md). The short version:
+Start with the wiki's [Your first mod](https://falorfrozen-cmd.github.io/MelvorModLoader/modding/first-mod) (or [`ModdersKit/MODDING.md`](ModdersKit/MODDING.md) offline). The short version:
 
 ```csharp
 using MelvorModLoader;

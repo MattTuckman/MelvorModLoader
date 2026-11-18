@@ -2,6 +2,9 @@
 
 This kit is for people who want to **make** mods. Players only need the loader and the mods themselves.
 
+**The full guide is the wiki: https://falorfrozen-cmd.github.io/MelvorModLoader/** (first mod, API, how the game works
+inside, tested recipes, building windows, publishing). This file is the short offline version.
+
 A mod is one C# class library (a `.dll`) that the loader loads when the game starts. Your code runs inside the
 game, with direct, type-checked access to everything the game is made of: the bank, the skills, combat, every
 screen. There is no scripting layer in between and nothing to learn except C# and the game's own classes.
@@ -164,5 +167,6 @@ of this. See the links at the end.
 ## 7. Help, source code, contact
 
 - Discord (questions, releases, feedback): https://discord.gg/q6aexZZSAf
-- GitHub: https://github.com/falorfrozen-cmd
+- Wiki: https://falorfrozen-cmd.github.io/MelvorModLoader/
+- Source code: https://github.com/falorfrozen-cmd/MelvorModLoader
 - The loader's log: `MelvorModLoader.log` in the game folder. Include it when you ask for help.

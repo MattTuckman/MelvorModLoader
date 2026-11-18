@@ -1271,6 +1271,117 @@ static class Tests
         Engine.ResetAll();
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // The wiki: runs every Cookbook recipe against the real game and prints the facts the pages quote.
+    static IEnumerator<int> DocsCheck(Game game, ModContext ctx)
+    {
+        Out("=== Wiki: tarifler ve oyun bilgileri ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        game.ActionManager.TryStopActive(force: true);
+
+        // facts for the "Inside the game" page
+        foreach (GameEntity e in game.Entities.GetAllObjects())
+            Out($"  ENTITY {e.Id} ({e.GetType().Name}): {string.Join(", ", e.Components.Select(c => $"{c.Key}={c.Value.GetType().Name}"))}");
+        Out($"  LEVELED: {string.Join(", ", game.LeveledEntities.Select(s => s.Id))}");
+        Out($"  COUNTS: items {game.Data.GetDataRegistryOutput<Item>().GetAllObjects().Count()}, enemies {game.Data.GetDataRegistryOutput<Enemy>().GetAllObjects().Count()}, areas {game.Data.GetDataRegistryOutput<CombatArea>().GetAllObjects().Count()}, currencies {game.Data.GetDataRegistryOutput<Currency>().GetAllObjects().Count()}");
+        Out($"  SAMPLE ITEMS: {string.Join(", ", game.Data.GetDataRegistryOutput<Item>().GetAllObjects().Take(6).Select(i => $"{i.Id} = {i.DisplayName.GetPluralText(1)}"))}");
+        Out($"  TICKS PER SECOND: {GamesByMalcs.Melvor2.Core.Constants.TicksPerSecond}");
+        Out($"  USER DIR: {ProjectSettings.GlobalizePath("user://")}");
+
+        BankEntity bank0() => DocsRecipes.Bank(game)!;
+        // the bank button recipe, for real: open the bank the way the game's menu does and look for the button
+        var bankRecipe = new DocsMod();
+        bankRecipe.OnLoad(ctx);
+        GameAccess.FindGameView()!.OpenBank();
+        for (int i = 0; i < 60 && bankRecipe.BankButton == null; i++) yield return 2;
+        Button? added = bankRecipe.BankButton;
+        bool inTree = added != null && GodotObject.IsInstanceValid(added) && added.IsInsideTree() && added.IsVisibleInTree();
+        string neighbours = added?.GetParent() is Node row ? string.Join(" | ", row.GetChildren().Select(c => c is Button b ? "Button '" + b.Text + "'" : c.GetType().Name)) : "-";
+        Check("tarif: bankaya dugme", inTree, neighbours);
+        // the window from the "Building windows" page, with five items of the bank
+        var shown = bank0().Inventory.Stacks.Where(s => s.Quantity > 0).Select(s => s.Item).Distinct().Take(5).ToList();
+        bankRecipe.ShowWindowForCheck(game, bank0(), shown);
+        yield return 10;
+        Check("pencere sayfasi ornegi", true, $"{shown.Count} satir");
+        if (DisplayServer.GetName() != "headless")
+        {
+            yield return 10;
+            string shotDir2 = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Out($"  goruntu wiki-pencere.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir2, "wiki-pencere.png"))}");
+        }
+        bankRecipe.HideWindowForCheck();
+        if (DisplayServer.GetName() != "headless" && inTree)
+        {
+            yield return 20;
+            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Directory.CreateDirectory(shotDir);
+            Out($"  goruntu wiki-banka-dugmesi.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "wiki-banka-dugmesi.png"))}");
+        }
+
+        BankEntity bank = DocsRecipes.Bank(game)!;
+        Item? byId = DocsRecipes.ItemById(game, "MelvorBase:OakLog");
+        Item? byName = DocsRecipes.ItemByName(game, "oak log");
+        Check("tarif: esya bulma", byId != null && byName == byId, $"id -> {byId?.DisplayName.GetPluralText(1)}; ad -> {byName?.Id}");
+        Item item = byId ?? bank.Inventory.Stacks.First().Item;
+        int had = bank.Inventory.GetQuantity(item);
+        string io = DocsRecipes.ItemsInAndOut(bank, item);
+        Check("tarif: esya ekle/cikar", bank.Inventory.GetQuantity(item) == had + 60, io);
+        Check("tarif: para", true, DocsRecipes.Currencies(game, bank));
+
+        var sold = new List<string>();
+        bank.ItemSales.ItemSold += (_, e) => sold.Add($"{e.Quantity} {e.Item.Id} {e.CurrencyGain.Quantity}");
+        DocsRecipes.ListenToEvents(game, ctx);
+        DocsRecipes.Sell(bank, item, 10);
+        Check("tarif: satis + olay", bank.Inventory.GetQuantity(item) == had + 50 && sold.Count == 1, string.Join("; ", sold));
+        bank.Inventory.RemoveQuantity(item, 50);
+
+        Out($"  SKILLS: {DocsRecipes.Skills(game)}");
+        var thieving = game.LeveledEntities.First(s => s.Id == "MelvorBase:Thieving");
+        int lvl = thieving.Experience.Level;
+        DocsRecipes.SetLevel(game, "MelvorBase:Thieving", lvl + 1);
+        bool raised = thieving.Experience.Level == lvl + 1;
+        DocsRecipes.SetLevel(game, "MelvorBase:Thieving", lvl);
+        Check("tarif: seviye ayarlama", raised && thieving.Experience.Level == lvl, $"{lvl} -> {lvl + 1} -> {thieving.Experience.Level}");
+
+        bool started = DocsRecipes.StartWoodcutting(game);
+        string running = DocsRecipes.WhatIsRunning(game);
+        bool again = DocsRecipes.StartWoodcutting(game);   // calling it twice must not stop it
+        Check("tarif: is baslatma / ne calisiyor", started && again && running.StartsWith("Woodcutting"), running);
+        game.ActionManager.TryStopActive();
+        Check("tarif: durdurma", !game.ActionManager.HasActiveAction, DocsRecipes.WhatIsRunning(game));
+
+        int slots = bank.Inventory.MaxStacks;
+        DocsRecipes.AddBankSlots(game, 100);
+        int with = bank.Inventory.MaxStacks;
+        DocsRecipes.AddBankSlots(game, 250);    // AddOrUpdate: changes the amount, does not stack
+        int changed = bank.Inventory.MaxStacks;
+        DocsRecipes.RemoveBankSlots(game);
+        Check("tarif: bonus (modifier)", with == slots + 100 && changed == slots + 250 && bank.Inventory.MaxStacks == slots, $"{slots} -> {with} -> {changed} -> {bank.Inventory.MaxStacks}");
+
+        var settings = DocsRecipes.LoadSettings(ctx, game);
+        settings.Threshold = 123;
+        DocsRecipes.SaveSettings(ctx, game, settings);
+        Check("tarif: karakter basina ayar", DocsRecipes.LoadSettings(ctx, game).Threshold == 123, File.ReadAllText(Path.Combine(ctx.Directory, "settings.json")).Replace("\n", " ").Replace("\r", ""));
+        File.Delete(Path.Combine(ctx.Directory, "settings.json"));
+
+        Check("tarif: cevrimdisi kontrolu", !GameAccess.IsComputingOffline, $"IsComputingOffline = {GameAccess.IsComputingOffline}");
+        Check("tarif: ozel uye (UnsafeAccessor)", true, DocsRecipes.PrivateMembers(game));
+        Check("harita sayfasi ornekleri", true, DocsRecipes.MapSnippets(game));
+
+        Out($"  LOADED MODS: {string.Join(", ", Loader.LoadedMods)}; loader {Loader.Version}");
+
+        // the "first mod" tutorial, if it was built into the game for this run
+        if (DisplayServer.GetName() != "headless")
+        {
+            for (int i = 0; i < 180; i++) yield return 1;
+            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Directory.CreateDirectory(shotDir);
+            Out($"  goruntu wiki-ilk-mod.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "wiki-ilk-mod.png"))}");
+        }
+        yield return 5;
+    }
+
     public static IEnumerator<int> Run(Game game, ModContext ctx)
     {
         s_game = game;
@@ -1289,6 +1400,12 @@ static class Tests
         {
             IEnumerator<int> repro = PlanRepro(game, ctx);
             while (repro.MoveNext()) yield return repro.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "docs")
+        {
+            IEnumerator<int> docs = DocsCheck(game, ctx);
+            while (docs.MoveNext()) yield return docs.Current;
             yield break;
         }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "saved")

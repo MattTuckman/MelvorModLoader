@@ -1,0 +1,18 @@
+// Small touches on top of the theme.
+.main-content img {
+  border: 1px solid #2b2f37;
+  border-radius: 6px;
+}
+
+.main-content h1:first-child + p {
+  font-size: 1.1rem;
+  color: #b8bdc7;
+}
+
+.label-gold {
+  background-color: #8a6b22 !important;
+}
+
+table td code, table th code {
+  white-space: nowrap;
+}
