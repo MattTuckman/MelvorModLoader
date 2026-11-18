@@ -191,6 +191,18 @@ static class Tests
         }
         yield return 20;
         Shot("sira-2-pencere.png");
+        // The planner: the longest plan that is not locked, for 100 of the item.
+        ActionQueue.PlanResult? shotPlan = null;
+        foreach (Item candidate in ActionQueue.Planner.Makeable(game))
+        {
+            ActionQueue.PlanResult plan = ActionQueue.Planner.Compute(game, candidate, 100);
+            if (plan.Steps.Count == 0 || plan.Steps.Any(l => l.Problem != "")) continue;
+            if (shotPlan == null || plan.Steps.Count > shotPlan.Steps.Count) shotPlan = plan;
+        }
+        if (shotPlan != null) queueWindow.PlanFor(shotPlan.Item.Id, 100);
+        yield return 20;
+        Shot("sira-3-plan.png");
+        queueWindow.ShowStepForm();
         ActionQueue.ActionQueueMod.Instance.ToggleWindow();
         ActionQueue.Queue.Clear();
         game.ActionManager.TryStopActive(force: true);
@@ -1069,6 +1081,146 @@ static class Tests
               $"{rock.Name} -> {(countedRock == null ? "-" : Actions.ItemName(countedRock))}; savasta urun yok; urunu bilinen beceri sayisi: {withProduct}/{skills.Count}");
         queueMod.ToggleWindow();
         ActionQueue.Queue.Clear();
+        combat.Player.Health.Set(combat.Player.Health.Max);
+
+        // ---------- 5k. the planner: from "I want N of this item" to queue steps ----------
+        Out("=== 5k. Plan (esyadan adimlara) ===");
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Clear();
+        Engine.SetValue("bank.slots", 10000);
+        var plMakers = ActionQueue.Planner.Makers(game);
+        var plBySkill = plMakers.Values.SelectMany(l => l).GroupBy(m => m.Entity.DisplayName.Text).Select(g => $"{g.Key} {g.Count()}").ToList();
+        Check("plan: neyin neyden yapildigi okunuyor", plMakers.Count >= 30 && plBySkill.Count >= 6,
+              $"{plMakers.Count} esya, {ActionQueue.Planner.Makeable(game).Count} tanesi istenebilir; {string.Join(", ", plBySkill)}");
+
+        var plBefore = new Dictionary<Item, int>();
+        void PlKeep(Item i) { if (!plBefore.ContainsKey(i)) plBefore[i] = s_bank.Inventory.GetQuantity(i); }
+        void PlRestore()
+        {
+            foreach (var (i, n) in plBefore)
+            {
+                int now = s_bank.Inventory.GetQuantity(i);
+                if (now > n) s_bank.Inventory.RemoveQuantity(i, now - n);
+                else if (now < n) s_bank.Inventory.AddQuantity(i, n - now);
+            }
+            plBefore.Clear();
+        }
+
+        // The time shown for a step is a forecast. Play ten minutes of each kind of action and compare.
+        var plRates = new List<string>();
+        int plRateOk = 0, plRateTried = 0;
+        const int PlTicks = 36000;
+        foreach (var plGroup in plMakers.Values.SelectMany(l => l).Where(m => m.Seconds > 0 && m.Main).GroupBy(m => m.Entity.Id))
+        {
+            ActionQueue.Maker? plM = plGroup.FirstOrDefault(m => ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+            if (plM == null) { plRates.Add($"{plGroup.First().Entity.DisplayName.Text}: acik is yok"); continue; }
+            PlKeep(plM.Product);
+            foreach (var (plCost, plQty) in plM.Costs) { PlKeep(plCost); s_bank.Inventory.AddQuantity(plCost, plQty * 4000); }
+            if (!ActionQueue.Targets.Start(game, plM.Action, plM.Target, out string plWhy))
+            {
+                plRates.Add($"{plM.Name}: baslamadi ({plWhy})");
+                PlRestore();
+                continue;
+            }
+            int plHad = s_bank.Inventory.GetQuantity(plM.Product);
+            for (int i = 0; i < PlTicks; i++) game.PropagateTick();
+            int plGot = s_bank.Inventory.GetQuantity(plM.Product) - plHad;
+            double plExpected = PlTicks / 60.0 / plM.Seconds * plM.PerAction;
+            plRateTried++;
+            // The forecast may be a little cautious (bonus damage, doubling), but it must not promise more than the game gives.
+            bool plClose = plGot > 0 && plGot / plExpected >= 0.8 && plGot / plExpected <= 1.6;
+            if (plClose) plRateOk++;
+            plRates.Add($"{plM.Name}: tahmin {plExpected:0}, gercek {plGot} ({plGot / plExpected:0.00}x){(plClose ? "" : " <-- UYMUYOR")}");
+            game.ActionManager.TryStopActive(force: true);
+            PlRestore();
+        }
+        Check("plan: sure tahmini gercege yakin (10 dakikalik oyun)", plRateTried >= 4 && plRateOk == plRateTried, string.Join("; ", plRates));
+
+        // A plan to try: three or more steps, everything unlocked, nothing the player has to bring, the quickest such.
+        ActionQueue.PlanResult? plPlan = null;
+        int plCandidates = 0;
+        foreach (Item plItem in ActionQueue.Planner.Makeable(game))
+        {
+            ActionQueue.PlanResult plTry = ActionQueue.Planner.Compute(game, plItem, s_bank.Inventory.GetQuantity(plItem) + 3);
+            if (plTry.Steps.Count < 3 || plTry.Supply.Count > 0 || plTry.Steps.Any(l => l.Problem != "" || l.Maker!.Seconds <= 0 || !l.Maker.Certain)) continue;
+            plCandidates++;
+            if (plPlan == null || plTry.Seconds < plPlan.Seconds) plPlan = plTry;
+        }
+        if (plPlan == null) Check("plan: denenecek bir plan bulundu", false, "uc adimli, kilitsiz bir plan yok");
+        else
+        {
+            string PlShow(ActionQueue.PlanResult r) => string.Join(" -> ", r.Steps.Select(l => $"{l.Maker!.Name} [{l.Need} {l.ItemName}, bankada {l.Have}, {l.Actions} islem]"));
+            Out($"  secilen plan ({plCandidates} aday icinden): {plPlan.Own} {Actions.ItemName(plPlan.Item)} = {PlShow(plPlan)}; tahmin {ActionQueue.Planner.Time(plPlan.Seconds)}");
+
+            // The arithmetic, redone here from the recipes.
+            var plExpect = new Dictionary<Item, long>();
+            foreach (ActionQueue.PlanLine l in plPlan.Steps)
+                foreach (var (plCost, plQty) in l.Maker!.Costs) plExpect[plCost] = plExpect.GetValueOrDefault(plCost) + l.Actions * plQty;
+            bool plRootLast = plPlan.Steps.Last().Item == plPlan.Item && plPlan.Steps.Last().Need == plPlan.Own;
+            bool plCounts = plPlan.Steps.All(l => l.Missing == Math.Max(0, l.Need - l.Have) && l.Actions == (long)Math.Ceiling(l.Missing / l.Maker!.PerAction));
+            bool plNeeds = plPlan.Steps.Where(l => l.Item != plPlan.Item).All(l => plExpect.GetValueOrDefault(l.Item) == l.Need);
+            bool plOrder = Enumerable.Range(0, plPlan.Steps.Count).All(i => plPlan.Steps[i].Maker!.Costs.All(c => plPlan.Steps.FindIndex(x => x.Item == c.Item) < i));
+            Check("plan: miktarlar ve sira dogru", plRootLast && plCounts && plNeeds && plOrder,
+                  $"istenen esya en sonda: {plRootLast}; eksik ve islem sayilari: {plCounts}; malzeme toplamlari tarifle ayni: {plNeeds}; malzeme, kullanildigi adimdan once: {plOrder}");
+
+            // What is already in the bank is taken off.
+            ActionQueue.PlanLine plMid = plPlan.Steps[^2];
+            PlKeep(plMid.Item);
+            s_bank.Inventory.AddQuantity(plMid.Item, (int)plMid.Missing);
+            ActionQueue.PlanResult plWithStock = ActionQueue.Planner.Compute(game, plPlan.Item, plPlan.Own);
+            bool plStock = plWithStock.Steps.All(l => l.Item != plMid.Item) && plWithStock.Steps.Count < plPlan.Steps.Count && plWithStock.Steps.Last().Item == plPlan.Item;
+            PlRestore();
+            Check("plan: bankadaki esya dusuluyor", plStock, $"bankaya {plMid.Missing} {plMid.ItemName} konunca: {plPlan.Steps.Count} adim -> {plWithStock.Steps.Count} adim ({PlShow(plWithStock)})");
+
+            // The window: show the plan, add it, then ask again.
+            queueMod.ToggleWindow();
+            yield return 5;
+            ActionQueue.PlanResult? plShown = queueMod.Window!.PlanFor(plPlan.Item.Id, plPlan.Own);
+            yield return 5;
+            Rect2 plRect = queueMod.Window.Panel.GetGlobalRect();
+            Vector2 plMin = queueMod.Window.Panel.GetCombinedMinimumSize();
+            Vector2 plScreen = ctx.Tree.Root.GetVisibleRect().Size;
+            int plRows = queueMod.Window.PlanRows;
+            string plNote = queueMod.Window.PlanNote;
+            Check("plan penceresi", plShown != null && plRows == plPlan.Steps.Count && plNote.Contains("step") && plRect.Position.X >= 0 && plRect.Position.Y >= 0
+                  && plRect.End.X <= plScreen.X && plRect.End.Y <= plScreen.Y && plMin.X <= plRect.Size.X + 0.5f && plMin.Y <= plRect.Size.Y + 0.5f,
+                  $"{plRows} satir; '{plNote}'; pencere {plRect.Size.X}x{plRect.Size.Y}, gereken en kucuk {plMin.X}x{plMin.Y}");
+
+            queueMod.Window.PressAddPlan();
+            bool plQueued = ActionQueue.Queue.Steps.Count == plPlan.Steps.Count && ActionQueue.Queue.Steps.Zip(plPlan.Steps).All(x =>
+                x.First.Until == ActionQueue.Until.Item && x.First.Subject == x.Second.Item.Id && x.First.Amount == x.Second.Need
+                && x.First.TargetId == x.Second.Maker!.Target.Id && x.First.Entity == x.Second.Maker.Entity.Id);
+            ActionQueue.PlanResult? plAgain = queueMod.Window.PlanFor(plPlan.Item.Id, plPlan.Own);
+            bool plNoDouble = plAgain != null && plAgain.Steps.Count == 0 && plAgain.Problem != "";
+            // A second plan must not count materials the first plan is going to use up.
+            ActionQueue.PlanLine plRaw = plPlan.Steps[0];
+            PlKeep(plRaw.Item);
+            s_bank.Inventory.AddQuantity(plRaw.Item, (int)plRaw.Missing);
+            ActionQueue.PlanResult plMore = ActionQueue.Planner.Compute(game, plPlan.Item, plPlan.Own + 3);
+            ActionQueue.PlanLine? plMoreRaw = plMore.Steps.FirstOrDefault(l => l.Item == plRaw.Item);
+            bool plShared = plMore.Steps.Count > 0 && plMore.Steps.Last().Missing == 3 && plMoreRaw != null && plMoreRaw.Have < plRaw.Need;
+            PlRestore();
+            Check("plan siraya ekleniyor; ikinci plan birincinin yapacagini ve harcayacagini sayiyor", plQueued && plNoDouble && plShared,
+                  $"siradaki adim: {ActionQueue.Queue.Steps.Count}; ayni plan tekrar istenince: '{plAgain?.Problem}'; 3 fazlasi istenince eksik {plMore.Steps.LastOrDefault()?.Missing}, " +
+                  $"bankada {plRaw.Need} {plRaw.ItemName} varken ikinci planin saydigi: {plMoreRaw?.Have.ToString() ?? "-"}");
+            queueMod.Window.ShowStepForm();
+            queueMod.ToggleWindow();
+
+            // And the queue really gets there.
+            foreach (ActionQueue.PlanLine l in plPlan.Steps) PlKeep(l.Item);
+            int plXpLevel = 0;
+            ActionQueue.Queue.Start();
+            int plLoops = 0;
+            for (; plLoops < 6000 && ActionQueue.Queue.Running; plLoops++) Drive(0.5, 60);
+            int plOwned = s_bank.Inventory.GetQuantity(plPlan.Item);
+            string plStates = string.Join(" | ", ActionQueue.Queue.Steps.Select(s => $"{s.Name}: {s.State}"));
+            Check("plan bastan sona yuruyor", !ActionQueue.Queue.Running && plOwned >= plPlan.Own && plXpLevel == 0,
+                  $"bankada {plOwned}/{plPlan.Own} {Actions.ItemName(plPlan.Item)}; oyun suresi {plLoops} sn (tahmin {plPlan.Seconds:0} sn); {plStates}; '{ActionQueue.Queue.Note}'");
+            game.ActionManager.TryStopActive(force: true);
+            ActionQueue.Queue.Clear();
+            PlRestore();
+        }
+        Engine.ResetAll();
         combat.Player.Health.Set(combat.Player.Health.Max);
 
         // ---------- 5j. slayer tasks as a queue step; a death pauses the queue ----------

@@ -15,7 +15,7 @@ Ready-to-use zips are on Nexus Mods. Extract each into the game folder.
 | [Melvor Mod Loader](https://www.nexusmods.com/melvoridle2/mods/2) | Required by everything below. Also hosts the Modder's Kit and the optional Debug Menu. | |
 | [Cheat Menu](https://www.nexusmods.com/melvoridle2/mods/3) | 60+ settings and tools in one window: XP, speed, bank, skills, combat, loot filter. | F8 |
 | [Bulk Sell](https://www.nexusmods.com/melvoridle2/mods/4) | Bulk sell window and "Sell junk", "Bury all", "Open all" buttons in the bank. | F7 |
-| [Action Queue](https://www.nexusmods.com/melvoridle2/mods/5) | Chain actions: "cut 1,000 logs, burn them, then go fishing". | F6 |
+| [Action Queue](https://www.nexusmods.com/melvoridle2/mods/5) | Chain actions: "cut 1,000 logs, burn them, then go fishing". Its planner turns "I want 100 of this item" into the steps to get there. | F6 |
 | [Save Backup](https://www.nexusmods.com/melvoridle2/mods/6) | Dated copies of your saves on every start. | |
 
 ## What is in this repository

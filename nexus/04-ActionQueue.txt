@@ -8,19 +8,23 @@ Action Queue
 KATEGORI ONERISI (Category):
 Gameplay
 
-KISA ACIKLAMA (Summary / Brief overview, 232 karakter):
-Chain actions in Melvor Idle 2: cut 1,000 logs, burn them all, fish to level 30, then fight for 45 minutes. 16 skills incl. combat, dungeons and slayer tasks. Never bypasses requirements, pauses if you take over or die. Not a cheat.
+KISA ACIKLAMA (Summary / Brief overview):
+Chain actions in Melvor Idle 2: cut 1,000 logs, burn them, fish to level 30, then fight. Or name an item ("100 Steel Platebodies") and the planner works out every step. 16 skills, never bypasses requirements. Not a cheat.
 
 GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.2.2.zip   (name: Action Queue, version 0.2.2)
+MAIN FILE:  dist\ActionQueue-0.3.0.zip   (name: Action Queue, version 0.3.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
-Dev\shots\sira-2-pencere.png (main image), sira-1-ekran-seridi.png
+Dev\shots\sira-2-pencere.png (main image), sira-3-plan.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.3.0
+- New: the planner. Name an item and how many you want; the steps to get there are worked out and added to the queue
+- The window is a little taller
+
 0.2.2
 - The item of an "until I own N" goal is filled in with what the chosen action makes
 
@@ -45,7 +49,7 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.2.2[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+This is Action Queue [b]0.3.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
 
 [size=5][b]An example[/b][/size]
 [list=1]
@@ -54,6 +58,25 @@ This is Action Queue [b]0.2.2[/b], tested on game version [b]0.11.6-alpha.1[/b] 
 [*]Fishing: Shallow Pools, [i]until Fishing level 30[/i]
 [*]Combat: Golbin, [i]for 45 minutes[/i]
 [/list]
+
+[size=5][b]New: the planner[/b][/size]
+Press [b]Plan an item[/b], type how many you want to own and pick the item. For "100 Air Wands" you get:
+[list=1]
+[*]Mining: Rune Essence, [i]until 1,776 in the bank[/i]
+[*]Smithing: Molten Glass, [i]until 294[/i]
+[*]Crafting: Unpowered Orb, [i]until 100[/i]
+[*]Runecrafting: Air Rune, [i]until 1,200[/i]
+[*]...and so on, down to the wands themselves
+[/list]
+[list]
+[*][b]It follows the recipes for you:[/b] armour needs bars, bars need ores. Every amount is worked out with your character's current bonuses.
+[*][b]It counts your bank:[/b] what you already own is taken off.
+[*][b]It tells you how long:[/b] each step shows the time it takes at normal game speed. In testing the forecast was within a few percent for most skills.
+[*][b]One click adds it:[/b] the steps go to the end of the queue as ordinary steps. Reorder them, remove them, mix them with your own.
+[*][b]Plans stack:[/b] add a second and a third plan. A later plan knows what the earlier ones will make and use up, so two plans never count on the same ore.
+[*][b]It is honest about gaps:[/b] actions you have not unlocked yet are shown in red, and items no skill makes (monster drops, shop items) are listed in yellow for you to bring.
+[/list]
+Plans cover Woodcutting, Mining, Fishing, Hunting, Smithing, Cooking, Crafting, Runecrafting, Fletching, Beastcrafting, Herblore and Firemaking: more than 1,000 items.
 
 [size=5][b]How it works[/b][/size]
 [list]
@@ -81,7 +104,7 @@ Woodcutting, Mining, Fishing, Firemaking, Cooking, Smithing, Crafting, Runecraft
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.2.2.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.3.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
@@ -92,7 +115,7 @@ Delete the folder [b]mods\ActionQueue[/b].
 [size=5][b]Safe to download[/b][/size]
 [list]
 [*]One file: [b]ActionQueue.dll[/b]. No .exe, no .bat, no installer.
-[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/27b3127732881272385984b29a2b12860dea690e3701e37600bd7d147eed995e]0 detections[/url].
+[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/c212d1ade8cd7381e0cfc01701978d8ac8704b33ae60438a92b5e5f5c89ae9f6]0 detections[/url].
 [*]None of the game's own files are changed or included.
 [/list]
 

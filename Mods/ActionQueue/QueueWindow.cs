@@ -10,7 +10,7 @@ using Godot;
 
 namespace ActionQueue;
 
-/// <summary>The F6 window: build the list of steps on top, watch it run below.</summary>
+/// <summary>The F6 window: add steps on top (one at a time, or a whole plan for an item), watch the queue run below.</summary>
 public sealed class QueueWindow
 {
     static readonly string[] UntilNames =
@@ -32,6 +32,20 @@ public sealed class QueueWindow
     readonly Button _run = new() { CustomMinimumSize = new Vector2(150, 0) };
     readonly Button _repeat = new() { ToggleMode = true, CustomMinimumSize = new Vector2(230, 0) };
 
+    // The card on top has two faces: the form for one step, and the planner.
+    readonly Button _stepMode = new() { Text = "Add one step", ToggleMode = true };
+    readonly Button _planMode = new() { Text = "Plan an item", ToggleMode = true };
+    readonly VBoxContainer _stepForm = new(), _planForm = new() { Visible = false };
+    readonly SpinBox _planAmount = new() { MinValue = 1, MaxValue = 100_000_000, Step = 1, Value = 100, CustomMinimumSize = new Vector2(120, 0), SelectAllOnFocus = true };
+    readonly LineEdit _planSearch = new() { PlaceholderText = "Search item...", CustomMinimumSize = new Vector2(170, 0), ClearButtonEnabled = true };
+    readonly OptionButton _planPick = new() { CustomMinimumSize = new Vector2(260, 0), FitToLongestItem = false, ClipText = true };
+    readonly Label _planNote = Style.Label("", Style.Muted, 12);
+    readonly Button _planAdd = new() { Text = "Add these steps to the queue" };
+    Tree _planTable = null!;
+    List<Item> _makeable = new(), _shownMakeable = new();
+    PlanResult? _plan;
+    string _planShown = "";
+
     Game? _game;
     List<(GameEntity Entity, ActionComponent Action)> _skills = new();
     List<Target> _targets = new();
@@ -51,7 +65,7 @@ public sealed class QueueWindow
         center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _layer.AddChild(center);
 
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1000, 660), Theme = Style.Build() };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1000, 700), Theme = Style.Build() };
         StyleBoxFlat frame = Style.Box(Style.Window, 8, Style.AccentDim, 1);
         frame.ShadowColor = new Color(0, 0, 0, 0.55f);
         frame.ShadowSize = 14;
@@ -105,6 +119,30 @@ public sealed class QueueWindow
         card.AddChild(form);
         body.AddChild(card);
 
+        var modes = new HBoxContainer();
+        modes.AddThemeConstantOverride("separation", 6);
+        var group = new ButtonGroup();
+        foreach (Button mode in new[] { _stepMode, _planMode })
+        {
+            mode.ButtonGroup = group;
+            StyleBoxFlat picked = Style.Box(Style.AccentDim, 5, Style.Accent, 1, 12, 5);
+            mode.AddThemeStyleboxOverride("pressed", picked);
+            mode.AddThemeStyleboxOverride("hover_pressed", picked);
+            modes.AddChild(mode);
+        }
+        _stepMode.ButtonPressed = true;
+        _stepMode.TooltipText = "Choose one action and when it is over.";
+        _planMode.TooltipText = "Say which item you want and how many. The steps to get there are worked out for you.";
+        _planMode.Toggled += ShowPlanFace;
+        Label modeHint = Style.Label("", Style.Muted, 12);
+        modeHint.Text = "A plan follows the recipes back to what must be gathered and adds every step to the end of the queue.";
+        modeHint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        modeHint.HorizontalAlignment = HorizontalAlignment.Right;
+        modeHint.ClipText = true;
+        modes.AddChild(modeHint);
+        form.AddChild(modes);
+        _stepForm.AddThemeConstantOverride("separation", 8);
+
         var what = new HBoxContainer();
         what.AddThemeConstantOverride("separation", 10);
         what.AddChild(Fixed("Do", 50));
@@ -115,7 +153,7 @@ public sealed class QueueWindow
         Button useNow = MakeButton("Use what I am doing now", UseCurrent);
         useNow.TooltipText = "Fills in the skill and the action your character is performing right now.";
         what.AddChild(useNow);
-        form.AddChild(what);
+        _stepForm.AddChild(what);
 
         var until = new HBoxContainer();
         until.AddThemeConstantOverride("separation", 10);
@@ -132,14 +170,16 @@ public sealed class QueueWindow
         until.AddChild(_levelPick);
         until.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         until.AddChild(MakeButton("Add step", AddStep));
-        form.AddChild(until);
-        form.AddChild(_now);
+        _stepForm.AddChild(until);
+        _stepForm.AddChild(_now);
+        form.AddChild(_stepForm);
+        BuildPlanForm(form);
 
         // -- the queue
         _table = new Tree
         {
             Columns = 4, HideRoot = true, SelectMode = Tree.SelectModeEnum.Row, ColumnTitlesVisible = true,
-            SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 200)
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 150)
         };
         string[] titles = { "#", "Do", "Until", "State" };
         for (int c = 0; c < titles.Length; c++)
@@ -183,6 +223,49 @@ public sealed class QueueWindow
         tree.Root.AddChild(_layer);
     }
 
+    void BuildPlanForm(VBoxContainer form)
+    {
+        _planForm.AddThemeConstantOverride("separation", 8);
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 10);
+        row.AddChild(Fixed("Own", 50));
+        _planAmount.TooltipText = "How many you want to have in the bank in the end (not how many more).";
+        _planAmount.ValueChanged += _ => Replan();
+        row.AddChild(_planAmount);
+        row.AddChild(Style.Label("of", Style.Muted));
+        _planSearch.TextChanged += FilterMakeable;
+        row.AddChild(_planSearch);
+        _planPick.TooltipText = "Every item one of your skills can make or gather.";
+        _planPick.ItemSelected += _ => Replan();
+        row.AddChild(_planPick);
+        row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        StyleBoxFlat go = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
+        _planAdd.AddThemeStyleboxOverride("normal", go);
+        _planAdd.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 5));
+        _planAdd.Pressed += AddPlan;
+        row.AddChild(_planAdd);
+        _planForm.AddChild(row);
+
+        _planTable = new Tree
+        {
+            Columns = 4, HideRoot = true, SelectMode = Tree.SelectModeEnum.Row, ColumnTitlesVisible = true,
+            CustomMinimumSize = new Vector2(0, 184)
+        };
+        string[] titles = { "Step", "Until the bank holds", "In the bank", "Takes about" };
+        for (int c = 0; c < titles.Length; c++)
+        {
+            _planTable.SetColumnTitle(c, titles[c]);
+            _planTable.SetColumnTitleAlignment(c, HorizontalAlignment.Left);
+            _planTable.SetColumnExpand(c, c is 0 or 1);
+        }
+        _planTable.SetColumnCustomMinimumWidth(2, 130);
+        _planTable.SetColumnCustomMinimumWidth(3, 130);
+        _planForm.AddChild(_planTable);
+        _planNote.ClipText = true;
+        _planForm.AddChild(_planNote);
+        form.AddChild(_planForm);
+    }
+
     static Button MakeButton(string text, Action onPressed)
     {
         var b = new Button { Text = text };
@@ -217,6 +300,9 @@ public sealed class QueueWindow
             Fill(_levelPick, _levelSkills);
             FilterItems("");
             FillTargets(null);
+            _makeable = Planner.Makeable(game);
+            _planSearch.Text = "";
+            FilterMakeable("");
         }
         UntilChanged();
         Repaint();
@@ -235,7 +321,140 @@ public sealed class QueueWindow
         _now.Text = active == null ? "Your character is doing nothing right now."
             : target == null ? $"Right now: {active.Entity.DisplayName.Text} (the queue cannot drive this one)"
             : $"Right now: {active.Entity.DisplayName.Text}: {target.Name}";
+        if (_planForm.Visible) Replan();   // the bank changes while the game runs
     }
+
+    // ---------------------------------------------------------------- the planner
+
+    void ShowPlanFace(bool plan)
+    {
+        _stepForm.Visible = !plan;
+        _planForm.Visible = plan;
+        if (plan) { _planShown = ""; Replan(); }
+    }
+
+    void FilterMakeable(string text)
+    {
+        text = text.Trim();
+        _shownMakeable = (text == "" ? _makeable : _makeable.Where(i => i.DisplayName.GetPluralText(1).Contains(text, StringComparison.OrdinalIgnoreCase)))
+            .Take(200).ToList();
+        Fill(_planPick, _shownMakeable.Select(i => i.DisplayName.GetPluralText(1)));
+        Replan();
+    }
+
+    /// <summary>Works the plan out again and redraws it, but only when something in it has changed.</summary>
+    void Replan()
+    {
+        if (_game == null || !_planForm.Visible) return;
+        Item? item = _planPick.Selected >= 0 && _planPick.Selected < _shownMakeable.Count ? _shownMakeable[_planPick.Selected] : null;
+        if (item == null)
+        {
+            _plan = null;
+            DrawPlan("none", () => { _planNote.Text = "No item with that name can be made by your skills."; });
+            return;
+        }
+        PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value);
+        string shown = item.Id + "|" + plan.Own + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply)
+            .Select(l => $"{l.Item.Id},{l.Maker?.Target.Id},{l.Need},{l.Have},{l.Actions},{l.Seconds:0},{l.Problem}"));
+        DrawPlan(shown, () =>
+        {
+            TreeItem root = _planTable.CreateItem();
+            int number = 0;
+            foreach (PlanLine line in plan.Steps)
+            {
+                TreeItem row = _planTable.CreateItem(root);
+                row.SetText(0, $"{++number}.  {line.Maker!.Name}");
+                row.SetText(1, $"{line.Need:N0} {line.ItemName}");
+                row.SetText(2, line.Have.ToString("N0"));
+                row.SetText(3, line.Maker.Seconds > 0 ? Planner.Time(line.Seconds) : "cannot be told");
+                row.SetCustomColor(2, Style.Muted);
+                row.SetCustomColor(3, Style.Muted);
+                if (line.Problem != "")
+                {
+                    row.SetText(3, "locked");
+                    row.SetCustomColor(0, Style.Bad);
+                    row.SetCustomColor(3, Style.Bad);
+                    for (int c = 0; c < 4; c++) row.SetTooltipText(c, "Locked for now: " + line.Problem + ". The queue skips a step it cannot start.");
+                }
+            }
+            foreach (PlanLine line in plan.Supply)
+            {
+                TreeItem row = _planTable.CreateItem(root);
+                row.SetText(0, "Bring yourself (no skill on the queue makes it)");
+                row.SetText(1, $"{line.Need:N0} {line.ItemName}");
+                row.SetText(2, line.Have.ToString("N0"));
+                for (int c = 0; c < 3; c++) row.SetCustomColor(c, Style.Accent);
+            }
+            _planNote.Text = PlanSummary(plan);
+        });
+        _planAdd.Disabled = plan.Steps.Count == 0;
+    }
+
+    void DrawPlan(string shown, Action draw)
+    {
+        if (shown == _planShown) return;
+        _planShown = shown;
+        _planTable.Clear();
+        _planAdd.Disabled = true;
+        draw();
+    }
+
+    static string PlanSummary(PlanResult plan)
+    {
+        if (plan.Problem != "") return plan.Problem;
+        string text = plan.Steps.Count == 1 ? "1 step" : $"{plan.Steps.Count} steps";
+        int timed = plan.Steps.Count - plan.UnknownTimes;
+        if (timed > 0) text += $", about {Planner.Time(plan.Seconds)} at normal game speed";
+        if (plan.UnknownTimes > 0) text += timed > 0 ? $" plus {plan.UnknownTimes} whose time cannot be told" : ", time cannot be told in advance";
+        text += ".";
+        if (plan.Money.Count > 0) text += "  Costs " + string.Join(", ", plan.Money.Select(m => $"{m.Value:N0} {m.Key}")) + ".";
+        if (plan.Supply.Count > 0) text += "  Yellow lines: items you have to bring yourself.";
+        if (plan.Steps.Any(l => l.Problem != "")) text += "  Red lines are still locked.";
+        return text;
+    }
+
+    void AddPlan()
+    {
+        if (_plan == null || _plan.Steps.Count == 0) return;
+        PlanResult plan = _plan;
+        int added = Planner.AddToQueue(plan);
+        Say($"Plan added: {added} step(s) to own {plan.Own:N0} {plan.Item.DisplayName.GetPluralText(1)}.");
+        _planShown = "";
+        Replan();   // what was just added now counts as "will be made"
+    }
+
+    /// <summary>For tests: open the planner, ask for an item and return the plan it shows.</summary>
+    public PlanResult? PlanFor(string itemId, long own)
+    {
+        _planMode.ButtonPressed = true;
+        _planSearch.Text = "";
+        FilterMakeable("");
+        int at = _shownMakeable.FindIndex(i => i.Id == itemId);
+        if (at < 0)
+        {
+            Item? item = _makeable.FirstOrDefault(i => i.Id == itemId);
+            if (item == null) return null;
+            _planSearch.Text = item.DisplayName.GetPluralText(1);
+            FilterMakeable(_planSearch.Text);
+            at = _shownMakeable.FindIndex(i => i.Id == itemId);
+            if (at < 0) return null;
+        }
+        _planPick.Select(at);
+        _planAmount.Value = own;
+        _planShown = "";
+        Replan();
+        return _plan;
+    }
+
+    /// <summary>For tests: press "Add these steps to the queue".</summary>
+    public void PressAddPlan() => AddPlan();
+
+    /// <summary>For tests: what the planner shows under its table, and how many rows the table has.</summary>
+    public string PlanNote => _planNote.Text;
+    public int PlanRows => _planTable.GetRoot()?.GetChildCount() ?? 0;
+
+    /// <summary>For tests: back to the one-step form.</summary>
+    public void ShowStepForm() => _stepMode.ButtonPressed = true;
 
     // ---------------------------------------------------------------- the "new step" form
 

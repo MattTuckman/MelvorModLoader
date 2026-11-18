@@ -1,9 +1,10 @@
-Action Queue 0.2.2  -  a mod for Melvor Idle 2
+Action Queue 0.3.0  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
 cut oak until you own 1,000 logs, burn them all, fish until level 30, then fight for 45 minutes.
 Works with 16 skills including combat, dungeons and slayer tasks. Not a cheat.
+New in 0.3.0: the planner. Say "I want 100 Steel Platebodies" and the steps are worked out for you.
 
 Tested with game version 0.11.6-alpha.1 and Melvor Mod Loader 0.1.3.
 
@@ -32,6 +33,21 @@ Open a character and press F6.
      (Smithing: Gold Bar -> Gold Bar). Type in the search box to count another item.
   3. "Add step". Repeat for the next steps, then "Start the queue".
 While the queue runs, one line at the top of the screen shows the current step.
+
+
+PLAN AN ITEM
+------------
+Press "Plan an item" at the top of the window.
+  1. Type how many you want to own and pick the item.
+  2. The planner follows the recipes back to what has to be gathered (armour <- bars <- ores),
+     takes off what your bank already holds, and lists the steps with the time they take.
+  3. "Add these steps to the queue" puts them at the end of the queue. They are ordinary
+     steps: reorder, remove or mix them with steps you add by hand.
+Several plans can be added one after another. A later plan knows what the earlier ones will
+make and use up, so two plans never count on the same ore.
+Red lines are actions you have not unlocked yet. Yellow lines are items no skill makes
+(monster drops, shop items): bring those yourself.
+Times are for normal game speed and are a forecast, not a promise.
 
 
 GOOD TO KNOW

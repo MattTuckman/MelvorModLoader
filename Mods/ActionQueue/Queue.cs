@@ -114,6 +114,8 @@ public static class Queue
 
     public static void Add(Step step) { Steps.Add(step); Save(); Changed?.Invoke(); }
 
+    public static void AddRange(IEnumerable<Step> steps) { Steps.AddRange(steps); Save(); Changed?.Invoke(); }
+
     public static void RemoveAt(int index)
     {
         if (index < 0 || index >= Steps.Count) return;

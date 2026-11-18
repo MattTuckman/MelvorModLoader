@@ -188,6 +188,9 @@ public static class Targets
         return target.Extra == Slayer ? Master(target.Id)?.CurrentTask?.Id == now.Id : now.Id == target.Id;
     }
 
+    /// <summary>Whether the game would let this target be started now (materials aside). Nothing is started.</summary>
+    public static bool CanStart(ActionComponent action, Target target, out string problem) => Allowed(action, target, out problem);
+
     /// <summary>The game's own requirement check for a target; nothing is started here.</summary>
     static bool Allowed(ActionComponent action, Target target, out string problem)
     {
