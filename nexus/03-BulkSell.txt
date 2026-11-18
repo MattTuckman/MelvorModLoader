@@ -1,0 +1,91 @@
+==========================================================================================
+BULK SELL - BANK BUTTONS  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Bulk Sell - Bank Buttons
+
+KATEGORI ONERISI (Category):
+User interface
+
+KISA ACIKLAMA (Summary / Brief overview, 228 karakter):
+Adds buttons to the bank of Melvor Idle 2: a Bulk sell window with filters and "keep N of each", one-click Sell junk, Bury all and Open all. Uses the game's own prices and functions. Locked stacks are never touched. Not a cheat.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (link the loader's mod page)
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\BulkSell-0.2.1.zip   (name: Bulk Sell, version 0.2.1)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+Dev\shots\banka-2-toplu-satis.png (main image), banka-1-dugmeler.png
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.2.1
+- Leaves the game alone while it computes offline progress
+
+0.2.0
+- New: Bury all and Open all buttons
+
+0.1.0
+- First version: Bulk sell window and Sell junk
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]BULK SELL[/b][/size]
+[size=4][i]Clean out your bank in seconds.[/i][/size]
+New buttons right in the bank: a bulk sell window, one-click junk selling, bury all bones, open all chests.
+Quality of life, not a cheat: everything goes through the game's own functions at the game's own prices.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is Bulk Sell [b]0.2.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open the bank: the new buttons sit next to the search box. [b]F7[/b] opens the bulk sell window from anywhere.
+
+[size=5][b]Bulk sell window[/b][/size]
+[list]
+[*]Every sellable stack in one table: icon, amount, price each, what you would get.
+[*]Click a row to mark it. "All shown", "None" and "Invert shown" mark many at once.
+[*]Filter by search text, by bank tab and by kind (Woodcutting, Smithing, ... or "No skill uses it").
+[*][b]Keep of each:[/b] leave a number of every marked item in the bank.
+[*]Click a column title to sort, for example most valuable first.
+[*]The bottom line always shows how many items go and for how much. Selling needs a second click.
+[/list]
+
+[size=5][b]One-click buttons in the bank[/b][/size]
+[list]
+[*][b]Sell junk:[/b] mark the things you never want once, save them as your junk list, and from then on one button sells whatever of it is in the bank.
+[*][b]Bury all:[/b] buries every bone and other buriable item. Only shown when there is something to bury.
+[*][b]Open all:[/b] opens every chest, bag and pack. Only shown when there is something to open.
+[/list]
+Each of these asks once before it acts: the button text turns into a question such as "Sell 229,484 for 1,360,052 Gold Pieces?" and only a second click does it.
+
+[size=5][b]Your locks are respected[/b][/size]
+A stack you have locked in the bank never appears in the list and is never sold, buried or opened.
+
+The game already lets you select several stacks with Ctrl and Shift. This mod adds what that lacks: filters, "keep N of each", a junk list and the one-click buttons.
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]BulkSell-0.2.1.zip[/b] there. The mod ends up in [b]mods\BulkSell[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script. Nothing is written outside the game folder.
+
+[size=5][b]Uninstall[/b][/size]
+Delete the folder [b]mods\BulkSell[/b].
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]One file: [b]BulkSell.dll[/b]. No .exe, no .bat, no installer.
+[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/0d82eba6fb31e432ecf7716d9a9e55ccc47d01ebaa43e0cdc9f2dc9ca5a1639a]0 detections[/url].
+[*]None of the game's own files are changed or included.
+[/list]
+
+[size=5][b]Help[/b][/size]
+When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]

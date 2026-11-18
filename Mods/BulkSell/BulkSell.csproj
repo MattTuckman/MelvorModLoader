@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>BulkSell</AssemblyName>
+    <RootNamespace>BulkSell</RootNamespace>
+    <Version>0.2.1</Version>
+    <Product>Melvor Idle 2 Bulk Sell</Product>
+    <AssemblyTitle>Bulk Sell</AssemblyTitle>
+    <Description>Adds a "Bulk sell" window and one-click "Sell junk", "Bury all" and "Open all" buttons to the bank of Melvor Idle 2 (requires Melvor Mod Loader).</Description>
+    <Company>Melvor Mod Loader</Company>
+    <Copyright>MIT License</Copyright>
+    <Nullable>enable</Nullable>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GameData>..\..\..\data_GamesByMalcs.Melvor2_windows_x86_64</GameData>
+    <LoaderDir>..\..\..\data_MelvorModLoader_windows_x86_64</LoaderDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The same window look as the Cheat Menu. -->
+    <Compile Include="..\CheatMenu\Style.cs" Link="Style.cs" />
+    <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

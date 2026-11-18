@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Developer-only mod: drives the game from code for automated tests. Never shipped.
+       It does nothing unless the game is started with the environment variable MML_TEST=1. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>TestHarness</AssemblyName>
+    <Nullable>enable</Nullable>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <GameRoot>..\..\..</GameRoot>
+    <GameData>$(GameRoot)\data_GamesByMalcs.Melvor2_windows_x86_64</GameData>
+    <LoaderDir>$(GameRoot)\data_MelvorModLoader_windows_x86_64</LoaderDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="CheatMenu"><HintPath>$(GameRoot)\mods\CheatMenu\CheatMenu.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BulkSell"><HintPath>$(GameRoot)\mods\BulkSell\BulkSell.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="ActionQueue"><HintPath>$(GameRoot)\mods\ActionQueue\ActionQueue.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SaveBackup"><HintPath>$(GameRoot)\mods\SaveBackup\SaveBackup.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

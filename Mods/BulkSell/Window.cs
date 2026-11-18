@@ -1,0 +1,413 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using CheatMenu;
+using GamesByMalcs.Melvor2;
+using GamesByMalcs.Melvor2.Data.Currencies;
+using GamesByMalcs.Melvor2.Data.Items;
+using GamesByMalcs.Melvor2.Entities.Bank;
+using Godot;
+
+namespace BulkSell;
+
+/// <summary>
+/// The bulk sell window: every sellable stack of the bank in one table. Click a row to mark it,
+/// narrow the table with the filters, then sell everything marked in one go.
+/// </summary>
+public sealed class Window
+{
+    const int ColMark = 0, ColItem = 1, ColQuantity = 2, ColEach = 3, ColTotal = 4;
+
+    readonly SceneTree _tree;
+    readonly CanvasLayer _layer = new() { Layer = 119, Name = "BulkSell", Visible = false };
+    readonly Label _status = Style.Label("", Style.Good);
+    readonly Label _summary = Style.Label("");
+    readonly Label _hidden = Style.Label("", Style.Muted, 12);
+    readonly LineEdit _search = new() { PlaceholderText = "Search the bank...", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+    readonly OptionButton _tabPick = new() { CustomMinimumSize = new Vector2(150, 0) };
+    readonly OptionButton _kindPick = new() { CustomMinimumSize = new Vector2(220, 0), FitToLongestItem = false, ClipText = true };
+    readonly SpinBox _keep = new() { MinValue = 0, MaxValue = 1_000_000, Step = 1, Value = 0, CustomMinimumSize = new Vector2(110, 0), SelectAllOnFocus = true };
+    readonly Tree _table;
+    readonly Button _sell = new() { Text = "Sell marked", CustomMinimumSize = new Vector2(250, 0) };
+    readonly Button _junkCheck = new();
+
+    Game? _game;
+    BankEntity? _bank;
+    List<Entry> _entries = new(), _shown = new();
+    readonly HashSet<Item> _marked = new();
+    List<string> _kinds = new();
+    int _sortColumn = -1;
+    bool _sortDescending;
+    bool _armed;
+    int _armToken;
+
+    public bool Visible => _layer.Visible;
+    public Control Panel { get; }
+    /// <summary>For tests: the items marked for sale.</summary>
+    public IReadOnlyCollection<Item> Marked => _marked;
+    public IReadOnlyList<Entry> Shown => _shown;
+
+    public Window(SceneTree tree)
+    {
+        _tree = tree;
+        var shade = new ColorRect { Color = new Color(0, 0, 0, 0.25f), MouseFilter = Control.MouseFilterEnum.Ignore };
+        shade.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _layer.AddChild(shade);
+        var center = new CenterContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+        _layer.AddChild(center);
+
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(980, 700), Theme = Style.Build() };
+        StyleBoxFlat frame = Style.Box(Style.Window, 8, Style.AccentDim, 1);
+        frame.ShadowColor = new Color(0, 0, 0, 0.55f);
+        frame.ShadowSize = 14;
+        panel.AddThemeStyleboxOverride("panel", frame);
+        center.AddChild(panel);
+        Panel = panel;
+
+        var root = new VBoxContainer();
+        root.AddThemeConstantOverride("separation", 0);
+        panel.AddChild(root);
+
+        // ---- header
+        StyleBoxFlat headBox = Style.Box(Style.Sidebar, 0, null, 0, 18, 12);
+        headBox.CornerRadiusTopLeft = headBox.CornerRadiusTopRight = 7;
+        headBox.BorderColor = Style.Line;
+        headBox.BorderWidthBottom = 1;
+        var head = new PanelContainer();
+        head.AddThemeStyleboxOverride("panel", headBox);
+        var header = new HBoxContainer();
+        header.AddThemeConstantOverride("separation", 12);
+        header.AddChild(Style.Label("BULK SELL", Style.Accent, 20));
+        Label hint = Style.Label("Click a row to mark it. Locked items never appear here.", Style.Muted);
+        hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        hint.VerticalAlignment = VerticalAlignment.Center;
+        hint.SizeFlagsVertical = Control.SizeFlags.Fill;
+        header.AddChild(hint);
+        header.AddChild(MakeButton("Close", Hide));
+        head.AddChild(header);
+        root.AddChild(head);
+
+        // ---- body
+        var margin = new MarginContainer { SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        foreach (string m in new[] { "margin_left", "margin_right", "margin_top", "margin_bottom" })
+            margin.AddThemeConstantOverride(m, 16);
+        var body = new VBoxContainer();
+        body.AddThemeConstantOverride("separation", 8);
+        margin.AddChild(body);
+        root.AddChild(margin);
+
+        var filters = new HBoxContainer();
+        filters.AddThemeConstantOverride("separation", 10);
+        _search.TextChanged += _ => Rebuild();
+        _tabPick.ItemSelected += _ => Rebuild();
+        _kindPick.ItemSelected += _ => Rebuild();
+        filters.AddChild(_search);
+        filters.AddChild(_tabPick);
+        filters.AddChild(_kindPick);
+        body.AddChild(filters);
+
+        var picks = new HBoxContainer();
+        picks.AddThemeConstantOverride("separation", 10);
+        picks.AddChild(Style.Label("Mark:", Style.Muted));
+        picks.AddChild(MakeButton("All shown", () => MarkShown(true)));
+        picks.AddChild(MakeButton("None", () => { _marked.Clear(); Repaint(); }));
+        picks.AddChild(MakeButton("Invert shown", () => { foreach (Entry e in _shown) Toggle(e.Item); Repaint(); }));
+        _junkCheck.Pressed += () =>
+        {
+            foreach (Entry e in _entries) if (Junk.Contains(e.Item)) _marked.Add(e.Item);
+            Repaint();
+        };
+        picks.AddChild(_junkCheck);
+        picks.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        Label keepLabel = Style.Label("Keep of each:", Style.Muted);
+        keepLabel.TooltipText = "This many of every marked item stay in the bank.";
+        keepLabel.MouseFilter = Control.MouseFilterEnum.Pass;
+        picks.AddChild(keepLabel);
+        _keep.ValueChanged += _ => Repaint();
+        picks.AddChild(_keep);
+        body.AddChild(picks);
+
+        _table = new Tree
+        {
+            Columns = 5, HideRoot = true, SelectMode = Tree.SelectModeEnum.Row, ColumnTitlesVisible = true,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 240)
+        };
+        string[] titles = { "Sell", "Item", "In bank", "Each", "You get" };
+        for (int c = 0; c < titles.Length; c++)
+        {
+            _table.SetColumnTitle(c, titles[c]);
+            _table.SetColumnTitleAlignment(c, c >= ColQuantity ? HorizontalAlignment.Right : HorizontalAlignment.Left);
+            _table.SetColumnExpand(c, c == ColItem);
+        }
+        _table.SetColumnCustomMinimumWidth(ColMark, 60);
+        _table.SetColumnCustomMinimumWidth(ColQuantity, 120);
+        _table.SetColumnCustomMinimumWidth(ColEach, 110);
+        _table.SetColumnCustomMinimumWidth(ColTotal, 150);
+        _table.ItemSelected += () =>
+        {
+            TreeItem? row = _table.GetSelected();
+            if (row == null) return;
+            Toggle(_shown[(int)row.GetMetadata(ColItem)].Item);
+            Repaint();
+            // The table's own highlight is not used: clear it so the same row can be clicked again.
+            Callable.From(_table.DeselectAll).CallDeferred();
+        };
+        _table.ColumnTitleClicked += (column, button) =>
+        {
+            if (button != (long)MouseButton.Left) return;
+            // First click sorts (numbers: biggest first), a second click on the same title turns the order around.
+            if (_sortColumn == (int)column) _sortDescending = !_sortDescending;
+            else { _sortColumn = (int)column; _sortDescending = column >= ColQuantity; }
+            Rebuild();
+        };
+        body.AddChild(_table);
+
+        var bottom = new HBoxContainer();
+        bottom.AddThemeConstantOverride("separation", 10);
+        var totals = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+        totals.AddThemeConstantOverride("separation", 0);
+        _summary.ClipText = true;
+        totals.AddChild(_summary);
+        totals.AddChild(_hidden);
+        bottom.AddChild(totals);
+        Button saveJunk = MakeButton("Save marked as my junk list", () =>
+        {
+            Junk.Set(_marked);
+            Repaint();
+            Say(_marked.Count == 0 ? "Your junk list is empty now." : $"Junk list saved: {_marked.Count} item(s). \"Sell junk\" in the bank sells them with two clicks.");
+        });
+        saveJunk.TooltipText = "The junk list is remembered for this character. The \"Sell junk\" button in the bank sells everything on it.";
+        bottom.AddChild(saveJunk);
+        StyleBoxFlat go = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 7);
+        _sell.AddThemeStyleboxOverride("normal", go);
+        _sell.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 7));
+        _sell.AddThemeStyleboxOverride("pressed", go);
+        _sell.Pressed += SellPressed;
+        bottom.AddChild(_sell);
+        body.AddChild(bottom);
+
+        // ---- footer
+        StyleBoxFlat footBox = Style.Box(Style.Sidebar, 0, null, 0, 18, 8);
+        footBox.CornerRadiusBottomLeft = footBox.CornerRadiusBottomRight = 7;
+        footBox.BorderColor = Style.Line;
+        footBox.BorderWidthTop = 1;
+        var foot = new PanelContainer();
+        foot.AddThemeStyleboxOverride("panel", footBox);
+        _status.ClipText = true;
+        _status.CustomMinimumSize = new Vector2(0, 20);
+        foot.AddChild(_status);
+        root.AddChild(foot);
+
+        tree.Root.AddChild(_layer);
+    }
+
+    static Button MakeButton(string text, Action onPressed)
+    {
+        var b = new Button { Text = text };
+        b.Pressed += onPressed;
+        return b;
+    }
+
+    void Say(string text) => _status.Text = text;
+
+    public void Show(Game game)
+    {
+        _game = game;
+        _bank = Bank.Of(game);
+        if (_bank == null) return;
+        Junk.Bind(game.CharacterName);
+        _marked.Clear();
+        _search.Text = "";
+        Disarm();
+        Say("");
+        Reload();
+        _layer.Visible = true;
+    }
+
+    public void Hide()
+    {
+        _layer.Visible = false;
+        Disarm();
+    }
+
+    /// <summary>Called about once a second while open: stacks grow and shrink while the game runs.</summary>
+    public void Pulse()
+    {
+        if (!Visible || _bank == null || _armed) return;
+        Dictionary<Item, int> now = _bank.Inventory.Stacks.Where(s => !s.IsLocked && !s.IsPlaceholder && s.Quantity > 0)
+            .GroupBy(s => s.Item).ToDictionary(g => g.Key, g => g.Sum(s => s.Quantity));
+        if (now.Count != _entries.Count || _entries.Any(e => !now.ContainsKey(e.Item))) { Reload(); return; }
+        bool changed = false;
+        foreach (Entry e in _entries)
+            if (e.Quantity != now[e.Item]) { e.Quantity = now[e.Item]; changed = true; }
+        if (changed) Repaint();
+    }
+
+    /// <summary>Reads the bank again and rebuilds the filters and the table.</summary>
+    void Reload()
+    {
+        if (_bank == null) return;
+        _entries = Bank.Sellable(_bank);
+        _marked.RemoveWhere(i => _entries.All(e => e.Item != i));
+
+        int tab = _tabPick.Selected, tabs = _bank.Inventory.InventoryTabs.Count;
+        _tabPick.Clear();
+        _tabPick.AddItem("All tabs");
+        for (int i = 0; i < tabs; i++) _tabPick.AddItem($"Tab {i + 1}");
+        _tabPick.Select(tab > 0 && tab <= tabs ? tab : 0);
+
+        string kind = _kindPick.Selected > 0 && _kindPick.Selected - 1 < _kinds.Count ? _kinds[_kindPick.Selected - 1] : "";
+        _kinds = _entries.SelectMany(e => e.Item.BankTags.Select(t => t.BankTag.DisplayName.Text)).Distinct()
+            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
+        _kindPick.Clear();
+        _kindPick.AddItem("Any kind");
+        foreach (string k in _kinds) _kindPick.AddItem(k);
+        _kindPick.AddItem("No skill uses it");
+        int at = _kinds.IndexOf(kind);
+        _kindPick.Select(at >= 0 ? at + 1 : 0);
+
+        int locked = Bank.LockedCount(_bank);
+        _hidden.Text = locked > 0 ? $"{locked} locked stack(s) are protected and not listed." : "";
+        Rebuild();
+    }
+
+    /// <summary>Applies the filters and the sort order, then fills the table.</summary>
+    void Rebuild()
+    {
+        IEnumerable<Entry> list = _entries;
+        if (_tabPick.Selected > 0) list = list.Where(e => e.Tab == _tabPick.Selected - 1);
+        int kind = _kindPick.Selected;
+        if (kind > 0 && kind <= _kinds.Count) list = list.Where(e => e.Item.BankTags.Any(t => t.BankTag.DisplayName.Text == _kinds[kind - 1]));
+        else if (kind == _kinds.Count + 1) list = list.Where(e => e.Item.BankTags.Count == 0);
+        string text = _search.Text.Trim();
+        if (text != "") list = list.Where(e => Bank.Name(e.Item).Contains(text, StringComparison.OrdinalIgnoreCase));
+
+        list = _sortColumn switch
+        {
+            ColMark => list.OrderByDescending(e => _marked.Contains(e.Item)).ThenBy(e => e.Order),
+            ColItem => list.OrderBy(e => Bank.Name(e.Item), StringComparer.OrdinalIgnoreCase),
+            ColQuantity => list.OrderBy(e => e.Quantity),
+            ColEach => list.OrderBy(e => e.Price),
+            ColTotal => list.OrderBy(e => e.Price * e.Quantity),
+            _ => list.OrderBy(e => e.Order),
+        };
+        _shown = list.ToList();
+        if (_sortDescending && _sortColumn >= 0) _shown.Reverse();
+
+        _table.Clear();
+        TreeItem root = _table.CreateItem();
+        for (int i = 0; i < _shown.Count; i++)
+        {
+            Entry e = _shown[i];
+            TreeItem row = _table.CreateItem(root);
+            row.SetMetadata(ColItem, i);
+            row.SetText(ColItem, Bank.Name(e.Item));
+            row.SetIcon(ColItem, e.Item.Icon);
+            row.SetIconMaxWidth(ColItem, 22);
+            for (int c = ColQuantity; c <= ColTotal; c++) row.SetTextAlignment(c, HorizontalAlignment.Right);
+            row.SetCustomColor(ColMark, Style.Good);
+            row.SetCustomColor(ColEach, Style.Muted);
+        }
+        Repaint();
+    }
+
+    int Sellable(Entry e) => Math.Max(0, e.Quantity - (int)_keep.Value);
+
+    /// <summary>Updates numbers, marks and the summary without rebuilding the table.</summary>
+    void Repaint()
+    {
+        Disarm();
+        TreeItem? row = _table.GetRoot()?.GetFirstChild();
+        for (int i = 0; i < _shown.Count && row != null; i++, row = row.GetNext())
+        {
+            Entry e = _shown[i];
+            bool marked = _marked.Contains(e.Item);
+            int amount = Sellable(e);
+            row.SetText(ColMark, marked ? "SELL" : "");
+            row.SetText(ColQuantity, e.Quantity.ToString("N0"));
+            row.SetText(ColEach, e.Price.ToString("N0"));
+            row.SetText(ColTotal, (e.Price * (marked ? amount : e.Quantity)).ToString("N0"));
+            for (int c = 0; c <= ColTotal; c++)
+            {
+                if (marked) row.SetCustomBgColor(c, new Color(Style.GoodDim, 0.55f)); else row.ClearCustomBgColor(c);
+            }
+            row.SetCustomColor(ColTotal, marked ? Style.Good : Style.Text);
+        }
+
+        var (stacks, items, worth) = Plan();
+        _summary.Text = stacks == 0
+            ? $"Nothing marked.  {_shown.Count} of {_entries.Count} stacks shown."
+            : $"{stacks} stack(s), {items:N0} item(s) marked  ->  {Bank.Money(worth)}";
+        _sell.Disabled = items == 0;
+        _sell.Text = "Sell marked";
+        _junkCheck.Text = $"My junk list ({Junk.Count})";
+        _junkCheck.Disabled = Junk.Count == 0;
+    }
+
+    (int Stacks, long Items, Dictionary<Currency, long> Worth) Plan()
+    {
+        var worth = new Dictionary<Currency, long>();
+        int stacks = 0;
+        long items = 0;
+        foreach (Entry e in _entries)
+        {
+            int amount = Sellable(e);
+            if (!_marked.Contains(e.Item) || amount == 0) continue;
+            stacks++;
+            items += amount;
+            Currency c = e.Item.SellsFor.Currency;
+            worth[c] = worth.GetValueOrDefault(c) + e.Price * amount;
+        }
+        return (stacks, items, worth);
+    }
+
+    void Toggle(Item item) { if (!_marked.Remove(item)) _marked.Add(item); }
+
+    void MarkShown(bool on)
+    {
+        foreach (Entry e in _shown) { if (on) _marked.Add(e.Item); else _marked.Remove(e.Item); }
+        Repaint();
+    }
+
+    void Disarm()
+    {
+        _armed = false;
+        _armToken++;
+    }
+
+    /// <summary>First click asks, second click (within a few seconds) sells.</summary>
+    void SellPressed()
+    {
+        if (_bank == null) return;
+        var (stacks, items, worth) = Plan();
+        if (items == 0) return;
+        if (!_armed)
+        {
+            _armed = true;
+            int token = ++_armToken;
+            _sell.Text = $"Click again: sell {items:N0} item(s)";
+            Say($"About to sell {items:N0} item(s) from {stacks} stack(s) for {Bank.Money(worth)}. Click the button again to confirm.");
+            _tree.CreateTimer(5).Timeout += () => { if (_armed && token == _armToken) { Disarm(); _sell.Text = "Sell marked"; Say(""); } };
+            return;
+        }
+        var (sold, paid) = Bank.Sell(_bank, _marked.ToList(), (int)_keep.Value);
+        _marked.Clear();
+        Reload();
+        Say($"Sold {sold:N0} item(s) for {Bank.Money(paid)}.");
+    }
+
+    // ---------------------------------------------------------------- for tests
+
+    public void SetSearch(string text) { _search.Text = text; Rebuild(); }
+    public void SetKeep(int keep) => _keep.Value = keep;
+    public void ClickRow(int index)
+    {
+        if (index < 0 || index >= _shown.Count) return;
+        Toggle(_shown[index].Item);
+        Repaint();
+    }
+    public void PressSell() => SellPressed();
+    public string Summary => _summary.Text;
+    public string Status => _status.Text;
+}

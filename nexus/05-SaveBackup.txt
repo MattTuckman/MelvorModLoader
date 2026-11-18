@@ -1,0 +1,81 @@
+==========================================================================================
+SAVE BACKUP  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Save Backup
+
+KATEGORI ONERISI (Category):
+Utilities
+
+KISA ACIKLAMA (Summary / Brief overview, 186 karakter):
+Copies all Melvor Idle 2 save files to a dated backup folder every time the game starts. Keeps the newest 20, skips the copy when nothing changed. Nothing to press, nothing to configure.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (link the loader's mod page)
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\SaveBackup-0.1.1.zip   (name: Save Backup, version 0.1.1)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+(no screenshots: the mod has no window. Optional: a picture of the backup folder in Explorer.)
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.1.1
+- Log messages in English
+
+0.1.0
+- First version
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]SAVE BACKUP[/b][/size]
+[size=4][i]A bad day should not cost you a character.[/i][/size]
+Every time the game starts, all your save files are copied to a dated folder.
+Nothing to press and nothing to set up.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is Save Backup [b]0.1.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Install it and forget about it.
+
+[size=5][b]What it does[/b][/size]
+[list]
+[*]On every game start it copies all save files to
+[code]%APPDATA%\Games By Malcs\Melvor Idle 2\mod_save_backups\<date_time>\[/code]
+[*]It keeps the newest [b]20[/b] backups and removes older ones.
+[*]It makes no new backup when nothing has changed since the last one.
+[*]The game is in alpha and mods change your game. This is the cheap insurance.
+[/list]
+
+[size=5][b]Restoring a save[/b][/size]
+[list=1]
+[*]Close the game.
+[*]Open the backup folder above and pick a date.
+[*]Copy the [b].sav[/b] file over the file with the same name in the game's [b]saves[/b] folder.
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]SaveBackup-0.1.1.zip[/b] there. The mod ends up in [b]mods\SaveBackup[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script. Nothing is written outside the game folder.
+
+[size=5][b]Uninstall[/b][/size]
+Delete the folder [b]mods\SaveBackup[/b]. Your existing backups stay where they are.
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]One file: [b]SaveBackup.dll[/b]. No .exe, no .bat, no installer.
+[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/47bc399233d4eec42e70cab81ff2ea15e9677d9f11c07d7e959859fd9c5db40e]0 detections[/url].
+[*]None of the game's own files are changed or included.
+[/list]
+
+[size=5][b]Help[/b][/size]
+When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]

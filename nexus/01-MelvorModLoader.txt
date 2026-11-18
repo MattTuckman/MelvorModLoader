@@ -1,0 +1,116 @@
+==========================================================================================
+MELVOR MOD LOADER  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Melvor Mod Loader
+
+KATEGORI ONERISI (Category):
+Mod loader
+
+KISA ACIKLAMA (Summary / Brief overview, 218 karakter):
+The mod loader for Melvor Idle 2. Extract one zip into the game folder and the game loads C# mods from a "mods" folder. No game files are changed, no .exe, removed by deleting two items. Includes a kit for mod authors.
+
+GEREKSINIM (Requirements):
+None.
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:      dist\MelvorModLoader-0.1.3.zip      (name: Melvor Mod Loader, version 0.1.3)
+OPTIONAL FILE:  dist\MelvorModLoader-ModdersKit-0.1.3.zip   (name: Modder's Kit - guide and example mod, version 0.1.3)
+OPTIONAL FILE:  dist\DebugMenu-1.0.2.zip            (name: Debug Menu (F9), version 1.0.2)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+Dev\shots\0-oyun.png, Dev\shots\ornek-mod.png, Dev\shots\menu-5-combat.png, Dev\shots\banka-2-toplu-satis.png, Dev\shots\sira-2-pencere.png
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.1.3
+- Mods are held back while the game computes offline progress, so nothing can interfere with it
+- New: GameAccess.IsComputingOffline for mod authors
+- Modder's Kit: guide and example mod
+
+0.1.2
+- All log messages in English
+
+0.1.1
+- First public version
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]MELVOR MOD LOADER[/b][/size]
+[size=4][i]Mods for Melvor Idle 2. One zip, no game files touched.[/i][/size]
+Extract it into the game folder and the game loads every mod you put in its [b]mods[/b] folder.
+For players it is a one-time install. For mod authors it is a small, typed C# API with full access to the game.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is Melvor Mod Loader [b]0.1.3[/b] for Windows / Steam, tested on game version [b]0.11.6-alpha.1[/b]. Melvor Idle 2 is in alpha: a game update can break the loader or a mod until they are updated. If the game ever fails to start, delete [b]override.cfg[/b] and it runs without mods again.
+
+[size=5][b]What it does[/b][/size]
+[list]
+[*][b]Loads mods.[/b] Every mod is a folder under [b]mods[/b]. Add a folder to install, delete it to uninstall.
+[*][b]Leaves the game alone.[/b] It uses a standard feature of the Godot engine (an [b]override.cfg[/b] file) to start first, then starts the game's own untouched code. Not a single game file is modified or replaced.
+[*][b]Keeps mods apart.[/b] A mod that fails is reported in the log and skipped. The game and the other mods keep running.
+[*][b]Stays out of the way.[/b] A green line in the top-left corner shows the loader version and the number of mods for 15 seconds at start. That is all you see of it.
+[*][b]Protects offline progress.[/b] While the game computes offline progress, mods are held back so nothing interferes with it.
+[/list]
+
+[size=5][b]Mods that use it[/b][/size]
+[list]
+[*][url=https://www.nexusmods.com/melvoridle2/mods/3][b]Cheat Menu[/b][/url] (F8): 60+ settings and tools in one window: XP, speed, bank, skills, combat, loot filter.
+[*][url=https://www.nexusmods.com/melvoridle2/mods/4][b]Bulk Sell[/b][/url] (F7): bulk sell window, one-click "Sell junk", "Bury all" and "Open all" buttons in the bank.
+[*][url=https://www.nexusmods.com/melvoridle2/mods/5][b]Action Queue[/b][/url] (F6): chain actions, "cut 1,000 logs, burn them, then go fishing".
+[*][url=https://www.nexusmods.com/melvoridle2/mods/6][b]Save Backup[/b][/url]: dated copies of your saves on every start.
+[*][b]Debug Menu[/b] (F9, optional file on this page): opens the developers' own hidden debug menu.
+[/list]
+Each has its own page: click a name above.
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]MelvorModLoader-0.1.3.zip[/b] there. [b]override.cfg[/b] must end up next to [b]Melvor2.exe[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script. Nothing is written outside the game folder.
+A green "Melvor Mod Loader" line in the top-left corner tells you it works.
+
+[size=5][b]Uninstall[/b][/size]
+Delete [b]override.cfg[/b] and the folder [b]data_MelvorModLoader_windows_x86_64[/b]. The game starts exactly as before.
+
+[size=5][b]For mod authors[/b][/size]
+Mods are C# class libraries. Your code runs inside the game with direct, type-checked access to the game's own classes: the bank, skills, combat, every screen. No scripting layer in between.
+[code]public class MyMod : IMod
+{
+    public void OnLoad(ModContext ctx)
+    {
+        ctx.Log("hello");
+        ctx.Frame += () => { /* runs every frame */ };
+    }
+}[/code]
+[list]
+[*]Download the [b]Modder's Kit[/b] from the Files tab: a guide ([b]MODDING.md[/b]) and a complete example mod that builds straight into your game folder with one command.
+[*]The whole API is one interface, one context object (log, your folder, the scene tree, a per-frame event) and a few shortcuts into the running game.
+[*]Several mods run side by side. Without a loader only one mod could hook the game at a time.
+[*]Limits, honestly: C# only; no built-in tool for rewriting the inside of existing game functions; no in-game mod manager screen (you add and remove folders).
+[/list]
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]No .exe, no .bat, no installer in the package.
+[*]The loader itself is one small file, [b]MelvorModLoader.dll[/b]. VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/290856b19a910f3d43be51e1f3ab5b2e15609ab7e589caf1721c13d80e39478e]0 detections[/url].
+[*]The rest of the folder is Microsoft's own .NET 10 runtime (MIT license, digitally signed by Microsoft), which the engine needs to start the loader. That is why the download is about 34 MB.
+[*]None of the game's own files are changed or included.
+[/list]
+
+[size=5][b]Good to know[/b][/size]
+[list]
+[*]Windows / Steam only for now.
+[*]Mods change your game. Keep backups of your saves (the Save Backup mod does it for you).
+[*]This is an unofficial, fan-made project and is not affiliated with the developers of Melvor Idle 2.
+[/list]
+
+[size=5][b]Help[/b][/size]
+When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]

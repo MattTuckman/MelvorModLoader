@@ -1,0 +1,102 @@
+==========================================================================================
+ACTION QUEUE  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Action Queue
+
+KATEGORI ONERISI (Category):
+Gameplay
+
+KISA ACIKLAMA (Summary / Brief overview, 232 karakter):
+Chain actions in Melvor Idle 2: cut 1,000 logs, burn them all, fish to level 30, then fight for 45 minutes. 16 skills incl. combat, dungeons and slayer tasks. Never bypasses requirements, pauses if you take over or die. Not a cheat.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (link the loader's mod page)
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\ActionQueue-0.2.2.zip   (name: Action Queue, version 0.2.2)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+Dev\shots\sira-2-pencere.png (main image), sira-1-ekran-seridi.png
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.2.2
+- The item of an "until I own N" goal is filled in with what the chosen action makes
+
+0.2.1
+- Leaves the game alone while it computes offline progress
+
+0.2.0
+- New: slayer tasks as a step
+- A death now pauses the queue
+
+0.1.0
+- First version
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]ACTION QUEUE[/b][/size]
+[size=4][i]Do this, then that, then that.[/i][/size]
+Line up actions with a goal each and let the game work through them.
+Not a cheat: it only presses the buttons you would press, at the moment you would press them.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is Action Queue [b]0.2.2[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+
+[size=5][b]An example[/b][/size]
+[list=1]
+[*]Woodcutting: Oak Tree, [i]until 1,000 Oak Log in the bank[/i]
+[*]Firemaking: Oak Log, [i]until it stops by itself[/i] (the logs are used up)
+[*]Fishing: Shallow Pools, [i]until Fishing level 30[/i]
+[*]Combat: Golbin, [i]for 45 minutes[/i]
+[/list]
+
+[size=5][b]How it works[/b][/size]
+[list]
+[*][b]Pick what to do:[/b] choose a skill and an action from the lists, or press "Use what I am doing now".
+[*][b]Pick when it ends:[/b] when it stops by itself, when you own a number of an item, when a skill reaches a level, or after a number of minutes. For the item goal the item is filled in with what the action makes (Smithing: Gold Bar counts Gold Bars); you can still pick another one.
+[*][b]Start the queue.[/b] One line at the top of the screen shows the current step and its progress.
+[*][b]Start over at the end[/b] turns the queue into a loop.
+[/list]
+
+[size=5][b]16 skills[/b][/size]
+Woodcutting, Mining, Fishing, Firemaking, Cooking, Smithing, Crafting, Runecrafting, Fletching, Beastcrafting, Herblore, Thieving, Agility, Astrology, Hunting and Combat (a monster, a dungeon or a slayer master's tasks).
+
+[b]Slayer tasks as a step:[/b] "Slayer tasks of <master>" fights whatever that master's task is and walks to the new monster when a task is done. Unlike the game's own Auto Slayer switch it can have a goal, for example "until Slayer level 20", and then hand over to the next step.
+
+[size=5][b]It plays fair and it plays safe[/b][/size]
+[list]
+[*][b]Never bypasses requirements.[/b] A step you are not allowed to do yet, or have no materials for, is marked "skipped" with the reason, and the next one starts.
+[*][b]You stay in charge.[/b] Start something else by hand and the queue pauses instead of fighting you.
+[*][b]Death pauses it.[/b] If your character dies the queue stops and does not walk back into the fight, even with "start over" switched on.
+[*][b]Runs while the game is open.[/b] While the game is closed, the game's normal offline progress continues the last action only.
+[*]Hunting needs a trap and Agility needs a path chosen on the skill's own page first. The queue does not make that choice for you.
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]ActionQueue-0.2.2.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script. Nothing is written outside the game folder.
+
+[size=5][b]Uninstall[/b][/size]
+Delete the folder [b]mods\ActionQueue[/b].
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]One file: [b]ActionQueue.dll[/b]. No .exe, no .bat, no installer.
+[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/27b3127732881272385984b29a2b12860dea690e3701e37600bd7d147eed995e]0 detections[/url].
+[*]None of the game's own files are changed or included.
+[/list]
+
+[size=5][b]Help[/b][/size]
+When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
