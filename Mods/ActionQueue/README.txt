@@ -1,4 +1,4 @@
-Action Queue 0.4.1  -  a mod for Melvor Idle 2
+Action Queue 0.5.0  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -55,6 +55,20 @@ Red lines are actions you have not unlocked yet. Yellow lines are items no skill
 Times are for normal game speed and are a forecast, not a promise.
 
 
+SIDE BY SIDE (WITH THE MULTITASK MOD)
+-------------------------------------
+On its own the queue does one step after another. With the Multitask mod installed and
+its slots switched on, the queue runs as many steps at once as Multitask has room for:
+one slot on = two steps, both on = three.
+  - The fish are cooked while more are being caught, and a third step can mine meanwhile.
+  - A step that needs what an earlier step makes waits for it (in piles of about ten)
+    instead of being skipped.
+  - "Until I own N" then counts what was gathered, so a step that uses the item up as
+    it comes does not make the gathering step run twice as long.
+  - Two steps for the same skill still run one after the other.
+  - The button "Side by side" at the bottom of the window switches this off again.
+
+
 SAVED QUEUES AND SHARE CODES
 ----------------------------
 Press "Saved queues" at the top of the window.
@@ -83,8 +97,8 @@ GOOD TO KNOW
 - If your character dies, the queue pauses and does not walk back into the fight.
 - Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
 - The queue is remembered per character in "queue.json" next to the mod.
-- Works together with the Multitask mod: actions its slots keep running go on beside
-  the queue, and the queue does not mistake them for you taking over.
+- With side by side switched off, the Multitask mod keeps what you were doing before
+  running beside the queue instead.
 
 
 UNINSTALL

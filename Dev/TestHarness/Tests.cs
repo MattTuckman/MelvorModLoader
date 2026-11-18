@@ -552,6 +552,7 @@ static class Tests
             int fuelBefore = Qty(fuel);
             SetQty(fuel, 30 * cook.Costs[0].Quantity);
             Start(ore); Look();                                    // the player is mining, then lets the queue work
+            ActionQueue.Queue.SetSideBySide(false);                // one step after another, the player's own action beside them
             ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 0.05));
             ActionQueue.Queue.Add(QStep(cook, ActionQueue.Until.Stops));
             ActionQueue.Queue.Add(QStep(fishSpot, ActionQueue.Until.Minutes, 0.05));
@@ -573,10 +574,122 @@ static class Tests
             Look();
             string states = string.Join(" | ", ActionQueue.Queue.Steps.Select(s => s.State));
             bool finished = !ActionQueue.Queue.Running && ActionQueue.Queue.Note.Contains("finished") && ActionQueue.Queue.Steps.All(s => s.State.StartsWith("done"));
-            Check("is sirasi ile birlikte: oyuncunun isi suruyor, biten adimlar suruklenmiyor", finished && ore.Action.IsStarted && Qty(ore.Product) > o0 && most == 2 && !draggedAlong && Count() == 1,
+            ActionQueue.Queue.SetSideBySide(true);
+            Check("yan yana KAPALIYKEN: adimlar sirayla, oyuncunun isi yaninda suruyor, biten adimlar suruklenmiyor", finished && ore.Action.IsStarted && Qty(ore.Product) > o0 && most == 2 && !draggedAlong && Count() == 1,
                   $"gorulenler: {string.Join(" -> ", seen.Take(7))}; adimlar: {states}; not: '{ActionQueue.Queue.Note}'; ayni anda en cok {most} is; bu sirada kazilan: {Qty(ore.Product) - o0}; sonunda: {Running()}");
             ActionQueue.Queue.Clear();
             SetQty(fuel, fuelBefore);
+        }
+
+        // ---- 11b. the player's report: "I planned herring and pressed Start. It wants 100 fish first and does not
+        //           cook at the same time; I added a third step and nothing runs beside it." With slots on, the
+        //           queue's own steps must run side by side: fish, cook the catch, and mine, all at once.
+        if (cook != null && fish != null)
+        {
+            game.ActionManager.TryStopActive(force: true);
+            Look();
+            ActionQueue.Queue.Clear();
+            if (!mt::Multitask.Slots.IsOn(1)) win.PressSwitch(1);          // both slots on: three at once
+            Look();
+            Item rawFish = fish.Product, cooked = cook.Product;
+            int rawWas = Qty(rawFish), cookedWas = Qty(cooked), oreWas = Qty(ore.Product);
+            SetQty(rawFish, 18);                                           // what the player had
+            ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+            if (queueMod.Window is not { Visible: true }) queueMod.ToggleWindow();
+            yield return 5;
+            ActionQueue.QueueWindow qw = queueMod.Window!;
+            ActionQueue.PlanResult? herring = qw.PlanFor(cooked.Id, 60, more: true);   // "Plan an item", Make 60
+            qw.PressAddPlan();
+            long rawGoal = ActionQueue.Queue.Steps.FirstOrDefault(s => s.Subject == rawFish.Id)?.Amount is double g ? (long)g : 0;
+            ActionQueue.Queue.Add(new ActionQueue.Step                    // the third step the player added by hand
+            {
+                Entity = ore.Entity.Id, TargetId = ore.Target.Id, Name = ore.Name, Until = ActionQueue.Until.Item,
+                Amount = oreWas + 200, Subject = ore.Product.Id, SubjectName = ore.Product.DisplayName.GetPluralText(1),
+            });
+            string sideButton = qw.SideText;
+            int lanes = ActionQueue.Queue.Lanes;
+            ActionQueue.Queue.Start();
+            int most = 0, secondsAllThree = 0, loops = 0, fishedTotal = 0, lastRaw = Qty(rawFish);
+            var cookStates = new List<string>();
+            string midHeadline = "";
+            for (; loops < 1500 && ActionQueue.Queue.Running; loops++)   // one look per game second, like the mods do
+            {
+                Ticks(60);
+                int rawNow = Qty(rawFish);
+                if (rawNow > lastRaw) fishedTotal += rawNow - lastRaw;
+                ActionQueue.Queue.Tick(game, 1);
+                Look(1);
+                lastRaw = Qty(rawFish);
+                most = Math.Max(most, Count());
+                if (fish.Action.IsStarted && cook.Action.IsStarted && ore.Action.IsStarted)
+                {
+                    secondsAllThree++;
+                    if (midHeadline == "") midHeadline = ActionQueue.Queue.Headline;
+                    if (secondsAllThree == 12 && DisplayServer.GetName() != "headless")
+                    {
+                        string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+                        Directory.CreateDirectory(shotDir);
+                        yield return 20;
+                        Out($"  goruntu sira-5-yan-yana.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "sira-5-yan-yana.png"))}");
+                    }
+                }
+                string state = ActionQueue.Queue.Steps.FirstOrDefault(s => s.Entity == cook.Entity.Id)?.State ?? "";
+                state = System.Text.RegularExpressions.Regex.Replace(state, @"[\d.]+", "#");
+                if (cookStates.Count == 0 || cookStates[^1] != state) cookStates.Add(state);
+            }
+            int cookedNow = Qty(cooked) - cookedWas, rawLeft = Qty(rawFish), oreGot = Qty(ore.Product) - oreWas;
+            string endStates = string.Join(" | ", ActionQueue.Queue.Steps.Select(s => s.State));
+            bool finished = !ActionQueue.Queue.Running && ActionQueue.Queue.Note.Contains("finished");
+            // Fishing must stop at what the plan asked for, although the kitchen kept eating the fish: not twice as many.
+            bool notTwice = fishedTotal <= (rawGoal - 18) + 12;
+            Check("yan yana: balik tutarken pisiriyor, ucuncu adim da ayni anda calisiyor", herring != null && herring.Steps.Count == 2 && lanes == 3 && finished
+                  && most == 3 && secondsAllThree > 20 && cookedNow >= 55 && oreGot >= 200 && notTwice && !game.ActionManager.HasActiveAction,
+                  $"dugme: '{sideButton}'; ayni anda en cok {most} is, ucu birlikte {secondsAllThree} sn ('{midHeadline}'); {loops} sn surdu; " +
+                  $"plan {rawGoal} cig balik istedi (bankada 18 vardi): {fishedTotal} tutuldu, {cookedNow} pisti, {rawLeft} cig kaldi; {oreGot} maden; pisirmenin durumlari: {string.Join(" / ", cookStates.Distinct().Take(6))}; sonunda: {endStates}");
+
+            // Remove all while three steps run: all three stop.
+            ActionQueue.Queue.Clear();
+            SetQty(rawFish, 30);
+            ActionQueue.Queue.Add(QStep(fish, ActionQueue.Until.Minutes, 30));
+            ActionQueue.Queue.Add(QStep(cook, ActionQueue.Until.Stops));
+            ActionQueue.Queue.Add(QStep(ore, ActionQueue.Until.Minutes, 30));
+            ActionQueue.Queue.Start();
+            for (int i = 0; i < 3; i++) { ActionQueue.Queue.Tick(game, 1); Look(1); Ticks(60); }
+            int runningBefore = Count();
+            // The player starts something by hand: the queue pauses instead of fighting.
+            Start(wood);
+            ActionQueue.Queue.Tick(game, 1); Look(1);
+            bool pausedForPlayer = !ActionQueue.Queue.Running && wood.Action.IsStarted;
+            string pauseNote = ActionQueue.Queue.Note;
+            ActionQueue.Queue.Start();
+            for (int i = 0; i < 3; i++) { ActionQueue.Queue.Tick(game, 1); Look(1); Ticks(60); }
+            int runningAgain = Count();
+            ActionQueue.Queue.Clear();                                     // "Remove all"
+            Look(1);
+            Check("yan yana: elle ise gecince sira duraklar; Remove all ucunu de durdurur", runningBefore == 3 && pausedForPlayer && runningAgain == 3 && !fish.Action.IsStarted && !cook.Action.IsStarted && !ore.Action.IsStarted,
+                  $"baslayinca {runningBefore} is; elle odun kesince: '{pauseNote}'; yeniden baslatinca {runningAgain} is; Remove all sonrasi calisan: {Running()}");
+
+            // Side by side switched off in the queue window: one step after another again.
+            qw.PressSide();
+            int lanesOff = ActionQueue.Queue.Lanes;
+            string sideOff = qw.SideText;
+            qw.PressSide();
+            // Slots off: the button is not even shown and the queue is the plain one.
+            win.PressSwitch(1); win.PressSwitch(0);
+            Look();
+            ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 1));   // any change redraws the window
+            int lanesPlain = ActionQueue.Queue.Lanes;
+            string sidePlain = qw.SideText;
+            ActionQueue.Queue.Clear();
+            Check("yan yana dugmesi: kapatilabiliyor; yuvalar kapaliyken hic gorunmuyor", sideButton.Contains("3 at once") && lanesOff == 1 && sideOff.Contains("OFF") && lanesPlain == 1 && sidePlain == "(hidden)",
+                  $"acik: '{sideButton}'; kapatilinca: '{sideOff}' ({lanesOff} serit); yuvalar kapaliyken: {sidePlain} ({lanesPlain} serit)");
+            win.PressSwitch(0);                                            // slot 1 back on for the checks below
+            Look();
+            qw.ShowStepForm();
+            queueMod.ToggleWindow();
+            game.ActionManager.TryStopActive(force: true);
+            Look();
+            SetQty(rawFish, rawWas);
         }
 
         // ---- 12. the queue needs the very skill the player was using: the queue gets it, nothing is forced back

@@ -31,7 +31,8 @@ public sealed class QueueWindow
     readonly OptionButton _levelPick = new() { CustomMinimumSize = new Vector2(170, 0) };
     readonly Tree _table;
     readonly Button _run = new() { CustomMinimumSize = new Vector2(150, 0) };
-    readonly Button _repeat = new() { ToggleMode = true, CustomMinimumSize = new Vector2(230, 0) };
+    readonly Button _repeat = new() { ToggleMode = true, CustomMinimumSize = new Vector2(205, 0) };
+    readonly Button _side = new() { ToggleMode = true, CustomMinimumSize = new Vector2(175, 0), Visible = false };
 
     // The card on top has two faces: the form for one step, and the planner.
     readonly Button _stepMode = new() { Text = "Add one step", ToggleMode = true };
@@ -226,6 +227,12 @@ public sealed class QueueWindow
         _repeat.AddThemeStyleboxOverride("pressed", on);
         _repeat.AddThemeStyleboxOverride("hover_pressed", on);
         _repeat.Toggled += pressed => { if (!_syncing) Queue.SetRepeat(pressed); };
+        StyleBoxFlat sideOn = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
+        _side.AddThemeStyleboxOverride("pressed", sideOn);
+        _side.AddThemeStyleboxOverride("hover_pressed", sideOn);
+        _side.TooltipText = "With the Multitask mod's slots switched on, several steps run at the same time (the fish are cooked while more are caught).\nOFF: one step after another, as without Multitask.";
+        _side.Toggled += pressed => { if (!_syncing) Queue.SetSideBySide(pressed); };
+        buttons.AddChild(_side);
         buttons.AddChild(_repeat);
         buttons.AddChild(MakeButton("Remove all", Queue.Clear));
         body.AddChild(buttons);
@@ -577,6 +584,8 @@ public sealed class QueueWindow
     public string PressCopy() { CopyCode(); return _code.Text; }
     public void PasteAndImport(string code) { _code.Text = code; ImportCode(); }
     public string StatusText => _status.Text;
+    public string SideText => _side.Visible ? _side.Text : "(hidden)";
+    public void PressSide() => _side.ButtonPressed = !_side.ButtonPressed;
 
     void FilterMakeable(string text)
     {
@@ -902,7 +911,8 @@ public sealed class QueueWindow
         for (int i = 0; i < Queue.Steps.Count; i++)
         {
             Step step = Queue.Steps[i];
-            bool current = Queue.Running && i == Queue.Index;
+            bool current = Queue.Running && step.Run == RunState.Running;
+            bool waiting = Queue.Running && step.Run == RunState.Waiting;
             TreeItem row = _table.CreateItem(root);
             row.SetMetadata(0, i);
             row.SetText(0, (i + 1).ToString());
@@ -910,7 +920,7 @@ public sealed class QueueWindow
             row.SetText(2, step.Goal);
             row.SetText(3, step.State);
             row.SetCustomColor(0, Style.Muted);
-            row.SetCustomColor(3, step.State.StartsWith("skipped") ? Style.Bad : current ? Style.Good : Style.Muted);
+            row.SetCustomColor(3, step.State.StartsWith("skipped") ? Style.Bad : current ? Style.Good : waiting ? Style.Accent : Style.Muted);
             if (current)
                 for (int c = 0; c < 4; c++) row.SetCustomBgColor(c, new Color(Style.GoodDim, 0.55f));
         }
@@ -921,6 +931,13 @@ public sealed class QueueWindow
         _repeat.ButtonPressed = Queue.Repeat;
         _syncing = false;
         _repeat.Text = Queue.Repeat ? "Start over at the end: ON" : "Start over at the end: OFF";
+        // Only worth showing when the Multitask mod has made room for more than one action.
+        int room = Targets.MultitaskCapacity();
+        _side.Visible = room > 1;
+        _syncing = true;
+        _side.ButtonPressed = Queue.SideBySide;
+        _syncing = false;
+        _side.Text = Queue.SideBySide ? $"Side by side: {room} at once" : "Side by side: OFF";
         if (Queue.Note != "") Say(Queue.Note);
         else if (Queue.Running) Say(Queue.Headline);
         PaintQuick();

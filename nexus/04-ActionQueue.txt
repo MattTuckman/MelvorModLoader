@@ -15,18 +15,19 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.4.1.zip   (name: Action Queue, version 0.4.1)
+MAIN FILE:  dist\ActionQueue-0.5.0.zip   (name: Action Queue, version 0.5.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
-Dev\shots\sira-2-pencere.png (main image), sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
+Dev\shots\sira-2-pencere.png (main image), sira-5-yan-yana.png, sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
-0.4.1
-- "Remove all", or removing the step that is running, now also stops what that step had started
+0.5.0
+- New: side by side. With the Multitask mod's slots on, the queue runs two or three steps at the same time (cook the fish while more are caught)
+- A step that needs what an earlier step makes now waits for it instead of being skipped
+- "Remove all", or removing a running step, also stops what that step had started
 - The planner: "Make" (this many more) or "Own in total"; materials you already have are listed; the plan is worked out again at the moment you add it
 - The count-down goal fills in your food and starts at 5
 - A step whose goal is already met says so
-- Works with Multitask 0.2.0
 
 0.4.0
 - New: the planner. Name an item and how many you want; the steps to get there are worked out and added to the queue
@@ -61,7 +62,7 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.4.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+This is Action Queue [b]0.5.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
 
 [size=5][b]An example[/b][/size]
 [list=1]
@@ -112,8 +113,15 @@ Woodcutting, Mining, Fishing, Firemaking, Cooking, Smithing, Crafting, Runecraft
 
 [b]Slayer tasks as a step:[/b] "Slayer tasks of <master>" fights whatever that master's task is and walks to the new monster when a task is done. Unlike the game's own Auto Slayer switch it can have a goal, for example "until Slayer level 20", and then hand over to the next step.
 
-[size=5][b]Works with Multitask[/b][/size]
-With the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author), what you were doing before you started the queue keeps running beside it while the queue works through its steps.
+[size=5][b]New: side by side, with Multitask[/b][/size]
+On its own the queue does one step after another. Add the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author, a cheat), switch its slots on, and the queue runs [b]two or three steps at the same time[/b]:
+[list]
+[*]The fish are cooked while more are being caught, and a third step mines meanwhile.
+[*]A step that needs what an earlier step makes waits for it, in piles of about ten, instead of being skipped.
+[*]"Until I own N" counts what was gathered, so cooking the fish as they come does not make the fishing step run twice as long.
+[*]Two steps for the same skill still take turns.
+[*]One button in the queue window switches it back to one step at a time.
+[/list]
 
 [size=5][b]It plays fair and it plays safe[/b][/size]
 [list]
@@ -128,7 +136,7 @@ With the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.4.1.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.5.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

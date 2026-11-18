@@ -142,6 +142,7 @@ public static class Slots
         // is not running now is waiting to be started again (only looked at while a slot is on).
         foreach (Kept k in s_recent) k.Pending = true;
         s_savedAs = Signature();
+        PublishCapacity(Capacity);
         s_gameStartedSomething = false;
         // The game raises this whenever any action starts - also when the same one is started again, which
         // looks like "nothing changed" afterwards although the game stopped everything else for it.
@@ -164,15 +165,22 @@ public static class Slots
         if (s_game == null) return;
         s_game = null;
         s_character = "";
+        PublishCapacity(1);
         Publish(new List<string>());
     }
 
     // ---------------------------------------------------------------- the switches
 
+    static void PublishCapacity(int capacity)
+    {
+        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(Targets.CapacityMeta, capacity); } catch { }
+    }
+
     public static void SetOn(int slot, bool on)
     {
         if (slot < 0 || slot >= Count || s_on[slot] == on) return;
         s_on[slot] = on;
+        PublishCapacity(Capacity);
         Note = "";
         if (s_game != null) Trim(s_game, stopExtras: true);   // a slot switched off: what no longer fits is stopped
         Save();
@@ -189,6 +197,7 @@ public static class Slots
     {
         if (!ReferenceEquals(game, s_game)) return;
         string before = Signature() + "|" + string.Join(";", s_recent.Select(k => k.State)) + "|" + Note;
+        PublishCapacity(Capacity);
         try { Look(game, now); }
         catch (Exception e) { Log("Multitask failed: " + e.Message); }
         Save();
@@ -211,7 +220,7 @@ public static class Slots
 
         // 2. What runs now. Something new, or a skill doing another thing than before, is the player's latest
         //    choice and goes to the front.
-        string queueSkill = Targets.QueueDriving();
+        var queueSkills = new HashSet<string>(Targets.QueueDriving().Split('|', StringSplitOptions.RemoveEmptyEntries));
         bool somethingNew = s_gameStartedSomething;
         s_gameStartedSomething = false;
         foreach (ActionComponent action in game.ActionManager.ActiveActions.ToList())
@@ -236,7 +245,7 @@ public static class Slots
             kept.Extra = target.Extra;
             kept.Name = target.Name;
             kept.Pending = false;
-            kept.ByQueue = queueSkill == kept.Entity;
+            kept.ByQueue = queueSkills.Contains(kept.Entity);
             kept.State = "running";
         }
 
@@ -287,9 +296,14 @@ public static class Slots
     {
         while (s_recent.Count > Capacity)
         {
-            Kept oldest = s_recent[^1];
-            s_recent.RemoveAt(s_recent.Count - 1);
-            if (stopExtras && IsRunning(oldest)) s_actions[oldest.Entity].TryStop(force: true);
+            // The Action Queue's own steps keep their place; the oldest of the player's own actions makes room.
+            int at = s_recent.FindLastIndex(k => !k.ByQueue);
+            if (at < 0) at = s_recent.Count - 1;
+            Kept oldest = s_recent[at];
+            s_recent.RemoveAt(at);
+            // Normally it is not running any more (the game stopped it for the new action). It still is when
+            // the queue started a step beside it, or when a slot was just switched off.
+            if (IsRunning(oldest)) s_actions[oldest.Entity].TryStop(force: true);
         }
     }
 

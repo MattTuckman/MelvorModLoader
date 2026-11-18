@@ -180,6 +180,34 @@ public static class Targets
         return false;
     }
 
+    [System.Runtime.CompilerServices.UnsafeAccessor(System.Runtime.CompilerServices.UnsafeAccessorKind.Field, Name = "_activeActions")]
+    static extern ref List<ActionComponent> RunningList(ActiveActionManager manager);
+
+    /// <summary>
+    /// Starts this target next to whatever is running, instead of in place of it. The game stops every running
+    /// action when one starts by walking its list of running actions; that list is put aside for the moment of
+    /// the start, so the game's own start code runs untouched and stops nothing. Only used when the Multitask
+    /// mod has made room for more than one action.
+    /// </summary>
+    public static bool StartBeside(Game game, ActionComponent action, Target target, out string problem)
+    {
+        problem = "";
+        if (!Allowed(action, target, out problem)) return false;
+        List<ActionComponent> running = RunningList(game.ActionManager);
+        List<ActionComponent> kept = running.ToList();
+        running.Clear();
+        try { Select(action, target); }
+        finally
+        {
+            int at = 0;
+            foreach (ActionComponent other in kept)
+                if (other.IsStarted && !running.Contains(other)) running.Insert(at++, other);
+        }
+        if (IsDoing(action, target)) return true;
+        problem = target.Extra == Slayer ? "this slayer master has no task to give right now" : "it could not be started (materials missing?)";
+        return false;
+    }
+
     /// <summary>True while the action is running and working on this target (a slayer target: on its master's current task).</summary>
     public static bool IsDoing(ActionComponent action, Target target)
     {
@@ -213,6 +241,19 @@ public static class Targets
             return root.HasMeta(DrivingMeta) ? root.GetMeta(DrivingMeta).AsString() : "";
         }
         catch { return ""; }
+    }
+
+    /// <summary>The Multitask mod writes how many actions may run at once (1 = the plain game) under this name.</summary>
+    public const string CapacityMeta = "MultitaskCapacity";
+
+    public static int MultitaskCapacity()
+    {
+        try
+        {
+            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
+            return root.HasMeta(CapacityMeta) ? Math.Clamp(root.GetMeta(CapacityMeta).AsInt32(), 1, 8) : 1;
+        }
+        catch { return 1; }
     }
 
     static HashSet<string> Held()
