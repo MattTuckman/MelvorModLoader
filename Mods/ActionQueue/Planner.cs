@@ -65,6 +65,8 @@ public sealed class PlanResult
     public List<PlanLine> Steps = new();
     /// <summary>Missing items that no skill on the queue can make: the player has to bring them.</summary>
     public List<PlanLine> Supply = new();
+    /// <summary>Materials the plan needs and the bank already holds enough of: no step, but worth showing.</summary>
+    public List<PlanLine> Covered = new();
     public Dictionary<string, long> Money = new();
     public double Seconds;
     public int UnknownTimes;
@@ -334,7 +336,8 @@ public static class Planner
 
         foreach (Item i in order)
         {
-            if (!lines.TryGetValue(i, out PlanLine? line) || line.Missing == 0) continue;
+            if (!lines.TryGetValue(i, out PlanLine? line)) continue;
+            if (line.Missing == 0) { if (i != item) result.Covered.Add(line); continue; }
             if (line.Maker == null) result.Supply.Add(line);
             else
             {

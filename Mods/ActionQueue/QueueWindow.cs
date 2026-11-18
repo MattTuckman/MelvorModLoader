@@ -599,7 +599,7 @@ public sealed class QueueWindow
             return;
         }
         PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value, more: _planKind.Selected == 0);
-        string shown = item.Id + "|" + plan.Own + "|" + plan.More + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply)
+        string shown = item.Id + "|" + plan.Own + "|" + plan.More + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply).Concat(plan.Covered)
             .Select(l => $"{l.Item.Id},{l.Maker?.Target.Id},{l.Need},{l.Have},{l.Actions},{l.Seconds:0},{l.Problem}"));
         DrawPlan(shown, () =>
         {
@@ -621,6 +621,16 @@ public sealed class QueueWindow
                     row.SetCustomColor(3, Style.Bad);
                     for (int c = 0; c < 4; c++) row.SetTooltipText(c, "Locked for now: " + line.Problem + ". The queue skips a step it cannot start.");
                 }
+            }
+            foreach (PlanLine line in plan.Covered)
+            {
+                // Nothing to gather here: the bank has it. Shown so a missing "mine the ore" step explains itself.
+                TreeItem row = _planTable.CreateItem(root);
+                row.SetText(0, $"No step: enough {line.ItemName} in the bank");
+                row.SetText(1, $"{line.Need:N0} {line.ItemName} needed");
+                row.SetText(2, line.Have.ToString("N0"));
+                row.SetText(3, "-");
+                for (int c = 0; c < 4; c++) row.SetCustomColor(c, Style.Muted);
             }
             foreach (PlanLine line in plan.Supply)
             {
@@ -664,6 +674,7 @@ public sealed class QueueWindow
         if (plan.UnknownTimes > 0) text += timed > 0 ? $" plus {plan.UnknownTimes} whose time cannot be told" : ", time cannot be told in advance";
         text += ".";
         if (plan.Money.Count > 0) text += "  Costs " + string.Join(", ", plan.Money.Select(m => $"{m.Value:N0} {m.Key}")) + ".";
+        if (plan.Covered.Count > 0) text += "  Grey lines: already in the bank, so no step for them.";
         if (plan.Supply.Count > 0) text += "  Yellow lines: items you have to bring yourself.";
         if (plan.Steps.Any(l => l.Problem != "")) text += "  Red lines are still locked.";
         return text;
@@ -671,7 +682,10 @@ public sealed class QueueWindow
 
     void AddPlan()
     {
-        if (_plan == null || _plan.Steps.Count == 0) return;
+        // Work the plan out again at this very moment: the bank or the queue may have changed since it was drawn.
+        _planShown = "";
+        Replan();
+        if (_plan == null || _plan.Steps.Count == 0) { Say(_plan?.Problem is { Length: > 0 } why ? why : "There is nothing to add."); return; }
         PlanResult plan = _plan;
         int added = Planner.AddToQueue(plan);
         string itemName = plan.Item.DisplayName.GetPluralText(1);
@@ -710,6 +724,12 @@ public sealed class QueueWindow
     /// <summary>For tests: what the planner shows under its table, and how many rows the table has.</summary>
     public string PlanNote => _planNote.Text;
     public int PlanRows => _planTable.GetRoot()?.GetChildCount() ?? 0;
+    public string PlanRowText(int index)
+    {
+        TreeItem? row = _planTable.GetRoot()?.GetFirstChild();
+        for (int i = 0; i < index && row != null; i++) row = row.GetNext();
+        return row == null ? "" : $"{row.GetText(0)} | {row.GetText(1)} | {row.GetText(2)}";
+    }
 
     /// <summary>For tests: back to the one-step form.</summary>
     public void ShowStepForm() => _stepMode.ButtonPressed = true;
@@ -905,5 +925,6 @@ public sealed class QueueWindow
         else if (Queue.Running) Say(Queue.Headline);
         PaintQuick();
         if (_savedForm.Visible) PaintSaved();
+        if (_planForm.Visible) Replan();   // the plan counts what the queue will make: keep it in step with the queue
     }
 }

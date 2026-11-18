@@ -285,12 +285,34 @@ public static class Queue
         s_started = false;
         s_ranThisRound = false;
         Note = "";
+        Trace($"started at step {Index + 1} of {Steps.Count}: " + string.Join(" | ", Steps.Select(s => $"{s.Name} {s.Goal}")));
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// A small diary of what the queue did and why (queue-log.txt next to the mod). It exists so that
+    /// "it skipped a step" can be answered from facts; it holds nothing but step names and item counts.
+    /// </summary>
+    static void Trace(string text)
+    {
+        try
+        {
+            string file = Path.Combine(Dir, "queue-log.txt");
+            var info = new FileInfo(file);
+            if (info.Exists && info.Length > 200_000)
+            {
+                string[] lines = File.ReadAllLines(file);
+                File.WriteAllLines(file, lines.Skip(lines.Length / 2));
+            }
+            File.AppendAllText(file, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [{s_character}] {text}{Environment.NewLine}");
+        }
+        catch { }
     }
 
     public static void Pause(string why)
     {
         if (!Running) return;
+        Trace($"paused at step {Index + 1}: {why}");
         Running = false;
         s_started = false;
         if (Index < Steps.Count && Steps[Index].State.StartsWith("running")) Steps[Index].State = "paused";
@@ -300,6 +322,7 @@ public static class Queue
 
     static void Finish(string why)
     {
+        if (Running) Trace($"ended: {why}");
         Running = false;
         s_started = false;
         Index = 0;
@@ -347,7 +370,14 @@ public static class Queue
     {
         if (step.Until is Until.Item or Until.Level or Until.ItemLeft && Met(game, step))
         {
-            step.State = "done (the goal was already reached)";
+            // Not needed: say what was found, so "it never mined" explains itself.
+            step.State = step.Until switch
+            {
+                Until.Item => $"done: the bank already holds {Owned(game, step):N0} {step.SubjectName}, nothing to do",
+                Until.ItemLeft => $"done: already only {Owned(game, step):N0} {step.SubjectName} left, nothing to do",
+                _ => $"done: {step.SubjectName} is already level {Level(game, step)}, nothing to do",
+            };
+            Trace($"step {Index + 1} '{step.Name}' ({step.Goal}): {step.State}");
             Next();
             return;
         }
@@ -359,10 +389,12 @@ public static class Queue
             s_died = false;
             s_following = Targets.Current(action)?.Id ?? "";
             step.State = "running";
+            Trace($"step {Index + 1} '{step.Name}' ({step.Goal}): started{(step.Until is Until.Item or Until.ItemLeft ? $", bank holds {Owned(game, step):N0} {step.SubjectName}" : "")}");
         }
         else
         {
             step.State = "skipped: " + problem;
+            Trace($"step {Index + 1} '{step.Name}' ({step.Goal}): {step.State}");
             Next();
         }
     }
@@ -377,6 +409,7 @@ public static class Queue
             // Actions kept running by a Multitask slot do not count as "the player took over".
             if (Targets.Main(game) != null) { Pause("You started something else, so the queue is paused."); return; }
             step.State = "done (it stopped by itself)";
+            Trace($"step {Index + 1} '{step.Name}': stopped by itself after {s_seconds:0} s{(step.Until is Until.Item or Until.ItemLeft ? $", bank holds {Owned(game, step):N0} {step.SubjectName}" : "")}");
             Next();
             return;
         }
@@ -400,6 +433,7 @@ public static class Queue
             // Only this step's own action is stopped: anything a Multitask slot keeps running goes on.
             if (!action.TryStop()) action.TryStop(force: true);
             step.State = "done";
+            Trace($"step {Index + 1} '{step.Name}' ({step.Goal}): goal reached after {s_seconds:0} s");
             Next();
             return;
         }

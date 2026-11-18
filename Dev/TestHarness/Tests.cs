@@ -707,6 +707,43 @@ static class Tests
               && make != null && make.Steps.Count >= 1 && make.Own == 773 && make.Steps.Last().Missing == 100 && makeRows == make.Steps.Count && makeNote.StartsWith("To make 100 more")
               && planMin.X <= planRect.Size.X + 0.5f && planMin.Y <= planRect.Size.Y + 0.5f,
               $"bankada 673 varken 'Own in total 100': {total?.Steps.Count} adim, tabloda aciklama satiri: {totalRows == 1} ('{totalNote}'); 'Make 100': {make?.Steps.Count} adim, hedef {make?.Own} ('{makeNote}'); pencere {planRect.Size.X}x{planRect.Size.Y}, en kucuk {planMin.X}x{planMin.Y}");
+        // The plan on screen is out of date (the bank changed a moment ago): pressing Add must use the bank as it is now.
+        ActionQueue.Maker? staleCook = makers.FirstOrDefault(m => m.Entity.DisplayName.Text == "Cooking" && m.Costs.Count == 1 && m.Costs[0].Quantity == 1
+            && makers.Any(f => f.Entity.DisplayName.Text == "Fishing" && f.Product == m.Costs[0].Item && ActionQueue.Targets.CanStart(f.Action, f.Target, out _))
+            && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+        if (staleCook == null) Out("  bayat plan denemesi: uygun tarif bulunamadi");
+        else
+        {
+            Item rawItem = staleCook.Costs[0].Item, cooked = staleCook.Product;
+            int rawWas = Qty(rawItem);
+            SetQty(rawItem, 0);
+            ActionQueue.Queue.Clear();
+            ActionQueue.PlanResult? withoutRaw = planMod.Window.PlanFor(cooked.Id, 10, more: true);
+            int stepsShown = withoutRaw?.Steps.Count ?? 0;       // gather, then cook
+            SetQty(rawItem, 500);                                // ...and now there is plenty, before the window has looked again
+            planMod.Window.PressAddPlan();
+            bool onlyCooking = ActionQueue.Queue.Steps.Count == 1 && ActionQueue.Queue.Steps[0].TargetId == staleCook.Target.Id;
+            string coveredRow = planMod.Window.PlanRowText(1);
+            ActionQueue.Queue.Start();
+            ActionQueue.Queue.Tick(game, 0.5);
+            bool cookingNow = staleCook.Action.IsStarted;
+            ActionQueue.Queue.Clear();
+            game.ActionManager.TryStopActive(force: true);
+            // A step whose goal is already met says what it found.
+            SetQty(rawItem, 500);
+            ActionQueue.Queue.Add(new ActionQueue.Step { Entity = "MelvorBase:Fishing", TargetId = fishSpot.Target.Id, Name = fishSpot.Name, Until = ActionQueue.Until.Item, Amount = 200, Subject = rawItem.Id, SubjectName = rawItem.DisplayName.GetPluralText(1) });
+            ActionQueue.Queue.Start();
+            ActionQueue.Queue.Tick(game, 0.5);
+            string skippedState = ActionQueue.Queue.Steps[0].State;
+            string diary = Path.Combine(Path.GetDirectoryName(typeof(ActionQueue.ActionQueueMod).Assembly.Location)!, "queue-log.txt");
+            bool diaryHasIt = File.Exists(diary) && File.ReadAllText(diary).Contains("already holds 500");
+            Check("plan: ekrandaki plan bayatsa eklerken yeniden hesaplaniyor; gereksiz adim nedenini soyluyor",
+                  stepsShown == 2 && onlyCooking && cookingNow && coveredRow.Contains("enough") && skippedState.StartsWith("done: the bank already holds 500") && diaryHasIt,
+                  $"malzeme yokken plan {stepsShown} adim; malzeme gelince Add: sirada {(onlyCooking ? "yalniz pisirme" : "YANLIS")}; pencerede: '{coveredRow}'; hedefi zaten tamam adim: '{skippedState}'; kayit dosyasi: {diaryHasIt}");
+            ActionQueue.Queue.Clear();
+            game.ActionManager.TryStopActive(force: true);
+            SetQty(rawItem, rawWas);
+        }
         planMod.Window.ShowStepForm();
         planMod.ToggleWindow();
         SetQty(plenty, plentyBefore);
@@ -944,6 +981,116 @@ static class Tests
         combat.Player.Health.Set(combat.Player.Health.Max);
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // The player's report: "Make 200 Iron Bar" went straight to smithing. Rebuilt here with their numbers.
+    static IEnumerator<int> PlanRepro(Game game, ModContext ctx)
+    {
+        Out("=== Plan: oyuncunun durumu (Make 200 Iron Bar) ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        var makers = ActionQueue.Planner.Makers(game);
+        Item? bar = makers.Keys.FirstOrDefault(i => i.DisplayName.GetPluralText(1) == "Iron Bar");
+        if (bar == null) { Out("  Iron Bar bulunamadi"); yield break; }
+        ActionQueue.Maker smith = makers[bar].First(m => m.Main);
+        Out($"  Iron Bar tarifi: {smith.Name}; islem basina {smith.PerAction} urun; malzeme: {string.Join(", ", smith.Costs.Select(c => $"{c.Quantity} {c.Item.DisplayName.GetPluralText(1)}"))}; " +
+            $"baslatilabilir mi: {ActionQueue.Targets.CanStart(smith.Action, smith.Target, out string smithWhy)} {smithWhy}");
+        Item ore = smith.Costs[0].Item;
+        ActionQueue.Maker? mine = makers.GetValueOrDefault(ore)?.FirstOrDefault(m => m.Main);
+        Out($"  {ore.DisplayName.GetPluralText(1)} kaynagi: {mine?.Name ?? "YOK"}; baslatilabilir mi: {(mine == null ? "-" : ActionQueue.Targets.CanStart(mine.Action, mine.Target, out string mineWhy) + " " + mineWhy)}");
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void SetQty(Item i, int n) { int now = Qty(i); if (now > n) s_bank.Inventory.RemoveQuantity(i, now - n); else if (now < n) s_bank.Inventory.AddQuantity(i, n - now); }
+        int barBefore = Qty(bar), oreBefore = Qty(ore);
+        var others = smith.Costs.Skip(1).Select(c => (c.Item, Before: Qty(c.Item))).ToList();
+        foreach (var (item, _) in others) SetQty(item, 100000);   // anything else the recipe needs is not the question here
+
+        foreach (int oreAtStart in new[] { 72, 272 })
+        {
+            game.ActionManager.TryStopActive(force: true);
+            ActionQueue.Queue.Clear();
+            SetQty(bar, 106);
+            SetQty(ore, oreAtStart);
+            ActionQueue.PlanResult plan = ActionQueue.Planner.Compute(game, bar, 200, more: true);
+            Out($"  [cevher {oreAtStart}] plan: {string.Join(" -> ", plan.Steps.Select(l => $"{l.Maker!.Name} [hedef {l.Need}, bankada {l.Have}]"))}{(plan.Problem == "" ? "" : " sorun: " + plan.Problem)}");
+            ActionQueue.Planner.AddToQueue(plan);
+            // What the window shows right after "Add": the next plan, counting what the queue will make and use.
+            ActionQueue.PlanResult next = ActionQueue.Planner.Compute(game, bar, 200, more: true);
+            Out($"  [cevher {oreAtStart}] eklendikten sonra pencerenin gosterdigi: {string.Join(" -> ", next.Steps.Select(l => $"{l.Maker!.Name} [hedef {l.Need}, bankada {l.Have}]"))}");
+            ActionQueue.Queue.Start();
+            var seen = new List<string>();
+            for (int i = 0; i < 12; i++)
+            {
+                ActionQueue.Queue.Tick(game, 0.5);
+                for (int k = 0; k < 30; k++) game.PropagateTick();
+                string doing = game.ActionManager.ActiveActions.Count == 0 ? "hicbir sey" : string.Join("+", game.ActionManager.ActiveActions.Select(a => $"{a.Entity.DisplayName.Text}: {ActionQueue.Targets.Current(a)?.Name}"));
+                if (seen.Count == 0 || seen[^1] != doing) seen.Add(doing);
+            }
+            Out($"  [cevher {oreAtStart}] ilk 6 saniye: {string.Join(" -> ", seen)}");
+            Out($"  [cevher {oreAtStart}] adimlar: {string.Join(" | ", ActionQueue.Queue.Steps.Select(s => $"{s.Name}: {s.State}"))}; not: '{ActionQueue.Queue.Note}'");
+        }
+
+        // The same, but the character is already mining that ore by hand when the queue is started.
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Clear();
+        SetQty(bar, 106);
+        SetQty(ore, 72);
+        if (mine != null)
+        {
+            ActionQueue.Targets.Start(game, mine.Action, mine.Target, out _);
+            ActionQueue.PlanResult plan = ActionQueue.Planner.Compute(game, bar, 200, more: true);
+            ActionQueue.Planner.AddToQueue(plan);
+            for (int k = 0; k < 600; k++) game.PropagateTick();   // ten seconds pass before Start is pressed
+            int oreAtStart = Qty(ore);
+            ActionQueue.Queue.Start();
+            ActionQueue.Queue.Tick(game, 0.5);
+            Out($"  [elle kazarken] plan kurulurken cevher 72, Start'a basilinca {oreAtStart}; adimlar: {string.Join(" | ", ActionQueue.Queue.Steps.Select(s => $"{s.Name}: {s.State}"))}");
+        }
+        // Once more in real time, with the player's own cheat settings, driven by the mods' own clocks (no help from the test).
+        string settingsFile = Path.Combine(Path.GetDirectoryName(typeof(CheatMenuMod).Assembly.Location)!, "settings.json");
+        var savedSettings = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, double>>>(File.ReadAllText(settingsFile))!;
+        savedSettings.TryGetValue("Falor", out Dictionary<string, double>? theirs);
+        foreach (bool withSettings in new[] { false, true })
+        {
+            game.ActionManager.TryStopActive(force: true);
+            ActionQueue.Queue.Clear();
+            Engine.ResetAll();
+            Engine.SetValue("bank.slots", 10000);
+            if (withSettings && theirs != null) foreach (var v in theirs) if (Features.Find(v.Key) != null) Engine.SetValue(v.Key, v.Value);
+            SetQty(bar, 106);
+            SetQty(ore, 72);
+            ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+            if (queueMod.Window is not { Visible: true }) queueMod.ToggleWindow();
+            yield return 10;
+            ActionQueue.PlanResult? shown = queueMod.Window!.PlanFor(bar.Id, 200, more: true);
+            queueMod.Window.PressAddPlan();
+            yield return 10;
+            ActionQueue.Queue.Start();
+            var timeline = new List<string>();
+            for (int i = 0; i < 40; i++)   // about twenty real seconds
+            {
+                yield return 30;
+                string doing = game.ActionManager.ActiveActions.Count == 0 ? "hicbir sey" : string.Join("+", game.ActionManager.ActiveActions.Select(a => $"{a.Entity.DisplayName.Text}: {ActionQueue.Targets.Current(a)?.Name}"));
+                string line = $"{doing} [cevher {Qty(ore)}, kulce {Qty(bar)}; {string.Join(" | ", ActionQueue.Queue.Steps.Select(s => s.State))}]";
+                if (timeline.Count == 0 || !timeline[^1].StartsWith(doing + " [") || i % 10 == 9) timeline.Add(line);
+            }
+            Out($"  [gercek zaman, {(withSettings ? "oyuncunun hile ayarlariyla" : "ayarsiz")}] plan {shown?.Steps.Count} adim; akis:");
+            foreach (string line in timeline) Out("      " + line);
+            Out($"      not: '{ActionQueue.Queue.Note}', calisiyor: {ActionQueue.Queue.Running}");
+            queueMod.Window.ShowStepForm();
+            queueMod.ToggleWindow();
+        }
+
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Clear();
+        SetQty(bar, barBefore);
+        SetQty(ore, oreBefore);
+        foreach (var (item, before) in others) SetQty(item, before);
+        Engine.ResetAll();
+    }
+
     public static IEnumerator<int> Run(Game game, ModContext ctx)
     {
         s_game = game;
@@ -956,6 +1103,12 @@ static class Tests
         {
             IEnumerator<int> shots = Screenshots(game, ctx);
             while (shots.MoveNext()) yield return shots.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "repro")
+        {
+            IEnumerator<int> repro = PlanRepro(game, ctx);
+            while (repro.MoveNext()) yield return repro.Current;
             yield break;
         }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "saved")
@@ -1774,7 +1927,7 @@ static class Tests
             Vector2 plScreen = ctx.Tree.Root.GetVisibleRect().Size;
             int plRows = queueMod.Window.PlanRows;
             string plNote = queueMod.Window.PlanNote;
-            Check("plan penceresi", plShown != null && plRows == plPlan.Steps.Count && plNote.Contains("step") && plRect.Position.X >= 0 && plRect.Position.Y >= 0
+            Check("plan penceresi", plShown != null && plRows == plPlan.Steps.Count + plPlan.Covered.Count && plNote.Contains("step") && plRect.Position.X >= 0 && plRect.Position.Y >= 0
                   && plRect.End.X <= plScreen.X && plRect.End.Y <= plScreen.Y && plMin.X <= plRect.Size.X + 0.5f && plMin.Y <= plRect.Size.Y + 0.5f,
                   $"{plRows} satir; '{plNote}'; pencere {plRect.Size.X}x{plRect.Size.Y}, gereken en kucuk {plMin.X}x{plMin.Y}");
 
