@@ -42,7 +42,7 @@ UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
 Extract it into the game folder and the game loads every mod you put in its [b]mods[/b] folder.
 For players it is a one-time install. For mod authors it is a small, typed C# API with full access to the game.[/center]
 
-[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
 This is Melvor Mod Loader [b]0.1.3[/b] for Windows / Steam, tested on game version [b]0.11.6-alpha.1[/b]. Melvor Idle 2 is in alpha: a game update can break the loader or a mod until they are updated. If the game ever fails to start, delete [b]override.cfg[/b] and it runs without mods again.
@@ -62,6 +62,7 @@ This is Melvor Mod Loader [b]0.1.3[/b] for Windows / Steam, tested on game versi
 [*][url=https://www.nexusmods.com/melvoridle2/mods/4][b]Bulk Sell[/b][/url] (F7): bulk sell window, one-click "Sell junk", "Bury all" and "Open all" buttons in the bank.
 [*][url=https://www.nexusmods.com/melvoridle2/mods/5][b]Action Queue[/b][/url] (F6): chain actions, "cut 1,000 logs, burn them, then go fishing".
 [*][url=https://www.nexusmods.com/melvoridle2/mods/6][b]Save Backup[/b][/url]: dated copies of your saves on every start.
+[*][url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] (F5): keep two extra actions running beside your main one. A cheat.
 [*][b]Debug Menu[/b] (F9, optional file on this page): opens the developers' own hidden debug menu.
 [/list]
 Each has its own page: click a name above.
@@ -113,4 +114,4 @@ Mods are C# class libraries. Your code runs inside the game with direct, type-ch
 [size=5][b]Help[/b][/size]
 When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
 
-[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]

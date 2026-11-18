@@ -17,7 +17,7 @@ Ready-to-use zips are on Nexus Mods. Extract each into the game folder.
 | [Bulk Sell](https://www.nexusmods.com/melvoridle2/mods/4) | Bulk sell window and "Sell junk", "Bury all", "Open all" buttons in the bank. | F7 |
 | [Action Queue](https://www.nexusmods.com/melvoridle2/mods/5) | Chain actions: "cut 1,000 logs, burn them, then go fishing". Its planner turns "I want 100 of this item" into the steps to get there. | F6 |
 | [Save Backup](https://www.nexusmods.com/melvoridle2/mods/6) | Dated copies of your saves on every start. | |
-| Multitask (not on Nexus yet) | Two slots keep extra actions running beside your main one: fish while you cook, mine while you fight. A cheat. | F5 |
+| [Multitask](https://www.nexusmods.com/melvoridle2/mods/8) | Two slots keep extra actions running beside your main one: fish while you cook, mine while you fight. A cheat. | F5 |
 
 ## What is in this repository
 

@@ -106,7 +106,7 @@ Woodcutting, Mining, Fishing, Firemaking, Cooking, Smithing, Crafting, Runecraft
 [b]Slayer tasks as a step:[/b] "Slayer tasks of <master>" fights whatever that master's task is and walks to the new monster when a task is done. Unlike the game's own Auto Slayer switch it can have a goal, for example "until Slayer level 20", and then hand over to the next step.
 
 [size=5][b]Works with Multitask[/b][/size]
-With the [b]Multitask[/b] mod (same author) you can keep extra actions running in its slots while the queue works through your main action step by step.
+With the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author) you can keep extra actions running in its slots while the queue works through your main action step by step.
 
 [size=5][b]It plays fair and it plays safe[/b][/size]
 [list]
