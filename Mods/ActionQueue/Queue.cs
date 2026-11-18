@@ -135,10 +135,25 @@ public static class Queue
 
     public static void AddRange(IEnumerable<Step> steps) { Steps.AddRange(steps); Save(); Changed?.Invoke(); }
 
+    /// <summary>
+    /// Stops the action of the step that is running, if the queue started it and the character is still on it.
+    /// Taking a running step out of the queue (or emptying the queue) must not leave its action going on:
+    /// to the player that looks as if the queue were still at work.
+    /// </summary>
+    static void StopOwnAction()
+    {
+        if (s_game == null || !Running || !s_started || Index >= Steps.Count) return;
+        Step step = Steps[Index];
+        ActionComponent? action = Targets.Find(s_game, step.Entity);
+        if (action != null && Targets.IsDoing(action, new Target(step.TargetId, step.Name, step.Extra))) action.TryStop(force: true);
+    }
+
+    static void Publish() => Targets.PublishDriving(Running && s_started && Index < Steps.Count ? Steps[Index].Entity : "");
+
     public static void RemoveAt(int index)
     {
         if (index < 0 || index >= Steps.Count) return;
-        if (Running && index == Index) { s_started = false; }
+        if (Running && index == Index) { StopOwnAction(); s_started = false; }
         Steps.RemoveAt(index);
         if (index < Index) Index--;
         if (Steps.Count == 0) Finish("The queue is empty.");
@@ -157,9 +172,10 @@ public static class Queue
 
     public static void Clear()
     {
+        StopOwnAction();
         Steps.Clear();
         Name = "";
-        Finish("");
+        Finish(Running ? "The queue was emptied, so what it had started was stopped." : "");
         Save();
         Changed?.Invoke();
     }
@@ -317,6 +333,7 @@ public static class Queue
         s_started = false;
         if (Index < Steps.Count && Steps[Index].State.StartsWith("running")) Steps[Index].State = "paused";
         Note = why;
+        Publish();
         Changed?.Invoke();
     }
 
@@ -327,6 +344,7 @@ public static class Queue
         s_started = false;
         Index = 0;
         Note = why;
+        Publish();
     }
 
     static void Next()
@@ -363,6 +381,7 @@ public static class Queue
             step.State = "skipped: an error occurred (see the log)";
             Next();
         }
+        Publish();
         Changed?.Invoke();
     }
 

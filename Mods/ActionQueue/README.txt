@@ -1,4 +1,4 @@
-Action Queue 0.4.0  -  a mod for Melvor Idle 2
+Action Queue 0.4.1  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -78,6 +78,8 @@ GOOD TO KNOW
 - It never bypasses the game's requirements. A step you are not allowed to do yet, or have
   no materials for, is marked "skipped" and the next one starts.
 - If you start something else by hand, the queue pauses instead of fighting you.
+- "Remove all" (or removing the step that is running) also stops what that step had started.
+  "Pause" leaves your character doing what it was doing.
 - If your character dies, the queue pauses and does not walk back into the fight.
 - Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
 - The queue is remembered per character in "queue.json" next to the mod.

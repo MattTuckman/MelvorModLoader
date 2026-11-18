@@ -114,7 +114,7 @@ public sealed class QueueWindow
         StyleBoxFlat go = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
         _run.AddThemeStyleboxOverride("normal", go);
         _run.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 5));
-        _run.Pressed += () => { if (Queue.Running) Queue.Pause("Paused."); else Queue.Start(); };
+        _run.Pressed += () => { if (Queue.Running) Queue.Pause("Paused. Your character goes on with what it was doing; press Start to carry on with the queue."); else Queue.Start(); };
         _quick.TooltipText = "Switch to one of your saved queues. A running queue keeps running, from the first step of the new one.";
         _quick.ItemSelected += QuickPicked;
         header.AddChild(_quick);

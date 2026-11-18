@@ -15,12 +15,19 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.4.0.zip   (name: Action Queue, version 0.4.0)
+MAIN FILE:  dist\ActionQueue-0.4.1.zip   (name: Action Queue, version 0.4.1)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\sira-2-pencere.png (main image), sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.4.1
+- "Remove all", or removing the step that is running, now also stops what that step had started
+- The planner: "Make" (this many more) or "Own in total"; materials you already have are listed; the plan is worked out again at the moment you add it
+- The count-down goal fills in your food and starts at 5
+- A step whose goal is already met says so
+- Works with Multitask 0.2.0
+
 0.4.0
 - New: the planner. Name an item and how many you want; the steps to get there are worked out and added to the queue
 - New: saved queues. Keep several queues under a name and switch between them in one click, also while the queue is running
@@ -54,7 +61,7 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.4.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+This is Action Queue [b]0.4.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
 
 [size=5][b]An example[/b][/size]
 [list=1]
@@ -106,12 +113,12 @@ Woodcutting, Mining, Fishing, Firemaking, Cooking, Smithing, Crafting, Runecraft
 [b]Slayer tasks as a step:[/b] "Slayer tasks of <master>" fights whatever that master's task is and walks to the new monster when a task is done. Unlike the game's own Auto Slayer switch it can have a goal, for example "until Slayer level 20", and then hand over to the next step.
 
 [size=5][b]Works with Multitask[/b][/size]
-With the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author) you can keep extra actions running in its slots while the queue works through your main action step by step.
+With the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author), what you were doing before you started the queue keeps running beside it while the queue works through its steps.
 
 [size=5][b]It plays fair and it plays safe[/b][/size]
 [list]
 [*][b]Never bypasses requirements.[/b] A step you are not allowed to do yet, or have no materials for, is marked "skipped" with the reason, and the next one starts.
-[*][b]You stay in charge.[/b] Start something else by hand and the queue pauses instead of fighting you.
+[*][b]You stay in charge.[/b] Start something else by hand and the queue pauses instead of fighting you. "Remove all" also stops what the running step had started.
 [*][b]Death pauses it.[/b] If your character dies the queue stops and does not walk back into the fight, even with "start over" switched on.
 [*][b]Runs while the game is open.[/b] While the game is closed, the game's normal offline progress continues the last action only.
 [*]Hunting needs a trap and Agility needs a path chosen on the skill's own page first. The queue does not make that choice for you.
@@ -121,7 +128,7 @@ With the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.4.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.4.1.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

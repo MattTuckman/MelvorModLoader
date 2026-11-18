@@ -1,12 +1,16 @@
-Multitask 0.1.0  -  a mod for Melvor Idle 2
+Multitask 0.2.0  -  a mod for Melvor Idle 2
 ===========================================
 
-Do more than one thing at a time: fish while you cook the catch, mine while you fight,
-cut wood while you smith. Two slots keep extra actions running beside the one you choose
-in the game.
+Do more than one thing at a time. Nothing to set up: switch a slot on and play as usual.
+When you start a new action, the one you were doing keeps running next to it.
 
-This is a cheat: the game is balanced around one action at a time, and this mod lets up
-to three run together. Use it if that is the game you want to play.
+   Slot 1 on            your last two actions run together
+   Slot 1 and 2 on      your last three actions run together
+
+Fish, then start cooking: both run. Go mining, then start a fight: both run.
+
+This is a cheat: the game is balanced around one action at a time. Use it if that is the
+game you want to play.
 
 Tested with game version 0.11.6-alpha.1 and Melvor Mod Loader 0.1.3.
 
@@ -27,34 +31,32 @@ INSTALL
 
 HOW TO USE
 ----------
-Open a character and press F5.
-  1. In a slot, pick a skill and what to do, then switch the slot ON.
-     Or do something in the game and press "Use what I am doing now": that action
-     moves into the slot.
-  2. Start your main action in the game as usual. The slot keeps going next to it.
-  3. Switch the slot OFF to stop its action.
-Each slot shows what it is doing: running, waiting (and why), or turned off.
+Open a character, press F5 and switch Slot 1 (and Slot 2) ON. That is all.
+  - Start a new action in the game: the one before it keeps going.
+  - Start another one: with no room left, the oldest drops out.
+  - To drop an action, press its own Stop button in the game.
+  - Choose another rock, tree or recipe: that skill simply does the new thing.
+    (A skill can only do one thing at a time.)
+  - Switch a slot OFF: what no longer fits is stopped.
+The window lists what is running together right now, your latest first.
 
 
 GOOD TO KNOW
 ------------
-- Whenever you start something in the game, the game stops everything for a moment.
-  The slots come back by themselves within a second.
-- A slot that makes something (cooking, smithing...) waits when its materials run out
+- An action that makes something (cooking, smithing...) waits when its materials run out
   and goes on when there are some again. It works in small piles, about ten at a time,
   so the game does not report "action stopped" for every single fish.
-- A slot that fights turns itself off if your character dies. It never walks back in.
-- If you use a slot's skill for something else in the game, the slot waits until that
-  skill is free again.
-- The two slots cannot use the same skill.
-- Offline progress: everything that was running when you closed the game goes on. A slot
-  that runs out of materials while the game is closed stays stopped until you are back.
-- It never bypasses the game's requirements: a slot cannot do what you cannot do yet.
-- Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
-- Works together with Action Queue 0.4.0 or newer: the queue runs your main action, the
-  slots keep running beside it.
-- The game's bottom bar shows your main action. The slots are shown in this window.
-- The slots are remembered per character in "multitask.json" next to the mod.
+- A fight is dropped if your character dies. Nothing walks back in.
+- Offline progress: everything that was running when you closed the game goes on.
+  An action that runs out of materials while the game is closed stays stopped until you
+  are back.
+- It never bypasses the game's requirements.
+- With both slots OFF the mod does nothing at all: the game plays as it always did.
+- Works together with Action Queue 0.4.1 or newer: the queue's steps come and go as the
+  latest action, and what you were doing before keeps running beside them. A finished
+  step is not kept going. If the queue needs a skill you were using, the queue gets it.
+- The game's bottom bar shows your latest action. The others are listed in the F5 window.
+- The switches and the list are remembered per character in "multitask.json".
 
 
 UNINSTALL

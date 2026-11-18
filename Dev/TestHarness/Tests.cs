@@ -367,10 +367,12 @@ static class Tests
     }
 
     // ------------------------------------------------------------------------------------------------
-    // Multitask: slots that keep extra actions running beside the main one.
+    // Multitask 0.2: an on/off switch per slot, nothing to pick. With a slot on, the action before the latest
+    // one keeps running. Everything below is done the way a player does it: the game's own start calls,
+    // the game's own Stop, the window's switches.
     static IEnumerator<int> MultiTests(Game game, ModContext ctx)
     {
-        Out("=== 5l. Multitask (ayni anda birden fazla is) ===");
+        Out("=== 5l. Multitask (son islerin birlikte calismasi) ===");
         Engine.Bind(game);
         Engine.ResetAll();
         Engine.SetValue("bank.slots", 10000);
@@ -378,23 +380,30 @@ static class Tests
         ActionQueue.Queue.Bind(game);
         ActionQueue.Queue.Clear();
         mt::Multitask.Slots.Bind(game);
-        for (int i = 0; i < mt::Multitask.Slots.Count; i++) mt::Multitask.Slots.SetOn(i, false);
+        mt::Multitask.MultitaskMod mod = mt::Multitask.MultitaskMod.Instance!;
+        if (mod.Window is not { Visible: true }) mod.ToggleWindow();
+        yield return 5;
+        mt::Multitask.SlotWindow win = mod.Window!;
+        for (int i = 0; i < mt::Multitask.Slots.Count; i++) if (mt::Multitask.Slots.IsOn(i)) win.PressSwitch(i);
         var makers = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).ToList();
         List<ActionQueue.Maker> Open(string skill) => makers.Where(m => m.Entity.DisplayName.Text == skill && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _))
             .GroupBy(m => m.Target.Id).Select(g => g.First()).ToList();
         int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void SetQty(Item i, int n) { int now = Qty(i); if (now > n) s_bank.Inventory.RemoveQuantity(i, now - n); else if (now < n) s_bank.Inventory.AddQuantity(i, n - now); }
         void Ticks(int n) { for (int i = 0; i < n; i++) game.PropagateTick(); }
         string Running() => game.ActionManager.ActiveActions.Count == 0 ? "hicbir sey"
             : string.Join(" + ", game.ActionManager.ActiveActions.Select(a => $"{a.Entity.DisplayName.Text}: {ActionQueue.Targets.Current(a)?.Name ?? "?"}"));
-        // The mod looks at its slots twice a second; here that look is made by hand, with a clock that jumps ahead.
+        string Kept() => string.Join(" > ", mt::Multitask.Slots.Recent.Select(k => $"{k.Title} [{k.State}]"));
+        int Count() => game.ActionManager.ActiveActions.Count;
+        // The mod looks twice a second; here that look is made by hand, with a clock that jumps ahead.
         double clock = Time.GetTicksMsec() / 1000.0;
         void Look(double seconds = 60) { clock += seconds; mt::Multitask.Slots.Tick(game, clock); }
-        void SetSlot(int index, ActionQueue.Maker m) => mt::Multitask.Slots.Set(index, m.Entity, new mt::ActionQueue.Target(m.Target.Id, m.Target.Name, m.Target.Extra));
-        bool Start(ActionQueue.Maker m) => ActionQueue.Targets.Start(game, m.Action, m.Target, out _);   // what a click in the game does
-        string State(int index) => mt::Multitask.Slots.All[index].State;
+        bool Start(ActionQueue.Maker m) => ActionQueue.Targets.Start(game, m.Action, m.Target, out _);   // what choosing it in the game does
+        bool Doing(ActionQueue.Maker m) => ActionQueue.Targets.IsDoing(m.Action, m.Target);
 
         ActionQueue.Maker wood = Open("Woodcutting")[0], ore = Open("Mining")[0], fishSpot = Open("Fishing")[0];
         List<ActionQueue.Maker> rocks = Open("Mining");
+        var mining = (GamesByMalcs.Melvor2.Entities.Mining.MiningActionComponent)ore.Action;
         const int T = 18000;   // five minutes of game time
 
         // ---- alone, for comparison
@@ -402,65 +411,76 @@ static class Tests
         Start(ore); int o0 = Qty(ore.Product); Ticks(T); int oreAlone = Qty(ore.Product) - o0;
         game.ActionManager.TryStopActive(force: true);
 
-        // ---- 1. a slot beside the main action
-        SetSlot(0, ore);
-        mt::Multitask.Slots.SetOn(0, true);
-        Start(wood);
+        // ---- 1. both slots off: the plain game, nothing is started for the player
+        Start(ore); Look();
+        Start(wood); Look(); Look();
+        Check("iki yuva da kapaliyken oyun aynen eskisi gibi", Count() == 1 && wood.Action.IsStarted && !ore.Action.IsStarted && mt::Multitask.Slots.Starts == 0 && win.LineText(0).Contains(wood.Target.Name),
+              $"calisan: {Running()}; pencere: '{win.LineText(0)}' / '{win.StatusText}'");
+
+        // ---- 2. slot 1 on: start something new and the one before keeps running
+        win.PressSwitch(0);
         Look();
-        bool both = wood.Action.IsStarted && ore.Action.IsStarted && game.ActionManager.ActiveActions.Count == 2;
-        bool mainLast = game.ActionManager.ActiveActions.Count == 2 && ReferenceEquals(game.ActionManager.ActiveActions[^1], wood.Action);
+        Start(ore);                                  // the player goes mining
+        bool stoppedByGame = !wood.Action.IsStarted && Count() == 1;
+        Look();
+        bool two = Count() == 2 && wood.Action.IsStarted && ore.Action.IsStarted;
+        bool latestLast = two && ReferenceEquals(game.ActionManager.ActiveActions[^1], ore.Action);   // the bottom bar shows the last of the list
         w0 = Qty(wood.Product); o0 = Qty(ore.Product);
         Ticks(T);
         int woodBoth = Qty(wood.Product) - w0, oreBoth = Qty(ore.Product) - o0;
-        Check("yuva ana isin yaninda calisiyor", both && mainLast && State(0) == "running" && Near(woodBoth, woodAlone, 0.25) && Near(oreBoth, oreAlone, 0.4),
-              $"{Running()}; 5 dakikada {woodBoth} {wood.Product.DisplayName.GetPluralText(1)} (tek basina {woodAlone}) ve {oreBoth} {ore.Product.DisplayName.GetPluralText(1)} (tek basina {oreAlone}); alt cubukta gorunen (listenin sonu) ana is: {mainLast}");
-        yield return 20;
+        Check("yuva 1 acikken yeni ise gecince onceki is de suruyor", stoppedByGame && two && latestLast && Near(woodBoth, woodAlone, 0.25) && Near(oreBoth, oreAlone, 0.5),
+              $"{Kept()}; 5 dakikada {woodBoth} {wood.Product.DisplayName.GetPluralText(1)} (tek basina {woodAlone}) ve {oreBoth} {ore.Product.DisplayName.GetPluralText(1)} (tek basina {oreAlone}); alt cubukta son is: {latestLast}");
+        yield return 10;
 
-        // ---- 2. the player clicks something else: the game stops everything, the slot comes back
-        int startsBefore = mt::Multitask.Slots.Starts;
+        // ---- 3. a third action with one slot: the oldest drops out
         Start(fishSpot);
-        bool allStopped = !ore.Action.IsStarted && !wood.Action.IsStarted && game.ActionManager.ActiveActions.Count == 1;
         Look();
-        Check("oyunda baska ise gecince yuva geri geliyor", allStopped && ore.Action.IsStarted && fishSpot.Action.IsStarted && game.ActionManager.ActiveActions.Count == 2
-              && mt::Multitask.Slots.Starts == startsBefore + 1 && ReferenceEquals(game.ActionManager.ActiveActions[^1], fishSpot.Action),
-              $"tiklamadan hemen sonra yalniz yeni is: {allStopped}; bir bakista: {Running()}");
+        Check("tek yuvayla ucuncu ise gecince en eski is dusuyor", Count() == 2 && fishSpot.Action.IsStarted && ore.Action.IsStarted && !wood.Action.IsStarted, Kept());
 
-        // ---- 3. the skill of a slot is used by the player for something else: the slot waits, then returns
+        // ---- 4. slot 2 on: the last three
+        win.PressSwitch(1);
+        Start(wood);
+        Look();
+        Check("iki yuva acikken son uc is birlikte calisiyor", Count() == 3 && wood.Action.IsStarted && fishSpot.Action.IsStarted && ore.Action.IsStarted, Kept());
+
+        // ---- 5. the player's report: another rock is chosen on the mining page, then a new action is started.
+        //         The skill does the new rock from then on; the old one is not forced back.
         if (rocks.Count >= 2)
         {
-            Start(rocks[1]);
+            mining.SelectRock(mining.Rocks.First(r => r.Key.Id == rocks[1].Target.Id).Value);   // what a click on the other rock does
             Look();
-            bool waits = State(0).StartsWith("waiting") && ActionQueue.Targets.IsDoing(rocks[1].Action, rocks[1].Target) && game.ActionManager.ActiveActions.Count == 1;
-            string waitText = State(0);
-            Start(wood);
+            bool switchedRock = Doing(rocks[1]) && Count() == 3 && mt::Multitask.Slots.Recent[0].TargetId == rocks[1].Target.Id;
+            string afterClick = Kept();
+            Start(wood);                                                                       // "a second task": the same tree again
             Look();
-            Check("oyuncu yuvanin becerisini baska is icin kullaninca yuva bekliyor", waits && State(0) == "running" && ActionQueue.Targets.IsDoing(ore.Action, ore.Target) && wood.Action.IsStarted,
-                  $"{rocks[1].Name} elle baslatilinca yuva: '{waitText}'; oyuncu oduna gecince: {Running()}");
+            bool stillNewRock = Doing(rocks[1]) && !Doing(ore) && Count() == 3;
+            Check("baska kaya secilince o kaya kaliyor, eskisi geri gelmiyor", switchedRock && stillNewRock, $"{rocks[1].Name} secilince: {afterClick}; baska ise gecince: {Running()}");
+            mining.SelectRock(mining.Rocks.First(r => r.Key.Id == ore.Target.Id).Value);         // back to the first rock for the checks below
+            Look();
         }
-        else Out("  (ikinci acik kaya yok, bekleme denemesi atlandi)");
+        else Out("  (ikinci acik kaya yok, kaya degistirme denemesi atlandi)");
 
-        // ---- 4. two slots, and both on the same skill
-        SetSlot(1, fishSpot);
-        mt::Multitask.Slots.SetOn(1, true);
+        // ---- 6. the game's own Stop on one of them drops it; the others go on
+        fishSpot.Action.TryStop();
+        Look(); Look();
+        Check("oyundaki Stop dugmesi o isi birakiyor, digerleri suruyor", !fishSpot.Action.IsStarted && Count() == 2 && wood.Action.IsStarted && ore.Action.IsStarted && mt::Multitask.Slots.Recent.Count == 2, Kept());
+
+        // ---- 7. starting the same action again must not lose the others
         Start(wood);
         Look();
-        bool three = game.ActionManager.ActiveActions.Count == 3 && wood.Action.IsStarted && ore.Action.IsStarted && fishSpot.Action.IsStarted;
-        string threeText = Running();
-        if (rocks.Count >= 2) SetSlot(1, rocks[1]);
-        Look();
-        Check("iki yuva + ana is; ayni beceriye iki yuva konamiyor", three && (rocks.Count < 2 || State(1).Contains("other slot")),
-              $"uc is birden: {threeText}; ikinci yuvaya da madencilik konunca: '{State(1)}'");
-        mt::Multitask.Slots.SetOn(1, false);
+        Check("ayni isi yeniden baslatmak digerlerini dusurmuyor", Count() == 2 && wood.Action.IsStarted && ore.Action.IsStarted, Kept());
 
-        // ---- 5. switching a slot off stops its action and nothing else
-        Start(wood);
+        // ---- 8. switching the slots off stops what no longer fits
+        win.PressSwitch(1);
         Look();
-        mt::Multitask.Slots.SetOn(0, false);
+        bool stillTwo = Count() == 2;
+        win.PressSwitch(0);
         Look();
-        Check("yuva kapatilinca yalniz kendi isi duruyor", wood.Action.IsStarted && !ore.Action.IsStarted && game.ActionManager.ActiveActions.Count == 1, Running());
+        Check("yuvalar kapatilinca fazlalik duruyor", stillTwo && Count() == 1 && !mt::Multitask.Slots.IsOn(0) && !mt::Multitask.Slots.IsOn(1), $"{Running()}; pencere: '{win.StatusText}'");
         game.ActionManager.TryStopActive(force: true);
+        Look();
 
-        // ---- 6. fishing as the main action, cooking the catch in a slot
+        // ---- 9. fishing, then cooking the catch: the kitchen waits for fish and goes on by itself
         ActionQueue.Maker? cook = null, fish = null;
         foreach (ActionQueue.Maker c in makers.Where(m => m.Entity.DisplayName.Text == "Cooking" && m.Costs.Count == 1 && ActionQueue.Targets.CanStart(m.Action, m.Target, out _)))
         {
@@ -472,58 +492,55 @@ static class Tests
         {
             Item rawFish = fish.Product;
             int rawBefore = Qty(rawFish), cookedBefore = Qty(cook.Product);
-            if (rawBefore > 0) s_bank.Inventory.RemoveQuantity(rawFish, rawBefore);
-            SetSlot(0, cook);
-            mt::Multitask.Slots.SetOn(0, true);
-            Start(fish);
-            Look();
-            string emptyState = State(0);
-            bool waitsForFish = emptyState.Contains("materials") && !cook.Action.IsStarted;
-            int restarts = mt::Multitask.Slots.Starts, caught = 0, lastRaw = 0;
+            SetQty(rawFish, 3);
+            win.PressSwitch(0);
+            Start(fish); Look();
+            Start(cook); Look();                      // the player starts cooking the three they have
+            bool bothAtFirst = Count() == 2 && fish.Action.IsStarted && cook.Action.IsStarted;
+            int restarts = mt::Multitask.Slots.Starts, caught = 0, lastRaw = Qty(rawFish);
+            var states = new List<string>();
             for (int second = 0; second < 600; second++)   // ten minutes, one look per second like the mod does
             {
                 Ticks(60);
                 int rawNow = Qty(rawFish);
                 if (rawNow > lastRaw) caught += rawNow - lastRaw;
-                lastRaw = rawNow;
-                Look(1);   // real pace: one second of clock per second of game
+                Look(1);
                 lastRaw = Qty(rawFish);
+                string state = mt::Multitask.Slots.Recent.FirstOrDefault(k => k.Entity == cook.Entity.Id)?.State ?? "(dustu)";
+                if (states.Count == 0 || states[^1] != state) states.Add(state);
             }
             restarts = mt::Multitask.Slots.Starts - restarts;
             int cooked = Qty(cook.Product) - cookedBefore, rawLeft = Qty(rawFish);
-            // It works in piles (about ten at a time) instead of starting and stopping for every fish.
-            Check("balik tutarken pisirme: malzeme bitince bekliyor, birikince devam ediyor", waitsForFish && fish.Action.IsStarted && cooked > 0 && restarts >= 2 && restarts <= caught / 4 && rawLeft < 15,
-                  $"{fish.Name} + yuva {cook.Name}; cig balik yokken yuva: '{emptyState}'; 10 dakikada {caught} tutuldu, {cooked} pisti, {rawLeft} cig kaldi; yuva {restarts} kez basladi (her baliga degil, birikince)");
-            mt::Multitask.Slots.SetOn(0, false);
+            Check("balik tutarken pisirme: malzeme bitince bekliyor, birikince devam ediyor", bothAtFirst && fish.Action.IsStarted && cooked > 3 && restarts >= 2 && restarts <= Math.Max(3, caught / 4) && rawLeft < 15
+                  && states.Any(s => s.StartsWith("waiting")) && !states.Contains("(dustu)"),
+                  $"{fish.Name} + {cook.Name}: 10 dakikada {caught} tutuldu, {cooked} pisti, {rawLeft} cig kaldi; pisirme {restarts} kez yeniden basladi; gorulen durumlar: {string.Join(" / ", states.Distinct().Take(5))}");
             game.ActionManager.TryStopActive(force: true);
-            int rawEnd = Qty(rawFish);
-            if (rawEnd > rawBefore) s_bank.Inventory.RemoveQuantity(rawFish, rawEnd - rawBefore); else if (rawEnd < rawBefore) s_bank.Inventory.AddQuantity(rawFish, rawBefore - rawEnd);
+            Look();
+            win.PressSwitch(0);
+            SetQty(rawFish, rawBefore);
         }
 
-        // ---- 7. a fighting slot turns itself off when the character dies
+        // ---- 10. a fight is dropped when the character dies, and nothing walks back in
         game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combatEntity);
         var combat = (CombatEntity)combatEntity!;
-        var cbSkill = ActionQueue.Targets.Skills(game).First(s => s.Entity.Id == "MelvorBase:Combat");
         CombatArea area = game.Data.GetDataRegistryOutput<CombatArea>().GetAllObjects().First(a => a.Enemies.Count > 0 && a.UnlockRequirements.AreMet);
         combat.Player.Health.Set(combat.Player.Health.Max);
-        mt::Multitask.Slots.Set(0, cbSkill.Entity, new mt::ActionQueue.Target(area.Enemies[0].Id, $"{area.Enemies[0].DisplayName.Text}  ({area.DisplayName.Text})", area.Id));
-        mt::Multitask.Slots.SetOn(0, true);
-        Start(ore);
+        win.PressSwitch(0);
+        Start(ore); Look();
+        combat.Areas.SelectEnemy(area, area.Enemies[0]);
+        if (!combat.Action.IsStarted) combat.Action.TryStart();
         Look();
-        bool fighting = combat.Action.IsStarted && ore.Action.IsStarted && State(0) == "running";
+        bool fighting = combat.Action.IsStarted && ore.Action.IsStarted && Count() == 2;
         Ticks(120);
         combat.Player.Health.Set(0);
         for (int i = 0; i < 20 && combat.Action.IsStarted; i++) Ticks(30);
         for (int i = 0; i < 6; i++) { Look(); Ticks(60); }
-        Check("savas yuvasi olunce kendini kapatiyor, savasa donmuyor", fighting && !combat.Action.IsStarted && !mt::Multitask.Slots.All[0].On && State(0).Contains("died") && ore.Action.IsStarted,
-              $"savasiyordu: {fighting}; olumden sonra yuva: {(mt::Multitask.Slots.All[0].On ? "ACIK" : "kapali")} ('{State(0)}'); calisan: {Running()}");
+        string deathNote = mt::Multitask.Slots.Note;
+        Check("karakter olunce savas birakiliyor, geri donulmuyor", fighting && !combat.Action.IsStarted && ore.Action.IsStarted && mt::Multitask.Slots.Recent.All(k => k.Entity != "MelvorBase:Combat"),
+              $"savasiyordu: {fighting}; olumden sonra: {Running()}; '{deathNote}'");
         combat.Player.Health.Set(combat.Player.Health.Max);
-        game.ActionManager.TryStopActive(force: true);
 
-        // ---- 8. the Action Queue with a slot running: the queue must not think the player took over
-        SetSlot(0, ore);
-        mt::Multitask.Slots.SetOn(0, true);
-        Look();
+        // ---- 11. the Action Queue beside it: the queue's steps come and go, what the player was doing stays
         ActionQueue.Step QStep(ActionQueue.Maker m, ActionQueue.Until until, double amount = 0) => new()
         {
             Entity = m.Entity.Id, TargetId = m.Target.Id, Extra = m.Target.Extra, Name = m.Name, Until = until, Amount = amount,
@@ -531,41 +548,57 @@ static class Tests
         if (cook == null) Out("  is sirasi + yuva: pisirilecek tarif bulunamadi");
         else
         {
-            // Three steps; the middle one ends by itself when its thirty portions are used up (about two minutes).
             Item fuel = cook.Costs[0].Item;
             int fuelBefore = Qty(fuel);
-            if (fuelBefore > 0) s_bank.Inventory.RemoveQuantity(fuel, fuelBefore);
-            s_bank.Inventory.AddQuantity(fuel, 30 * cook.Costs[0].Quantity);
+            SetQty(fuel, 30 * cook.Costs[0].Quantity);
+            Start(ore); Look();                                    // the player is mining, then lets the queue work
             ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 0.05));
             ActionQueue.Queue.Add(QStep(cook, ActionQueue.Until.Stops));
-            ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 0.05));
+            ActionQueue.Queue.Add(QStep(fishSpot, ActionQueue.Until.Minutes, 0.05));
             o0 = Qty(ore.Product);
             ActionQueue.Queue.Start();
             var seen = new List<string>();
-            int loops = 0, slotStarts = mt::Multitask.Slots.Starts, miningOff = 0;
+            int loops = 0, most = 0;
+            bool draggedAlong = false;
             for (; loops < 600 && ActionQueue.Queue.Running; loops++)
             {
                 Ticks(60);
                 ActionQueue.Queue.Tick(game, 2);
-                if (!ore.Action.IsStarted) miningOff++;
                 Look();
-                string doing = ActionQueue.Targets.Main(game)?.Entity.DisplayName.Text ?? "-";
+                most = Math.Max(most, Count());
+                string doing = Running();
                 if (seen.Count == 0 || seen[^1] != doing) seen.Add(doing);
+                if (ActionQueue.Queue.Index >= 1 && wood.Action.IsStarted) draggedAlong = true;   // a finished step must not be kept going
             }
-            int slotRestarts = mt::Multitask.Slots.Starts - slotStarts;
-            Out($"  [ayrinti] {loops} dongu (saniye); yuva {slotRestarts} kez yeniden basladi; sira tikinden sonra kazma kapali bulunan dongu: {miningOff}");
+            Look();
             string states = string.Join(" | ", ActionQueue.Queue.Steps.Select(s => s.State));
             bool finished = !ActionQueue.Queue.Running && ActionQueue.Queue.Note.Contains("finished") && ActionQueue.Queue.Steps.All(s => s.State.StartsWith("done"));
-            Check("is sirasi yuva calisirken dogru yuruyor", finished && ore.Action.IsStarted && State(0) == "running" && Qty(ore.Product) > o0 && ActionQueue.Targets.Main(game) == null,
-                  $"siranin yaptiklari: {string.Join(" -> ", seen)}; adimlar: {states}; not: '{ActionQueue.Queue.Note}'; bu sirada kazilan: {Qty(ore.Product) - o0}; sira bitince calisan: {Running()}");
+            Check("is sirasi ile birlikte: oyuncunun isi suruyor, biten adimlar suruklenmiyor", finished && ore.Action.IsStarted && Qty(ore.Product) > o0 && most == 2 && !draggedAlong && Count() == 1,
+                  $"gorulenler: {string.Join(" -> ", seen.Take(7))}; adimlar: {states}; not: '{ActionQueue.Queue.Note}'; ayni anda en cok {most} is; bu sirada kazilan: {Qty(ore.Product) - o0}; sonunda: {Running()}");
             ActionQueue.Queue.Clear();
-            int fuelEnd = Qty(fuel);
-            if (fuelEnd > fuelBefore) s_bank.Inventory.RemoveQuantity(fuel, fuelEnd - fuelBefore); else if (fuelEnd < fuelBefore) s_bank.Inventory.AddQuantity(fuel, fuelBefore - fuelEnd);
+            SetQty(fuel, fuelBefore);
         }
 
-        // ---- 9. the game's own offline calculation
-        Start(wood);
-        Look();
+        // ---- 12. the queue needs the very skill the player was using: the queue gets it, nothing is forced back
+        if (rocks.Count >= 2)
+        {
+            Start(wood); Look();
+            Start(ore); Look();                                    // wood kept, mining the latest
+            ActionQueue.Queue.Add(QStep(rocks[1], ActionQueue.Until.Minutes, 0.05));
+            ActionQueue.Queue.Start();
+            ActionQueue.Queue.Tick(game, 0.5);
+            Look();
+            bool queueHasIt = Doing(rocks[1]) && wood.Action.IsStarted && Count() == 2;
+            for (int i = 0; i < 8 && ActionQueue.Queue.Running; i++) { Ticks(60); ActionQueue.Queue.Tick(game, 2); Look(); }
+            Look(); Look();
+            Check("sira oyuncunun kullandigi beceriyi isteyince: sira aliyor, bitince zorla geri gelen yok", queueHasIt && !ActionQueue.Queue.Running && !ore.Action.IsStarted && wood.Action.IsStarted && Count() == 1,
+                  $"sira calisirken: {(queueHasIt ? rocks[1].Name + " + odun" : "YANLIS")}; sira bitince: {Running()}; {Kept()}");
+            ActionQueue.Queue.Clear();
+        }
+
+        // ---- 13. the game's own offline calculation
+        Start(ore); Look();
+        Start(wood); Look();
         w0 = Qty(wood.Product); o0 = Qty(ore.Product);
         const double Hours = 0.25;
         game.RequestOfflineHours(Hours);
@@ -579,23 +612,21 @@ static class Tests
         }
         int woodOff = Qty(wood.Product) - w0, oreOff = Qty(ore.Product) - o0;
         double scale = Hours * 3600 * 60 / T;
-        Check("cevrimdisi hesapta ana is de yuva da ilerliyor", Near(woodOff, woodAlone * scale, 0.3) && Near(oreOff, oreAlone * scale, 0.5) && wood.Action.IsStarted && ore.Action.IsStarted,
+        Check("cevrimdisi hesapta iki is de ilerliyor", Near(woodOff, woodAlone * scale, 0.3) && Near(oreOff, oreAlone * scale, 0.5) && wood.Action.IsStarted && ore.Action.IsStarted,
               $"{Hours} saat: {woodOff} {wood.Product.DisplayName.GetPluralText(1)} (beklenen ~{woodAlone * scale:0}), {oreOff} {ore.Product.DisplayName.GetPluralText(1)} (beklenen ~{oreAlone * scale:0}); sonrasinda: {Running()}");
 
-        // ---- 10. the window
-        mt::Multitask.MultitaskMod mod = mt::Multitask.MultitaskMod.Instance!;
-        mod.ToggleWindow();
-        yield return 10;
-        Rect2 rect = mod.Window!.Panel.GetGlobalRect();
-        Vector2 screen = ctx.Tree.Root.GetVisibleRect().Size;
-        bool chose = mod.Window.Choose(1, fishSpot.Entity.Id, fishSpot.Target.Id);
-        mt::Multitask.Slots.SetOn(1, true);
+        // ---- 14. the window
+        if (!win.Visible) mod.ToggleWindow();
+        win.PressSwitch(1);
+        Start(fishSpot);
         Look();
         yield return 10;
-        string row0 = mod.Window.RowText(0), row1 = mod.Window.RowText(1);
-        Check("Multitask penceresi", mod.Window.Visible && rect.Position.X >= 0 && rect.Position.Y >= 0 && rect.End.X <= screen.X && rect.End.Y <= screen.Y
-              && chose && row0.StartsWith("ON") && row0.Contains("running") && row1.StartsWith("ON") && row1.Contains("running") && fishSpot.Action.IsStarted,
-              $"{rect.Size.X}x{rect.Size.Y}; 1. satir: {row0}; 2. satir: {row1}; calisan: {Running()}");
+        Rect2 rect = win.Panel.GetGlobalRect();
+        Vector2 screen = ctx.Tree.Root.GetVisibleRect().Size;
+        string l0 = win.LineText(0), l1 = win.LineText(1), l2 = win.LineText(2);
+        Check("Multitask penceresi", win.Visible && rect.Position.X >= 0 && rect.Position.Y >= 0 && rect.End.X <= screen.X && rect.End.Y <= screen.Y
+              && win.SwitchText(0) == "ON" && win.SwitchText(1) == "ON" && l0.Contains(fishSpot.Target.Name) && l0.Contains("running") && l1.Contains("running") && l2.Contains("running") && Count() == 3,
+              $"{rect.Size.X}x{rect.Size.Y}; 1: {l0} | 2: {l1} | 3: {l2}; alt yazi: '{win.StatusText}'");
         if (DisplayServer.GetName() != "headless")
         {
             string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
@@ -603,18 +634,19 @@ static class Tests
             for (int i = 0; i < 120; i++) { game.PropagateTick(); if (i % 4 == 0) yield return 1; }
             Out($"  goruntu coklu-1-pencere.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "coklu-1-pencere.png"))}");
         }
-        mod.ToggleWindow();
 
         string slotFile = Path.Combine(Path.GetDirectoryName(typeof(mt::Multitask.MultitaskMod).Assembly.Location)!, "multitask.json");
         Check("yuvalar dosyaya yaziliyor", File.Exists(slotFile) && File.ReadAllText(slotFile).Contains(ore.Target.Id) && File.ReadAllText(slotFile).Contains(Engine.Character), Path.GetFileName(slotFile));
 
-        for (int i = 0; i < mt::Multitask.Slots.Count; i++) mt::Multitask.Slots.SetOn(i, false);
+        for (int i = 0; i < mt::Multitask.Slots.Count; i++) if (mt::Multitask.Slots.IsOn(i)) win.PressSwitch(i);
+        mod.ToggleWindow();
         game.ActionManager.TryStopActive(force: true);
+        Look();
         Engine.ResetAll();
         combat.Player.Health.Set(combat.Player.Health.Max);
     }
 
-    // Closing the game with a slot running, and opening it again (two runs: MML_ONLY=multi-save, then multi-load).
+    // Closing the game with two actions running, and opening it again (two runs: MML_ONLY=multi-save, then multi-load).
     static IEnumerator<int> MultiSave(Game game)
     {
         Out("=== Multitask: iki is calisirken oyunu kapatma ===");
@@ -626,10 +658,11 @@ static class Tests
         ActionQueue.Maker First(string skill) => makers.First(m => m.Entity.DisplayName.Text == skill && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
         ActionQueue.Maker wood = First("Woodcutting"), ore = First("Mining");
         mt::Multitask.Slots.SetOn(1, false);
-        mt::Multitask.Slots.Set(0, ore.Entity, new mt::ActionQueue.Target(ore.Target.Id, ore.Target.Name, ore.Target.Extra));
         mt::Multitask.Slots.SetOn(0, true);
+        ActionQueue.Targets.Start(game, ore.Action, ore.Target, out _);
+        yield return 60;   // the mod itself notices (no help from the test)
         ActionQueue.Targets.Start(game, wood.Action, wood.Target, out _);
-        yield return 90;   // the mod itself notices and starts the slot (no help from the test)
+        yield return 90;
         Check("kapatmadan once iki is calisiyor (modun kendi saatiyle)", wood.Action.IsStarted && ore.Action.IsStarted && game.ActionManager.ActiveActions.Count == 2,
               string.Join(" + ", game.ActionManager.ActiveActions.Select(a => a.Entity.DisplayName.Text)));
     }
@@ -640,9 +673,9 @@ static class Tests
         // Nothing is started here: what runs now is what the game itself brought back from the save.
         var running = game.ActionManager.ActiveActions.Select(a => $"{a.Entity.DisplayName.Text}: {ActionQueue.Targets.Current(a)?.Name ?? "?"}").ToList();
         int startsByMod = mt::Multitask.Slots.Starts;
-        mt::Multitask.Slot slot = mt::Multitask.Slots.All[0];
-        Check("oyun yeniden acilinca iki is de suruyor", running.Count == 2 && slot.On && slot.State == "running" && startsByMod == 0,
-              $"calisan: {string.Join(" + ", running)}; yuva: {(slot.On ? "ACIK" : "kapali")} '{slot.State}'; modun yeniden baslatmasi gerekti mi: {(startsByMod == 0 ? "hayir, oyun kendi acti" : startsByMod + " kez")}");
+        string kept = string.Join(" > ", mt::Multitask.Slots.Recent.Select(k => $"{k.Title} [{k.State}]"));
+        Check("oyun yeniden acilinca iki is de suruyor", running.Count == 2 && mt::Multitask.Slots.IsOn(0) && mt::Multitask.Slots.Recent.Count == 2 && mt::Multitask.Slots.Recent.All(k => k.State == "running") && startsByMod == 0,
+              $"calisan: {string.Join(" + ", running)}; mod: {kept}; modun yeniden baslatmasi gerekti mi: {(startsByMod == 0 ? "hayir, oyun kendi acti" : startsByMod + " kez")}");
         int before = s_bank.Inventory.Stacks.Sum(s => s.Quantity);
         for (int i = 0; i < 3600; i++) game.PropagateTick();
         Check("yeniden acildiktan sonra ikisi de uretiyor", s_bank.Inventory.Stacks.Sum(s => s.Quantity) > before && game.ActionManager.ActiveActions.Count == 2, $"bir dakikada +{s_bank.Inventory.Stacks.Sum(s => s.Quantity) - before} esya");
@@ -784,6 +817,38 @@ static class Tests
         Check("sira calisirken baska siraya geciliyor", wasFishing && keptRunning && switched, $"once balik tutuyordu: {wasFishing}; '{flyMessage}'; simdi odun kesiyor: {wood.Action.IsStarted}");
         ActionQueue.Queue.Pause("test");
         game.ActionManager.TryStopActive(force: true);
+
+        // ---- 3b. the player's report: "Remove all" while a step runs. What the queue started must stop with it.
+        ActionQueue.Queue.Clear();
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Add(QStep(ore, ActionQueue.Until.Item, 1000000, ore.Product));
+        ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 5));
+        ActionQueue.Queue.Start();
+        ActionQueue.Queue.Tick(game, 0.5);
+        bool minedForQueue = ore.Action.IsStarted;
+        ActionQueue.Queue.Clear();                                   // the "Remove all" button
+        bool stoppedWithIt = !ore.Action.IsStarted && !game.ActionManager.HasActiveAction && !ActionQueue.Queue.Running;
+        string clearedNote = ActionQueue.Queue.Note;
+        // Taking out only the running step: its action stops and the next step takes over.
+        ActionQueue.Queue.Add(QStep(ore, ActionQueue.Until.Item, 1000000, ore.Product));
+        ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 5));
+        ActionQueue.Queue.Start();
+        ActionQueue.Queue.Tick(game, 0.5);
+        ActionQueue.Queue.RemoveAt(0);                                // "Remove" on the running step
+        bool stepStopped = !ore.Action.IsStarted;
+        ActionQueue.Queue.Tick(game, 0.5);
+        bool nextTookOver = wood.Action.IsStarted && ActionQueue.Queue.Running && ActionQueue.Queue.Steps.Count == 1;
+        // But what the player started by hand is theirs: emptying a paused queue leaves it alone.
+        ActionQueue.Targets.Start(game, fishSpot.Action, fishSpot.Target, out _);
+        ActionQueue.Queue.Tick(game, 0.5);                            // the queue notices and pauses
+        bool pausedForPlayer = !ActionQueue.Queue.Running;
+        ActionQueue.Queue.Clear();
+        bool playersActionKept = fishSpot.Action.IsStarted;
+        Check("sira bosaltilinca siranin baslattigi is de duruyor", minedForQueue && stoppedWithIt && stepStopped && nextTookOver && pausedForPlayer && playersActionKept,
+              $"Remove all: kazma durdu: {stoppedWithIt} ('{clearedNote}'); calisan adim silinince durdu: {stepStopped}, sonraki adim basladi: {nextTookOver}; oyuncunun elle baslattigi ise dokunulmadi: {playersActionKept}");
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.SetRepeat(false);
 
         // ---- 4. a share code brings a queue back exactly
         string code = ActionQueue.Queue.ExportCode(B)!;

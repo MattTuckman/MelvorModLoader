@@ -196,6 +196,25 @@ public static class Targets
     /// </summary>
     public const string HeldMeta = "MultitaskHeld";
 
+    /// <summary>The Action Queue writes the skill of the step it is running under this name ("" when it runs nothing).</summary>
+    public const string DrivingMeta = "ActionQueueDriving";
+
+    public static void PublishDriving(string entityId)
+    {
+        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(DrivingMeta, entityId); } catch { }
+    }
+
+    /// <summary>The skill the Action Queue is running a step on right now, or "".</summary>
+    public static string QueueDriving()
+    {
+        try
+        {
+            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
+            return root.HasMeta(DrivingMeta) ? root.GetMeta(DrivingMeta).AsString() : "";
+        }
+        catch { return ""; }
+    }
+
     static HashSet<string> Held()
     {
         var held = new HashSet<string>();

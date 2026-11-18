@@ -15,48 +15,60 @@ using MelvorModLoader;
 
 namespace Multitask;
 
-/// <summary>One extra action that is kept running beside whatever the player is doing.</summary>
-public sealed class Slot
+/// <summary>One of the player's recent actions that is being kept running.</summary>
+public sealed class Kept
 {
-    public bool On { get; set; }
     public string Entity { get; set; } = "";      // the skill, e.g. MelvorBase:Mining
     public string SkillName { get; set; } = "";
     public string TargetId { get; set; } = "";    // the rock, recipe, monster...
     public string Extra { get; set; } = "";       // combat only: the area
-    public string Name { get; set; } = "";        // "Copper Ore"
+    public string Name { get; set; } = "";        // "Coal"
 
-    /// <summary>What the slot is doing right now, in words (not saved).</summary>
+    /// <summary>What it is doing right now, in words (not saved).</summary>
     [JsonIgnore] public string State = "";
+    /// <summary>True while it is stopped and waiting to be started again by this mod.</summary>
+    [JsonIgnore] internal bool Pending;
+    /// <summary>The Action Queue started it: the queue decides when it runs, this mod never starts it again.</summary>
+    [JsonIgnore] internal bool ByQueue;
     [JsonIgnore] internal double RetryAt;
-    [JsonIgnore] internal string Following = "";  // a slayer slot: the task monster it is fighting
-    [JsonIgnore] internal long Pile;              // a recipe slot: how many crafts the bank had materials for at the last look
+    [JsonIgnore] internal long Pile;              // a recipe: how many crafts the bank had materials for at the last look
     [JsonIgnore] internal double GrewAt;          // ...and when that number last went up
 
-    [JsonIgnore] public bool HasTarget => Entity != "" && TargetId != "";
-    [JsonIgnore] public string Title => HasTarget ? $"{SkillName}: {Name}" : "";
+    [JsonIgnore] public string Title => $"{SkillName}: {Name}";
 }
 
 /// <summary>
-/// The game stops every running action when a new one starts. It does that by walking its list of running
-/// actions - and that list is the only thing that says "one at a time": the list itself, the save file and
-/// the screen all cope with several. So a slot's action is started through the game's own start code while
-/// the list is put aside for a moment; nothing else is touched.
+/// The idea, in the player's words: "just an on/off switch per slot; whatever I do last is what counts".
 ///
-/// Anything the player starts in the game still stops everything (the game's rule). A slot notices within
-/// half a second and starts its action again. It also starts again when materials come back, and it turns
-/// itself off when the character dies, so it never walks back into a fight.
+/// The game stops every running action when a new one starts. With a slot switched on, the action the player
+/// was doing before is started again next to the new one. So with one slot on, the last two actions run
+/// together; with both on, the last three. Nothing has to be picked anywhere:
+///   - start something new            -> it joins, the oldest drops out when there is no room
+///   - choose another rock/recipe     -> that skill simply does the new thing (a skill can only do one)
+///   - press the game's own Stop      -> that action is dropped
+///   - materials run out              -> it waits and goes on when there are some again
+///   - the character dies             -> the fight is dropped, it never walks back in
+///
+/// How: the game's "one at a time" lives in one place, the list it walks to stop things. That list is put
+/// aside for the moment an earlier action is started again through the game's own start code.
 /// </summary>
 public static class Slots
 {
     public const int Count = 2;
     const double RetrySeconds = 2;
-    /// <summary>A recipe slot starts again once there is enough for this many crafts...</summary>
+    /// <summary>A recipe that waits for materials starts again once there is enough for this many crafts...</summary>
     const int PileSize = 10;
     /// <summary>...or once the materials have not grown for this long.</summary>
     const double SettleSeconds = 30;
 
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_activeActions")]
     static extern ref List<ActionComponent> Running(ActiveActionManager manager);
+
+    sealed class Saved
+    {
+        public List<bool> On { get; set; } = new();
+        public List<Kept> Recent { get; set; } = new();
+    }
 
     public static string Dir = "";
     public static Action<string> Log { get; set; } = _ => { };
@@ -67,33 +79,47 @@ public static class Slots
     static Dictionary<string, ActionComponent> s_actions = new();
     static GameFooter? s_footer;
     static volatile bool s_died;
-    static bool s_startedNow;
-    static string s_published = "";
+    /// <summary>Set by the game's own "an action started" event: the game has just stopped everything else for it.</summary>
+    static volatile bool s_gameStartedSomething;
+    static volatile ActionComponent? s_lastStarted;
+    static bool s_restoring, s_startedNow;
+    static string s_published = "", s_savedAs = "";
+    static readonly bool[] s_on = new bool[Count];
+    static List<Kept> s_recent = new();
 
-    public static List<Slot> All { get; private set; } = NewSlots();
-    /// <summary>How many times a slot had to start its action since the character was opened.</summary>
+    /// <summary>The actions being kept, the latest first.</summary>
+    public static IReadOnlyList<Kept> Recent => s_recent;
+    public static bool IsOn(int slot) => slot >= 0 && slot < Count && s_on[slot];
+    /// <summary>How many actions may run together: the latest one plus one per slot that is on.</summary>
+    public static int Capacity => 1 + s_on.Count(on => on);
+    /// <summary>How many times this mod started an action again since the character was opened.</summary>
     public static int Starts { get; private set; }
+    /// <summary>The last thing worth telling the player.</summary>
+    public static string Note { get; private set; } = "";
     public static event Action? Changed;
-
-    static List<Slot> NewSlots() => Enumerable.Range(0, Count).Select(_ => new Slot()).ToList();
 
     // ---------------------------------------------------------------- loading and saving
 
-    static Dictionary<string, List<Slot>> Read()
+    static Dictionary<string, Saved> Read()
     {
-        try { return JsonSerializer.Deserialize<Dictionary<string, List<Slot>>>(File.ReadAllText(FilePath)) ?? new(); }
-        catch { return new(); }
+        try { return JsonSerializer.Deserialize<Dictionary<string, Saved>>(File.ReadAllText(FilePath)) ?? new(); }
+        catch { return new(); }   // also an older file with another layout: start clean
     }
+
+    static string Signature() => string.Join(",", s_on) + "|" + string.Join(";", s_recent.Select(k => $"{k.Entity},{k.TargetId},{k.Extra}"));
 
     static void Save()
     {
         if (s_character == "") return;
+        string now = Signature();
+        if (now == s_savedAs) return;
         try
         {
             // Only this character's entry is replaced in what is on disk right now.
-            Dictionary<string, List<Slot>> all = Read();
-            all[s_character] = All;
+            Dictionary<string, Saved> all = Read();
+            all[s_character] = new Saved { On = s_on.ToList(), Recent = s_recent };
             File.WriteAllText(FilePath, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
+            s_savedAs = now;
         }
         catch (Exception e) { Log("The slots could not be saved: " + e.Message); }
     }
@@ -107,10 +133,24 @@ public static class Slots
         s_footer = null;
         s_died = false;
         Starts = 0;
-        Read().TryGetValue(s_character, out List<Slot>? saved);
-        All = saved ?? NewSlots();
-        while (All.Count < Count) All.Add(new Slot());
-        if (All.Count > Count) All = All.Take(Count).ToList();
+        Note = "";
+        Read().TryGetValue(s_character, out Saved? saved);
+        for (int i = 0; i < Count; i++) s_on[i] = saved != null && i < saved.On.Count && saved.On[i];
+        s_recent = (saved?.Recent ?? new List<Kept>()).Where(k => k.Entity != "" && k.TargetId != "" && s_actions.ContainsKey(k.Entity))
+            .GroupBy(k => k.Entity).Select(g => g.First()).ToList();
+        // What was running when the game was closed is brought back by the game itself. Anything on file that
+        // is not running now is waiting to be started again (only looked at while a slot is on).
+        foreach (Kept k in s_recent) k.Pending = true;
+        s_savedAs = Signature();
+        s_gameStartedSomething = false;
+        // The game raises this whenever any action starts - also when the same one is started again, which
+        // looks like "nothing changed" afterwards although the game stopped everything else for it.
+        game.ActionManager.ActionStarted += (_, e) =>
+        {
+            if (!ReferenceEquals(game, s_game) || s_restoring) return;
+            s_gameStartedSomething = true;
+            s_lastStarted = e.Action;
+        };
         // A death must never turn into "walk straight back in". The event can arrive on the game's own
         // thread (offline progress), so it only raises a flag; the next tick acts on it.
         if (game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combat) && combat is CombatEntity fighter)
@@ -127,127 +167,166 @@ public static class Slots
         Publish(new List<string>());
     }
 
-    // ---------------------------------------------------------------- editing
+    // ---------------------------------------------------------------- the switches
 
-    public static void Set(int index, GameEntity entity, Target target)
+    public static void SetOn(int slot, bool on)
     {
-        if (index < 0 || index >= All.Count) return;
-        Slot slot = All[index];
-        if (slot.Entity == entity.Id && slot.TargetId == target.Id && slot.Extra == target.Extra) return;
-        StopIfDoing(slot);
-        slot.Entity = entity.Id;
-        slot.SkillName = entity.DisplayName.Text;
-        slot.TargetId = target.Id;
-        slot.Extra = target.Extra;
-        slot.Name = target.Name;
-        slot.State = "";
-        slot.RetryAt = 0;
-        slot.Following = "";
+        if (slot < 0 || slot >= Count || s_on[slot] == on) return;
+        s_on[slot] = on;
+        Note = "";
+        if (s_game != null) Trim(s_game, stopExtras: true);   // a slot switched off: what no longer fits is stopped
         Save();
         Changed?.Invoke();
-    }
-
-    public static void SetOn(int index, bool on)
-    {
-        if (index < 0 || index >= All.Count) return;
-        Slot slot = All[index];
-        if (slot.On == on) return;
-        slot.On = on;
-        slot.RetryAt = 0;
-        slot.State = "";
-        if (!on) StopIfDoing(slot);
-        Save();
-        Changed?.Invoke();
-    }
-
-    static void StopIfDoing(Slot slot)
-    {
-        if (s_game == null || !slot.HasTarget || !s_actions.TryGetValue(slot.Entity, out ActionComponent? action)) return;
-        if (Targets.IsDoing(action, new Target(slot.TargetId, slot.Name, slot.Extra))) action.TryStop(force: true);
     }
 
     // ---------------------------------------------------------------- running
+
+    static bool IsRunning(Kept k) =>
+        s_actions.TryGetValue(k.Entity, out ActionComponent? action) && Targets.IsDoing(action, new Target(k.TargetId, k.Name, k.Extra));
 
     /// <summary>Call a couple of times per second while a character is open. <paramref name="now"/> is any steady clock in seconds.</summary>
     public static void Tick(Game game, double now)
     {
         if (!ReferenceEquals(game, s_game)) return;
-        bool changed = false;
+        string before = Signature() + "|" + string.Join(";", s_recent.Select(k => k.State)) + "|" + Note;
+        try { Look(game, now); }
+        catch (Exception e) { Log("Multitask failed: " + e.Message); }
+        Save();
+        if (before != Signature() + "|" + string.Join(";", s_recent.Select(k => k.State)) + "|" + Note) Changed?.Invoke();
+    }
+
+    static void Look(Game game, double now)
+    {
+        // 1. A death: the fight is dropped for good.
         if (s_died)
         {
             s_died = false;
-            foreach (Slot slot in All.Where(s => s.On && s.Entity == "MelvorBase:Combat"))
+            Kept? fight = s_recent.FirstOrDefault(k => k.Entity == "MelvorBase:Combat");
+            if (fight != null)
             {
-                slot.On = false;
-                slot.State = "turned off: your character died";
-                changed = true;
+                s_recent.Remove(fight);
+                Note = $"Your character died, so {fight.Title} was dropped.";
             }
-            if (changed) Save();
         }
 
-        var holding = new List<string>();
-        for (int i = 0; i < All.Count; i++)
+        // 2. What runs now. Something new, or a skill doing another thing than before, is the player's latest
+        //    choice and goes to the front.
+        string queueSkill = Targets.QueueDriving();
+        bool somethingNew = s_gameStartedSomething;
+        s_gameStartedSomething = false;
+        foreach (ActionComponent action in game.ActionManager.ActiveActions.ToList())
         {
-            Slot slot = All[i];
-            string before = slot.State;
-            try { Step(game, i, slot, now, holding); }
-            catch (Exception e)
+            if (!s_actions.TryGetValue(action.Entity.Id, out ActionComponent? known) || !ReferenceEquals(known, action)) continue;
+            Target? target = Targets.Current(action);
+            if (target == null) continue;
+            Kept? kept = s_recent.FirstOrDefault(k => k.Entity == action.Entity.Id);
+            if (kept == null)
             {
-                Log($"Slot {i + 1} ('{slot.Title}') failed: {e.Message}");
-                slot.State = "waiting: an error occurred (see the log)";
-                slot.RetryAt = now + 10;
+                kept = new Kept { Entity = action.Entity.Id, SkillName = action.Entity.DisplayName.Text };
+                s_recent.Insert(0, kept);
+                somethingNew = true;
             }
-            changed |= before != slot.State;
+            else if (kept.TargetId != target.Id || kept.Extra != target.Extra)
+            {
+                s_recent.Remove(kept);
+                s_recent.Insert(0, kept);
+                somethingNew = true;
+            }
+            kept.TargetId = target.Id;
+            kept.Extra = target.Extra;
+            kept.Name = target.Name;
+            kept.Pending = false;
+            kept.ByQueue = queueSkill == kept.Entity;
+            kept.State = "running";
         }
-        Publish(holding);
-        Order(game, holding);
-        if (changed) Changed?.Invoke();
-    }
 
-    static void Step(Game game, int index, Slot slot, double now, List<string> holding)
-    {
-        if (!slot.On) { if (!slot.State.StartsWith("turned off")) slot.State = ""; return; }
-        if (!slot.HasTarget) { slot.State = "choose an action"; return; }
-        if (All.Take(index).Any(other => other.On && other.Entity == slot.Entity)) { slot.State = "waiting: the other slot uses this skill"; return; }
-        if (!s_actions.TryGetValue(slot.Entity, out ActionComponent? action)) { slot.State = "waiting: this skill is not in the game"; return; }
-
-        var target = new Target(slot.TargetId, slot.Name, slot.Extra);
-        if (Targets.IsDoing(action, target))
+        // What the game started last is the player's latest action, also when it is the same one as before.
+        ActionComponent? last = s_lastStarted;
+        s_lastStarted = null;
+        if (last != null && s_recent.FindIndex(k => k.Entity == last.Entity.Id) is var at && at > 0 && last.IsStarted)
         {
-            slot.Following = Targets.Current(action)?.Id ?? "";
-            slot.State = "running";
-            holding.Add(slot.Entity);
+            Kept latest = s_recent[at];
+            s_recent.RemoveAt(at);
+            s_recent.Insert(0, latest);
+        }
+
+        // With every slot off this is the plain game: remember what runs, start nothing.
+        if (Capacity == 1)
+        {
+            s_recent.RemoveAll(k => !IsRunning(k));
+            Trim(game, stopExtras: false);
+            Publish(new List<string>());
             return;
         }
-        bool nextTask = false;
+
+        // 3. What does not run.
+        foreach (Kept kept in s_recent.ToList())
+        {
+            if (IsRunning(kept)) continue;
+            if (kept.ByQueue) { s_recent.Remove(kept); continue; }   // the queue's own step: never ours to start again
+            if (kept.Pending) continue;
+            if (somethingNew) { kept.Pending = true; kept.RetryAt = 0; continue; }   // stopped by the game because of the new action
+            // It stopped while nothing new was started: the player pressed Stop, or it ran out of something.
+            ActionComponent action = s_actions[kept.Entity];
+            if (Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0) { kept.Pending = true; continue; }   // out of materials: wait
+            s_recent.Remove(kept);
+        }
+
+        // 4. No more than fits. With every slot off that is one action: plain game.
+        Trim(game, stopExtras: false);
+
+        // 5. Start again what is waiting.
+        foreach (Kept kept in s_recent.Where(k => k.Pending).Reverse().ToList()) Restore(game, kept, now);
+
+        var held = s_recent.Skip(1).Where(IsRunning).Select(k => k.Entity).ToList();
+        Publish(held);
+        Order(game);
+    }
+
+    static void Trim(Game game, bool stopExtras)
+    {
+        while (s_recent.Count > Capacity)
+        {
+            Kept oldest = s_recent[^1];
+            s_recent.RemoveAt(s_recent.Count - 1);
+            if (stopExtras && IsRunning(oldest)) s_actions[oldest.Entity].TryStop(force: true);
+        }
+    }
+
+    static void Restore(Game game, Kept kept, double now)
+    {
+        ActionComponent action = s_actions[kept.Entity];
+        var target = new Target(kept.TargetId, kept.Name, kept.Extra);
         if (action.IsStarted)
         {
-            // The skill is busy. Either the player is using it for something else (leave it alone), or this is
-            // a slayer slot whose task was just completed: then it moves on to the new task monster.
-            nextTask = slot.Extra == Targets.Slayer && slot.Following != "" && Targets.Current(action)?.Id == slot.Following;
-            if (!nextTask) { slot.State = "waiting: this skill is doing something else"; return; }
+            // The skill went on to something else in the meantime; step 2 picks that up at the next look.
+            kept.State = "waiting: this skill is doing something else";
+            return;
         }
-        if (now < slot.RetryAt) return;
-        slot.RetryAt = now + RetrySeconds;
+        if (now < kept.RetryAt) return;
+        kept.RetryAt = now + RetrySeconds;
 
-        if (!Targets.CanStart(action, target, out string problem)) { slot.State = "waiting: " + problem; return; }
-        // A recipe that eats what the main action makes would start and stop for every single fish, and the
+        if (!Targets.CanStart(action, target, out string problem))
+        {
+            s_recent.Remove(kept);
+            Note = $"{kept.Title} was dropped: {problem}.";
+            return;
+        }
+        // A recipe that eats what another action makes would start and stop for every single fish, and the
         // game reports each stop. So it waits for a small pile - or, when the pile has stopped growing
         // (nothing is making more), works through whatever there is.
         long batches = Targets.Batches(game, action, target);
-        if (batches > slot.Pile) slot.GrewAt = now;
-        slot.Pile = batches;
-        if (batches == 0) { slot.State = "waiting: the materials have run out"; return; }
-        if (batches < PileSize && now - slot.GrewAt < SettleSeconds) { slot.State = $"waiting: collecting materials ({batches}/{PileSize})"; return; }
-        if (nextTask) action.TryStop(force: true);
-        bool started = Beside(game, () => Targets.Start(game, action, target, out problem));
-        if (!started) { slot.State = "waiting: " + problem; return; }
+        if (batches > kept.Pile) kept.GrewAt = now;
+        kept.Pile = batches;
+        if (batches == 0) { kept.State = "waiting: the materials have run out"; return; }
+        if (batches < PileSize && now - kept.GrewAt < SettleSeconds) { kept.State = $"waiting: collecting materials ({batches}/{PileSize})"; return; }
+
+        if (!Beside(game, () => Targets.Start(game, action, target, out problem))) { kept.State = "waiting: " + problem; return; }
         Starts++;
         s_startedNow = true;
-        slot.RetryAt = 0;
-        slot.Following = Targets.Current(action)?.Id ?? "";
-        slot.State = "running";
-        holding.Add(slot.Entity);
+        kept.Pending = false;
+        kept.RetryAt = 0;
+        kept.State = "running";
     }
 
     /// <summary>Runs the game's own start code while the game sees nothing running, so it stops nothing.</summary>
@@ -256,30 +335,37 @@ public static class Slots
         List<ActionComponent> running = Running(game.ActionManager);
         List<ActionComponent> kept = running.ToList();
         running.Clear();
+        s_restoring = true;
         try { return start(); }
         finally
         {
+            s_restoring = false;
             foreach (ActionComponent action in kept)
                 if (action.IsStarted && !running.Contains(action)) running.Add(action);
         }
     }
 
     /// <summary>
-    /// The game shows the last action of its list in the bottom bar. Slot actions are moved to the front so the
-    /// bar keeps showing what the player chose.
+    /// The game shows the last action of its list in the bottom bar. The list is kept in the order "oldest
+    /// first, latest last", so the bar shows what the player did last.
     /// </summary>
-    static void Order(Game game, List<string> holding)
+    static void Order(Game game)
     {
         List<ActionComponent> running = Running(game.ActionManager);
-        if (running.Count < 2) return;
-        List<ActionComponent> wanted = running.Where(a => holding.Contains(a.Entity.Id)).Concat(running.Where(a => !holding.Contains(a.Entity.Id))).ToList();
+        if (running.Count < 2) { s_startedNow = false; return; }
+        int Rank(ActionComponent a)
+        {
+            int at = s_recent.FindIndex(k => k.Entity == a.Entity.Id);
+            return at < 0 ? -1 : at;   // something this mod does not know: treat it as the very latest
+        }
+        List<ActionComponent> wanted = running.OrderByDescending(Rank).ToList();
         bool reordered = !wanted.SequenceEqual(running);
         if (reordered)
         {
             running.Clear();
             running.AddRange(wanted);
         }
-        // The bar bound itself to the slot's action the moment that started; point it back at the main one.
+        // The bar bound itself to whatever started last (also to what this mod just started again).
         if (!reordered && !s_startedNow) return;
         s_startedNow = false;
         try
@@ -290,10 +376,10 @@ public static class Slots
         catch (Exception e) { Log("The bottom bar could not be refreshed: " + e.Message); }
     }
 
-    /// <summary>Tells other mods (the Action Queue) which skills are being kept running by a slot right now.</summary>
-    static void Publish(List<string> holding)
+    /// <summary>Tells other mods (the Action Queue) which skills are being kept running beside the latest action.</summary>
+    static void Publish(List<string> held)
     {
-        string text = string.Join("|", holding);
+        string text = string.Join("|", held);
         if (text == s_published) return;
         s_published = text;
         try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(Targets.HeldMeta, text); } catch { }

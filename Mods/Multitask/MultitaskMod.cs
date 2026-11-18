@@ -5,7 +5,7 @@ using MelvorModLoader;
 namespace Multitask;
 
 /// <summary>
-/// F5 opens the Multitask window. Its slots keep extra actions running beside the one chosen in the game.
+/// F5 opens the Multitask window. With a slot switched on, the action before the latest one keeps running.
 /// </summary>
 public class MultitaskMod : IMod
 {
