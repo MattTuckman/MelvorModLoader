@@ -1,0 +1,101 @@
+==========================================================================================
+MULTITASK  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Multitask
+
+KATEGORI ONERISI (Category):
+Miscellaneous (Cheats varsa o)
+
+KISA ACIKLAMA (Summary / Brief overview):
+Do more than one thing at a time in Melvor Idle 2: fish while you cook the catch, mine while you fight. Two slots keep extra actions running beside your main one, also offline. They come back by themselves and wait for materials. A cheat.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (file requirement, min 0.1.3)
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\Multitask-0.1.0.zip   (name: Multitask, version 0.1.0)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+Dev\shots\coklu-1-pencere.png (main image)
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.1.0
+- First version
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]MULTITASK[/b][/size]
+[size=4][i]One action at a time? Not any more.[/i][/size]
+Fish while you cook the catch. Mine while you fight. Cut wood while you smith.
+Two slots keep extra actions running beside the one you choose in the game.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is Multitask [b]0.1.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F5[/b].
+
+[b]This is a cheat.[/b] The game is balanced around one action at a time; this mod lets up to three run together. Use it if that is the game you want to play.
+
+[size=5][b]How it works[/b][/size]
+[list=1]
+[*]Press [b]F5[/b]. In a slot, pick a skill and what to do, and switch the slot [b]ON[/b]. Or press [b]Use what I am doing now[/b] to move your current action into the slot.
+[*]Start your main action in the game as usual.
+[*]Both run. Each at its normal speed, each with its normal rewards.
+[/list]
+
+[size=5][b]It looks after itself[/b][/size]
+[list]
+[*][b]It comes back.[/b] The game stops everything whenever you start something new. The slots return by themselves within a second, so you can click around freely.
+[*][b]It waits for materials.[/b] A cooking or smithing slot pauses when it runs out and goes on when there is more. It works in small piles (about ten at a time) so the game does not report "action stopped" for every single fish.
+[*][b]It does not walk back into a fight.[/b] A fighting slot turns itself off if your character dies.
+[*][b]It gets out of your way.[/b] Use a slot's skill for something else and the slot waits until that skill is free.
+[*][b]It works while you are away.[/b] Everything that was running when you closed the game goes on in the game's own offline progress.
+[*][b]It never bypasses requirements.[/b] A slot cannot do what you cannot do yet.
+[/list]
+
+[size=5][b]Good pairs[/b][/size]
+[list]
+[*]Fishing + Cooking: the slot cooks what you catch.
+[*]Mining + Smithing: the slot smelts what you mine.
+[*]Combat + any gathering skill.
+[*]Woodcutting + Firemaking.
+[/list]
+
+[size=5][b]Works with Action Queue[/b][/size]
+With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.3.1 or newer, the queue runs your main action step by step and the slots keep running beside it.
+
+[size=5][b]Good to know[/b][/size]
+[list]
+[*]The two slots cannot use the same skill.
+[*]A slot that runs out of materials while the game is closed stays stopped until you are back.
+[*]Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
+[*]The game's bottom bar shows your main action. The slots are shown in the F5 window.
+[*]All 16 skills the Action Queue knows are supported, including dungeons and slayer tasks.
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]Multitask-0.1.0.zip[/b] there. The mod ends up in [b]mods\Multitask[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script. Nothing is written outside the game folder.
+
+[size=5][b]Uninstall[/b][/size]
+Switch the slots OFF and delete the folder [b]mods\Multitask[/b]. Your save needs no clean-up: without the mod, extra actions simply stop the next time you start anything.
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]One file: [b]Multitask.dll[/b]. No .exe, no .bat, no installer.
+[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/40c451dd4a3fa40f84800a6733238e46dd82cb1b29c228c884968915f1188ea6]0 detections[/url].
+[*]None of the game's own files are changed or included.
+[/list]
+
+[size=5][b]Help[/b][/size]
+When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://github.com/falorfrozen-cmd]GitHub[/url][/b][/center]

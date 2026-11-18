@@ -246,7 +246,8 @@ public static class Queue
         if (now == null)
         {
             if (s_died) { s_died = false; Pause("Your character died, so the queue is paused."); return; }
-            if (game.ActionManager.HasActiveAction) { Pause("You started something else, so the queue is paused."); return; }
+            // Actions kept running by a Multitask slot do not count as "the player took over".
+            if (Targets.Main(game) != null) { Pause("You started something else, so the queue is paused."); return; }
             step.State = "done (it stopped by itself)";
             Next();
             return;
@@ -268,7 +269,8 @@ public static class Queue
         s_seconds += seconds;
         if (Met(game, step))
         {
-            if (!game.ActionManager.TryStopActive()) game.ActionManager.TryStopActive(force: true);
+            // Only this step's own action is stopped: anything a Multitask slot keeps running goes on.
+            if (!action.TryStop()) action.TryStop(force: true);
             step.State = "done";
             Next();
             return;

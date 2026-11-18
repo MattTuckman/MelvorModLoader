@@ -188,6 +188,73 @@ public static class Targets
         return target.Extra == Slayer ? Master(target.Id)?.CurrentTask?.Id == now.Id : now.Id == target.Id;
     }
 
+    // ---------------------------------------------------------------- living beside the Multitask mod
+
+    /// <summary>
+    /// The Multitask mod keeps extra actions running beside the main one. It writes the skills it is holding
+    /// right now ("id|id") under this name on the scene root, so the two mods need not know each other.
+    /// </summary>
+    public const string HeldMeta = "MultitaskHeld";
+
+    static HashSet<string> Held()
+    {
+        var held = new HashSet<string>();
+        try
+        {
+            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
+            if (root.HasMeta(HeldMeta))
+                foreach (string id in root.GetMeta(HeldMeta).AsString().Split('|', StringSplitOptions.RemoveEmptyEntries)) held.Add(id);
+        }
+        catch { }
+        return held;
+    }
+
+    /// <summary>The action the player (or the queue) is doing: the running action that no Multitask slot is holding.</summary>
+    public static ActionComponent? Main(Game game)
+    {
+        HashSet<string> held = Held();
+        return game.ActionManager.ActiveActions.LastOrDefault(a => !held.Contains(a.Entity.Id));
+    }
+
+    /// <summary>False when a recipe cannot be made right now because ingredients or money are missing. Gathering needs nothing.</summary>
+    public static bool HasMaterials(ActionComponent action, Target target) => action switch
+    {
+        ArtisanActionComponent c => CanCreate(c, target.Id),
+        CookingActionComponent c => CanCreate(c, target.Id),
+        FiremakingActionComponent c => CanCreate(c, target.Id),
+        HerbloreActionComponent c => CanCreate(c, target.Id),
+        _ => true,
+    };
+
+    /// <summary>How many times a recipe can be made from what the bank holds now; a very large number when it costs no items.</summary>
+    public static long Batches(Game game, ActionComponent action, Target target) => action switch
+    {
+        ArtisanActionComponent c => Batches(game, c, target.Id),
+        CookingActionComponent c => Batches(game, c, target.Id),
+        FiremakingActionComponent c => Batches(game, c, target.Id),
+        HerbloreActionComponent c => Batches(game, c, target.Id),
+        _ => long.MaxValue,
+    };
+
+    static long Batches<TRecipe, TActive>(Game game, CraftingActionComponent<TRecipe, TActive> c, string id)
+        where TRecipe : class, ICraftingRecipe, INamespacedDataClass<TRecipe> where TActive : class, IActiveCraftingRecipe
+    {
+        TActive? recipe = c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == id).Value;
+        if (recipe == null || !c.CanCreateRecipe(recipe)) return 0;
+        if (!game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? e) || e is not GamesByMalcs.Melvor2.Entities.Bank.BankEntity bank) return 1;
+        long batches = long.MaxValue;
+        foreach (var cost in recipe.Stats.ItemCost.Values)
+            if (cost.Value.Quantity > 0) batches = Math.Min(batches, bank.Inventory.GetQuantity(cost.Value.Item) / cost.Value.Quantity);
+        return Math.Max(1, batches);
+    }
+
+    static bool CanCreate<TRecipe, TActive>(CraftingActionComponent<TRecipe, TActive> c, string id)
+        where TRecipe : class, ICraftingRecipe, INamespacedDataClass<TRecipe> where TActive : class, IActiveCraftingRecipe
+    {
+        TActive? recipe = c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == id).Value;
+        return recipe != null && c.CanCreateRecipe(recipe);
+    }
+
     /// <summary>Whether the game would let this target be started now (materials aside). Nothing is started.</summary>
     public static bool CanStart(ActionComponent action, Target target, out string problem) => Allowed(action, target, out problem);
 

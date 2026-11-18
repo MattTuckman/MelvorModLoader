@@ -16,6 +16,7 @@
     <Reference Include="CheatMenu"><HintPath>$(GameRoot)\mods\CheatMenu\CheatMenu.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BulkSell"><HintPath>$(GameRoot)\mods\BulkSell\BulkSell.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="ActionQueue"><HintPath>$(GameRoot)\mods\ActionQueue\ActionQueue.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Multitask"><HintPath>$(GameRoot)\mods\Multitask\Multitask.dll</HintPath><Private>false</Private><Aliases>mt</Aliases></Reference>
     <Reference Include="SaveBackup"><HintPath>$(GameRoot)\mods\SaveBackup\SaveBackup.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>

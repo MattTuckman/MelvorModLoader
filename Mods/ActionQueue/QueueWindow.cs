@@ -316,9 +316,9 @@ public sealed class QueueWindow
     public void Pulse()
     {
         if (_game == null) return;
-        ActionComponent? active = _game.ActionManager.ActiveActions.FirstOrDefault();
+        ActionComponent? active = Targets.Main(_game);
         Target? target = active == null ? null : Targets.Current(active);
-        _now.Text = active == null ? "Your character is doing nothing right now."
+        _now.Text =active == null ? "Your character is doing nothing right now."
             : target == null ? $"Right now: {active.Entity.DisplayName.Text} (the queue cannot drive this one)"
             : $"Right now: {active.Entity.DisplayName.Text}: {target.Name}";
         if (_planForm.Visible) Replan();   // the bank changes while the game runs
@@ -502,9 +502,9 @@ public sealed class QueueWindow
     void UseCurrent()
     {
         if (_game == null) return;
-        ActionComponent? active = _game.ActionManager.ActiveActions.FirstOrDefault();
+        ActionComponent? active = Targets.Main(_game);
         Target? target = active == null ? null : Targets.Current(active);
-        int skill = active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
+        int skill =active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
         if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
         _skillPick.Select(skill);
         FillTargets(target.Id);
