@@ -687,6 +687,30 @@ static class Tests
         ActionQueue.Maker wood = Open("Woodcutting"), ore = Open("Mining"), fishSpot = Open("Fishing");
         const string A = "Wood then stone", B = "Fishing loop";
 
+        // ---- 0. the planner: "make N more" when the bank already holds plenty (what the player ran into)
+        ActionQueue.ActionQueueMod planMod = ActionQueue.ActionQueueMod.Instance!;
+        if (planMod.Window is not { Visible: true }) planMod.ToggleWindow();
+        yield return 5;
+        Item plenty = wood.Product;
+        int plentyBefore = Qty(plenty);
+        SetQty(plenty, 673);
+        ActionQueue.PlanResult? total = planMod.Window!.PlanFor(plenty.Id, 100, more: false);
+        int totalRows = planMod.Window.PlanRows;
+        string totalNote = planMod.Window.PlanNote;
+        ActionQueue.PlanResult? make = planMod.Window.PlanFor(plenty.Id, 100, more: true);
+        int makeRows = planMod.Window.PlanRows;
+        string makeNote = planMod.Window.PlanNote;
+        yield return 5;
+        Rect2 planRect = planMod.Window.Panel.GetGlobalRect();
+        Vector2 planMin = planMod.Window.Panel.GetCombinedMinimumSize();
+        Check("plan: bankada cok varken 'Make' ile ustune yapiliyor", total != null && total.Steps.Count == 0 && totalRows == 1 && totalNote.Contains("Make")
+              && make != null && make.Steps.Count >= 1 && make.Own == 773 && make.Steps.Last().Missing == 100 && makeRows == make.Steps.Count && makeNote.StartsWith("To make 100 more")
+              && planMin.X <= planRect.Size.X + 0.5f && planMin.Y <= planRect.Size.Y + 0.5f,
+              $"bankada 673 varken 'Own in total 100': {total?.Steps.Count} adim, tabloda aciklama satiri: {totalRows == 1} ('{totalNote}'); 'Make 100': {make?.Steps.Count} adim, hedef {make?.Own} ('{makeNote}'); pencere {planRect.Size.X}x{planRect.Size.Y}, en kucuk {planMin.X}x{planMin.Y}");
+        planMod.Window.ShowStepForm();
+        planMod.ToggleWindow();
+        SetQty(plenty, plentyBefore);
+
         // ---- 1. two queues kept under a name
         ActionQueue.Queue.Add(QStep(wood, ActionQueue.Until.Minutes, 5));
         ActionQueue.Queue.Add(QStep(ore, ActionQueue.Until.Minutes, 5));
@@ -830,6 +854,26 @@ static class Tests
             Item? offered = queueMod0.Window.CountedItem;
             Check("asagi sayan hedef secilince yenen yemek oneriliyor", offered == food && queueMod0.Window.AmountShown == 5,
                   $"savas secili: {choseFight}; onerilen esya: {(offered == null ? "-" : offered.DisplayName.GetPluralText(1))}; sayi: {queueMod0.Window.AmountShown}");
+            // The player had typed 997 for another goal: the count-down goal still starts at 5, and 997 comes back afterwards.
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.Item);
+            queueMod0.Window.SetAmount(997);
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.ItemLeft);
+            double leftNumber = queueMod0.Window.AmountShown;
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.Item);
+            double otherNumber = queueMod0.Window.AmountShown;
+            // No food chosen for the fight: the food the bank has most of is offered.
+            combat.Food.UnselectFood();
+            Item? mostFood = s_bank.Inventory.Stacks.Where(s => s.Quantity > 0 && s.Item.Capabilities.TryGet<FoodCapability>(out _)).OrderByDescending(s => s.Quantity).FirstOrDefault()?.Item;
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.Stops);
+            queueMod0.Window.ChooseUntil(ActionQueue.Until.ItemLeft);
+            Item? offeredWithout = queueMod0.Window.CountedItem;
+            // Goal chosen first, the fight afterwards (the order the player used).
+            queueMod0.Window.Choose("MelvorBase:Woodcutting", ActionQueue.Targets.All(wood.Action)[0].Id);
+            bool backToFight = queueMod0.Window.Choose(cbSkill.Entity.Id, monster.Id);
+            Item? offeredAfterSkill = queueMod0.Window.CountedItem;
+            Check("asagi sayan hedef: sayi ve yemek her durumda doluyor", leftNumber == 5 && otherNumber == 997 && mostFood != null && offeredWithout == mostFood && backToFight && offeredAfterSkill == mostFood,
+                  $"baska hedefte 997 yaziliyken secince: {leftNumber}; geri donunce: {otherNumber}; savasta yemek secili degilken onerilen: {(offeredWithout == null ? "-" : offeredWithout.DisplayName.GetPluralText(1))} " +
+                  $"(bankada en cok olan yemek: {(mostFood == null ? "-" : mostFood.DisplayName.GetPluralText(1))}); once hedef sonra savas secilince: {(offeredAfterSkill == null ? "-" : offeredAfterSkill.DisplayName.GetPluralText(1))}");
             queueMod0.Window.ChooseUntil(ActionQueue.Until.Stops);
             queueMod0.ToggleWindow();
             combat.Food.UnselectFood();
@@ -1939,6 +1983,8 @@ static class Tests
         game.ActionManager.TryStopActive(force: true);
 
         // ---------- 7. the game's offline calculation is left alone ----------
+        // The whole suite no longer fits in ten minutes: "-Only main" stops here, "-Only offline" runs the rest.
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "main") yield break;
         IEnumerator<int> offlineRun = OfflineSpeed(game, ctx);
         while (offlineRun.MoveNext()) yield return offlineRun.Current;
     }

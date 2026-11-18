@@ -56,7 +56,11 @@ public sealed class PlanLine
 public sealed class PlanResult
 {
     public Item Item = null!;
+    /// <summary>How many the bank must hold in the end.</summary>
     public long Own;
+    /// <summary>The number the player typed, and whether it meant "this many more" (true) or "this many in total".</summary>
+    public long Asked;
+    public bool More;
     /// <summary>The steps in the order they must run: what is gathered first, the wanted item last.</summary>
     public List<PlanLine> Steps = new();
     /// <summary>Missing items that no skill on the queue can make: the player has to bring them.</summary>
@@ -266,10 +270,13 @@ public static class Planner
         return problem;
     }
 
-    /// <summary>Plans owning <paramref name="own"/> of <paramref name="item"/>, counting the bank and the steps in <paramref name="queued"/>.</summary>
-    public static PlanResult Compute(Game game, Item item, long own, IEnumerable<Step>? queued = null)
+    /// <summary>
+    /// Plans owning <paramref name="own"/> of <paramref name="item"/>, counting the bank and the steps in <paramref name="queued"/>.
+    /// With <paramref name="more"/> the number means "this many on top of what I have (and what the queue will make)".
+    /// </summary>
+    public static PlanResult Compute(Game game, Item item, long own, IEnumerable<Step>? queued = null, bool more = false)
     {
-        var result = new PlanResult { Item = item, Own = own };
+        var result = new PlanResult { Item = item, Own = own, Asked = own, More = more };
         Dictionary<Item, List<Maker>> makers = Makers(game);
         Dictionary<Item, long> stock = StockAfterQueue(game, makers, queued ?? Queue.Steps);
         var problems = new Dictionary<Maker, string>();
@@ -281,6 +288,7 @@ public static class Planner
         }
         long Stock(Item i) => stock.TryGetValue(i, out long n) ? n : Bank(game)?.Inventory.GetQuantity(i) ?? 0;
 
+        if (more) result.Own = own = Stock(item) + own;
         if (MakerOf(item) == null) { result.Problem = "None of the skills the queue can drive makes this item."; return result; }
 
         // Ingredients before what is made from them. Walking that list backwards visits an item only after
@@ -342,7 +350,7 @@ public static class Planner
 
         if (result.Steps.Count == 0)
             result.Problem = lines[item].Missing == 0
-                ? $"You already own {lines[item].Have:N0} {lines[item].ItemName} (counting what the queue will make)."
+                ? $"You already own {lines[item].Have:N0} {lines[item].ItemName} (counting what the queue will make). Choose \"Make\" on the left to make more."
                 : "Nothing in this plan can be made by a skill.";
         return result;
     }

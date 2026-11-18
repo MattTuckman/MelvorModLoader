@@ -65,7 +65,7 @@ This is Action Queue [b]0.4.0[/b], tested on game version [b]0.11.6-alpha.1[/b] 
 [/list]
 
 [size=5][b]New: the planner[/b][/size]
-Press [b]Plan an item[/b], type how many you want to own and pick the item. For "100 Air Wands" you get:
+Press [b]Plan an item[/b], choose [b]Make[/b] (this many more) or [b]Own in total[/b], type the number and pick the item. For "100 Air Wands" you get:
 [list=1]
 [*]Mining: Rune Essence, [i]until 1,776 in the bank[/i]
 [*]Smithing: Molten Glass, [i]until 294[/i]

@@ -37,9 +37,10 @@ public sealed class QueueWindow
     readonly Button _stepMode = new() { Text = "Add one step", ToggleMode = true };
     readonly Button _planMode = new() { Text = "Plan an item", ToggleMode = true };
     readonly VBoxContainer _stepForm = new(), _planForm = new() { Visible = false };
+    readonly OptionButton _planKind = new() { CustomMinimumSize = new Vector2(132, 0) };
     readonly SpinBox _planAmount = new() { MinValue = 1, MaxValue = 100_000_000, Step = 1, Value = 100, CustomMinimumSize = new Vector2(120, 0), SelectAllOnFocus = true };
-    readonly LineEdit _planSearch = new() { PlaceholderText = "Search item...", CustomMinimumSize = new Vector2(170, 0), ClearButtonEnabled = true };
-    readonly OptionButton _planPick = new() { CustomMinimumSize = new Vector2(260, 0), FitToLongestItem = false, ClipText = true };
+    readonly LineEdit _planSearch = new() { PlaceholderText = "Search item...", CustomMinimumSize = new Vector2(150, 0), ClearButtonEnabled = true };
+    readonly OptionButton _planPick = new() { CustomMinimumSize = new Vector2(220, 0), FitToLongestItem = false, ClipText = true };
     readonly Label _planNote = Style.Label("", Style.Muted, 12);
     readonly Button _planAdd = new() { Text = "Add these steps to the queue" };
     Tree _planTable = null!;
@@ -67,6 +68,7 @@ public sealed class QueueWindow
     List<string> _levelSkills = new();
     bool _syncing;
     Until _lastKind;
+    double _amountLeft = 5, _amountOther = 1000;   // "only N left" keeps its own number, apart from the other goals
 
     public bool Visible => _layer.Visible;
     public Control Panel { get; }
@@ -249,8 +251,11 @@ public sealed class QueueWindow
         _planForm.AddThemeConstantOverride("separation", 8);
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
-        row.AddChild(Fixed("Own", 50));
-        _planAmount.TooltipText = "How many you want to have in the bank in the end (not how many more).";
+        _planKind.AddItem("Make");
+        _planKind.AddItem("Own in total");
+        _planKind.TooltipText = "Make: this many more than you have now.\nOwn in total: until the bank holds this many (what you already have counts).";
+        _planKind.ItemSelected += _ => { _planShown = ""; Replan(); };
+        row.AddChild(_planKind);
         _planAmount.ValueChanged += _ => Replan();
         row.AddChild(_planAmount);
         row.AddChild(Style.Label("of", Style.Muted));
@@ -593,8 +598,8 @@ public sealed class QueueWindow
             DrawPlan("none", () => { _planNote.Text = "No item with that name can be made by your skills."; });
             return;
         }
-        PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value);
-        string shown = item.Id + "|" + plan.Own + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply)
+        PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value, more: _planKind.Selected == 0);
+        string shown = item.Id + "|" + plan.Own + "|" + plan.More + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply)
             .Select(l => $"{l.Item.Id},{l.Maker?.Target.Id},{l.Need},{l.Have},{l.Actions},{l.Seconds:0},{l.Problem}"));
         DrawPlan(shown, () =>
         {
@@ -625,6 +630,16 @@ public sealed class QueueWindow
                 row.SetText(2, line.Have.ToString("N0"));
                 for (int c = 0; c < 3; c++) row.SetCustomColor(c, Style.Accent);
             }
+            if (plan.Steps.Count == 0 && plan.Problem != "")
+            {
+                // Nothing to do: say why where the steps would be, not only in the small line below.
+                TreeItem row = _planTable.CreateItem(root);
+                row.SetText(0, "No steps needed");
+                row.SetText(1, plan.Problem);
+                row.SetCustomColor(0, Style.Accent);
+                row.SetCustomColor(1, Style.Accent);
+                row.SetSelectable(0, false); row.SetSelectable(1, false); row.SetSelectable(2, false); row.SetSelectable(3, false);
+            }
             _planNote.Text = PlanSummary(plan);
         });
         _planAdd.Disabled = plan.Steps.Count == 0;
@@ -642,7 +657,8 @@ public sealed class QueueWindow
     static string PlanSummary(PlanResult plan)
     {
         if (plan.Problem != "") return plan.Problem;
-        string text = plan.Steps.Count == 1 ? "1 step" : $"{plan.Steps.Count} steps";
+        string text = plan.More ? $"To make {plan.Asked:N0} more (the bank will then hold {plan.Own:N0}): " : "";
+        text += plan.Steps.Count == 1 ? "1 step" : $"{plan.Steps.Count} steps";
         int timed = plan.Steps.Count - plan.UnknownTimes;
         if (timed > 0) text += $", about {Planner.Time(plan.Seconds)} at normal game speed";
         if (plan.UnknownTimes > 0) text += timed > 0 ? $" plus {plan.UnknownTimes} whose time cannot be told" : ", time cannot be told in advance";
@@ -658,15 +674,17 @@ public sealed class QueueWindow
         if (_plan == null || _plan.Steps.Count == 0) return;
         PlanResult plan = _plan;
         int added = Planner.AddToQueue(plan);
-        Say($"Plan added: {added} step(s) to own {plan.Own:N0} {plan.Item.DisplayName.GetPluralText(1)}.");
+        string itemName = plan.Item.DisplayName.GetPluralText(1);
+        Say(plan.More ? $"Plan added: {added} step(s) to make {plan.Asked:N0} more {itemName}." : $"Plan added: {added} step(s) to own {plan.Own:N0} {itemName}.");
         _planShown = "";
         Replan();   // what was just added now counts as "will be made"
     }
 
     /// <summary>For tests: open the planner, ask for an item and return the plan it shows.</summary>
-    public PlanResult? PlanFor(string itemId, long own)
+    public PlanResult? PlanFor(string itemId, long own, bool more = false)
     {
         _planMode.ButtonPressed = true;
+        _planKind.Select(more ? 0 : 1);
         _planSearch.Text = "";
         FilterMakeable("");
         int at = _shownMakeable.FindIndex(i => i.Id == itemId);
@@ -707,7 +725,7 @@ public sealed class QueueWindow
         // A level goal is usually about the skill being trained.
         int level = _levelSkills.IndexOf(_skills[_skillPick.Selected].Entity.DisplayName.Text);
         if (level >= 0) _levelPick.Select(level);
-        SuggestItem();
+        if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem();
     }
 
     /// <summary>
@@ -730,7 +748,11 @@ public sealed class QueueWindow
     void SuggestFood()
     {
         if (_game == null || !_game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? e) || e is not GamesByMalcs.Melvor2.Entities.Combat.CombatEntity combat) return;
+        // The food chosen for the fight; without one, the food the bank has most of.
         Item? food = combat.Food.SelectedFood?.Item;
+        if (food == null && _game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? b) && b is GamesByMalcs.Melvor2.Entities.Bank.BankEntity bank)
+            food = bank.Inventory.Stacks.Where(s => s.Quantity > 0 && s.Item.Capabilities.TryGet<GamesByMalcs.Melvor2.Components.CombatFood.FoodCapability>(out _))
+                .OrderByDescending(s => s.Quantity).FirstOrDefault()?.Item;
         if (food == null) return;
         string name = food.DisplayName.GetPluralText(1);
         _itemSearch.Text = name;
@@ -742,6 +764,7 @@ public sealed class QueueWindow
     /// <summary>For tests: pick how a step ends, the way the list does.</summary>
     public void ChooseUntil(Until kind) { _untilPick.Select((int)kind); UntilChanged(); }
     public double AmountShown => _amount.Value;
+    public void SetAmount(double value) => _amount.Value = value;
 
     /// <summary>For tests: choose a skill and one of its actions the way the two lists do.</summary>
     public bool Choose(string entityId, string targetId)
@@ -761,7 +784,7 @@ public sealed class QueueWindow
         if (_game == null) return;
         ActionComponent? active = Targets.Main(_game);
         Target? target = active == null ? null : Targets.Current(active);
-        int skill =active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
+        int skill = active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
         if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
         _skillPick.Select(skill);
         FillTargets(target.Id);
@@ -774,13 +797,19 @@ public sealed class QueueWindow
         _amount.Visible = kind != Until.Stops;
         _itemSearch.Visible = _itemPick.Visible = kind is Until.Item or Until.ItemLeft;
         _amount.MinValue = kind == Until.ItemLeft ? 0 : 1;
-        if (kind == Until.ItemLeft && kind != _lastKind)
+        if (kind == Until.ItemLeft && _lastKind != Until.ItemLeft)
         {
-            // Counting down is mostly about food in a fight: offer the food the character is eating.
-            if (_amount.Value == 1000) _amount.Value = 5;
+            // Counting down is mostly about food in a fight: offer the food the character is eating, and a small number.
+            _amountOther = _amount.Value;
+            _amount.Value = _amountLeft;
             SuggestFood();
         }
-        else if (kind == Until.Item && _lastKind == Until.ItemLeft) SuggestItem();
+        else if (kind != Until.ItemLeft && _lastKind == Until.ItemLeft)
+        {
+            _amountLeft = _amount.Value;
+            _amount.Value = Math.Max(1, _amountOther);
+            if (kind == Until.Item) SuggestItem();
+        }
         _lastKind = kind;
         _levelPick.Visible = kind == Until.Level;
         _amount.Suffix = kind == Until.Minutes ? " min" : "";

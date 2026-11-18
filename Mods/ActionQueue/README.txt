@@ -31,6 +31,8 @@ Open a character and press F6.
   2. Pick when the step ends: when it stops by itself, when you own a number of an item,
      when a skill reaches a level, after a number of minutes, or when only a number of an
      item are left (for example: fight until only 5 of your food are left).
+     For that goal the food you are eating is filled in (or, with none chosen, the food
+     your bank has most of) and the number starts at 5.
      For the item goal, the item is filled in with what the chosen action makes
      (Smithing: Gold Bar -> Gold Bar). Type in the search box to count another item.
   3. "Add step". Repeat for the next steps, then "Start the queue".
@@ -40,7 +42,8 @@ While the queue runs, one line at the top of the screen shows the current step.
 PLAN AN ITEM
 ------------
 Press "Plan an item" at the top of the window.
-  1. Type how many you want to own and pick the item.
+  1. Choose "Make" (this many more than you have) or "Own in total" (until the bank
+     holds this many), type the number and pick the item.
   2. The planner follows the recipes back to what has to be gathered (armour <- bars <- ores),
      takes off what your bank already holds, and lists the steps with the time they take.
   3. "Add these steps to the queue" puts them at the end of the queue. They are ordinary
