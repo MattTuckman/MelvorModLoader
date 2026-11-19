@@ -11,7 +11,7 @@
     <AssemblyTitle>Melvor Mod Loader</AssemblyTitle>
     <Description>Unofficial mod loader for Melvor Idle 2. Loads C# mods from the "mods" folder.</Description>
     <Company>Melvor Mod Loader</Company>
-    <Copyright>MIT License</Copyright>
+    <Copyright>Copyright (c) 2026 falorfrozen. See LICENSE.</Copyright>
     <Nullable>enable</Nullable>
     <!-- Ships its own .NET runtime so the loader folder works by plain copy (no junction, no installer). -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

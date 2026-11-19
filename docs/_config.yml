@@ -38,7 +38,7 @@ gh_edit_view_mode: "edit"
 
 footer_content: >-
   Community-made and unofficial. Not affiliated with Games by Malcs or Jagex.
-  Text under the MIT license, like the code.
+  Text and code: see the LICENSE file on GitHub.
 
 callouts:
   tip:

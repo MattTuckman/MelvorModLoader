@@ -8,7 +8,7 @@
     <AssemblyTitle>Save Backup</AssemblyTitle>
     <Description>Copies the save files to a dated backup folder every time the game starts (requires Melvor Mod Loader).</Description>
     <Company>Melvor Mod Loader</Company>
-    <Copyright>MIT License</Copyright>
+    <Copyright>Copyright (c) 2026 falorfrozen. See LICENSE.</Copyright>
     <Nullable>enable</Nullable>
     <DebugType>none</DebugType>
     <GenerateDependencyFile>false</GenerateDependencyFile>

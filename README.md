@@ -74,4 +74,7 @@ No game files are included here, and none may be added.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Not affiliated with Games by Malcs or Jagex.
+The source is public so anyone can see what the files do. You may use the mods, change them for yourself and
+learn from the code for your own mods; publishing them or a changed version of them (translations and repacks
+included) needs permission. See [LICENSE](LICENSE). Versions published before 19 November 2026 stay under the
+MIT license. Not affiliated with Games by Malcs or Jagex.

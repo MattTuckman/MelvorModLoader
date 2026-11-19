@@ -29,9 +29,15 @@ the pages are checked again.
 
 ## Licence
 
-The loader, the mods and this wiki are open source under the
-[MIT license](https://github.com/falorfrozen-cmd/MelvorModLoader/blob/main/LICENSE). Use the code in your own
-mods, change it, share it; keep the license notice.
+The source code of the loader, the mods and this wiki is public, so anyone can see what the files do. See the
+[LICENSE](https://github.com/falorfrozen-cmd/MelvorModLoader/blob/main/LICENSE) for the details:
+
+- Use the mods, read the code, change it for yourself (a translation for your own use, for example).
+- Learn from the code and the guides here, and use small parts of them in your own, different mod (a credit is welcome).
+- Publishing the loader or one of these mods, changed or not (translations and repacks included), needs permission:
+  ask on [Discord](https://discord.gg/q6aexZZSAf). Translations sent to us can ship with the mod, credited to you.
+
+Versions published before 19 November 2026 stay under the MIT license.
 
 Melvor Idle 2 is a game by Games by Malcs, published by Jagex. Screenshots of the game on this wiki are shown
 to explain the mods.

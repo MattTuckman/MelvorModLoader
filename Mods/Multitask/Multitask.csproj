@@ -8,7 +8,7 @@
     <AssemblyTitle>Multitask</AssemblyTitle>
     <Description>Keeps your last two or three actions running together in Melvor Idle 2 (requires Melvor Mod Loader). Opens with F5.</Description>
     <Company>Melvor Mod Loader</Company>
-    <Copyright>MIT License</Copyright>
+    <Copyright>Copyright (c) 2026 falorfrozen. See LICENSE.</Copyright>
     <Nullable>enable</Nullable>
     <DebugType>none</DebugType>
     <GenerateDependencyFile>false</GenerateDependencyFile>

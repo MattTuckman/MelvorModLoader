@@ -8,7 +8,7 @@
     <AssemblyTitle>Bulk Sell</AssemblyTitle>
     <Description>Adds a "Bulk sell" window and one-click "Sell junk", "Bury all" and "Open all" buttons to the bank of Melvor Idle 2 (requires Melvor Mod Loader).</Description>
     <Company>Melvor Mod Loader</Company>
-    <Copyright>MIT License</Copyright>
+    <Copyright>Copyright (c) 2026 falorfrozen. See LICENSE.</Copyright>
     <Nullable>enable</Nullable>
     <DebugType>none</DebugType>
     <GenerateDependencyFile>false</GenerateDependencyFile>
