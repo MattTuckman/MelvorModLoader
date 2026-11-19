@@ -9,18 +9,24 @@ KATEGORI ONERISI (Category):
 Cheats and God items
 
 KISA ACIKLAMA (Summary / Brief overview, 240 karakter):
-One F8 window with 60+ settings and tools for Melvor Idle 2: XP and game speed, bank slots, skill bonuses, god mode, loot filter, per-skill XP and speed, give items, currency and levels. Remembered per character, not written into your save.
+One F8 window with 60+ settings and tools for Melvor Idle 2: XP and game speed, bank slots, skill bonuses, god mode, loot filter, materials no recipe needs, per-skill XP and speed, give items and levels. Not written into your save.
 
 GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\CheatMenu-0.4.2.zip   (name: Cheat Menu, version 0.4.2)
+MAIN FILE:  dist\CheatMenu-0.5.0.zip   (name: Cheat Menu, version 0.5.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
-Dev\shots\menu-5-combat.png (main image), menu-1-bank.png, menu-3-speed.png, menu-4-skills.png, menu-6-per-skill.png, menu-7-loot-filter.png, menu-8-tools.png
+Dev\shots\menu-5-combat.png (main image), menu-1-bank.png, menu-3-speed.png, menu-4-skills.png, menu-6-per-skill.png, menu-7-loot-filter.png, menu-8-materials.png, menu-9-tools.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.5.0
+- Fixed: "Skill action speed" together with a skill's own speed could stop the game (everything froze until the setting was turned off). The two now multiply (x2 and x4 are x8) and stop at x20 together. The game's own speed bonuses are counted too, including those for a single animal or recipe (Hunting journal levels, for example).
+- Fixed: a speed setting changed after planting did not count for crops already growing, so their old time stayed on the plot. Crops now get their new time at once.
+- New page "Materials": mark a material (Coal, for example) as not needed and no recipe or item upgrade asks for it any more.
+- New setting "Astrology: knowledge per study" (up to x1000).
+
 0.4.2
 - Fixed: with Game speed above 1x, "Loading Offline Progress" could take many minutes or hang. Offline progress is now left entirely to the game.
 
@@ -41,7 +47,7 @@ Every setting applies the moment you change it and is remembered per character.[
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Cheat Menu [b]0.4.2[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F8[/b].
+This is Cheat Menu [b]0.5.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F8[/b].
 
 Your settings are [b]not written into your save file[/b]. They live in a small file next to the mod and are applied again each time you open that character. Remove the mod and the character is back to normal. Only what the Tools page gives you (items, currency, levels) stays.
 
@@ -56,7 +62,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [list]
 [*]XP multiplier for every skill
 [*]Game speed: the whole game runs up to 20x faster
-[*]Skill action speed, monster respawn speed
+[*]Skill action speed, monster respawn speed. Skill action speed multiplies with a skill's own speed (x2 and x4 are x8)
 [*]Higher offline progress limit
 [/list]
 [b]Skills[/b]
@@ -64,6 +70,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [*]Double product chance, keep materials chance, cheaper recipes
 [*]Product quantity multiplier and extra products per action
 [*]Woodcutting: instant cut chance. Thieving: never stunned.
+[*]Astrology: knowledge per study, up to x1000
 [/list]
 [b]Combat[/b]
 [list]
@@ -83,6 +90,12 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [*]Per item: keep it, sell it when it drops, or destroy it when it drops
 [*]Only the dropped amount is affected. What is already in your bank is never touched.
 [*]Show only the drops of the monster you are fighting right now
+[/list]
+[b]Materials[/b]
+[list]
+[*]Tired of mining Coal for every bar? Mark a material as "Not needed" and no recipe or item upgrade asks for it any more
+[*]A searchable list of every material, the most used first, with the number of recipes that ask for it
+[*]Your bank is never touched, and "Needed again" puts a material back
 [/list]
 [b]Tools[/b]
 [list]
@@ -105,7 +118,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]CheatMenu-0.4.2.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
+[*]Extract [b]CheatMenu-0.5.0.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
@@ -116,13 +129,15 @@ Delete the folder [b]mods\CheatMenu[/b].
 [size=5][b]Safe to download[/b][/size]
 [list]
 [*]One file: [b]CheatMenu.dll[/b]. No .exe, no .bat, no installer.
-[*]VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/7c966db75789df3873bdb8dd413deeecc01b491b5387bc644e330416ac34dbc7]0 detections[/url].
+[*]The source code is public on GitHub (MIT license): what the file does can be read there.
 [*]None of the game's own files are changed or included.
 [/list]
 
 [size=5][b]Good to know[/b][/size]
 [list]
 [*]Game speed makes the game run faster while you play. It does not change how fast the game computes offline progress.
+[*]A speed setting also counts for crops that are already growing: the plots show their new time at once.
+[*]On the Materials page, Farming recipes follow after the character has been opened again.
 [*]Changing a slayer task is never completely free: the game charges at least 1 coin.
 [*]With double loot at 100%, bones more than double, because they also get the game's separate bone bonus.
 [*]Melvor Idle 2 is in alpha. After a game update a setting can stop working until the mod is updated; it is then skipped and named in the log.

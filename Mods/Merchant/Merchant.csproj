@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Merchant</AssemblyName>
+    <RootNamespace>Merchant</RootNamespace>
+    <Version>0.1.0</Version>
+    <Product>Melvor Idle 2 Merchant</Product>
+    <AssemblyTitle>Merchant</AssemblyTitle>
+    <Description>A travelling merchant for Melvor Idle 2: raw materials for sale and goods bought above bank price, new every few hours (requires Melvor Mod Loader). A page of its own in the game, opened from the top bar or with F3.</Description>
+    <Company>Melvor Mod Loader</Company>
+    <Copyright>MIT License</Copyright>
+    <Nullable>enable</Nullable>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GameData>..\..\..\data_GamesByMalcs.Melvor2_windows_x86_64</GameData>
+    <LoaderDir>..\..\..\data_MelvorModLoader_windows_x86_64</LoaderDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

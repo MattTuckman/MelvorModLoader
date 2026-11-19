@@ -22,8 +22,8 @@ F8
 {: .label .label-gold }
 
 60+ settings and tools in one window: XP and game speed multipliers, extra bank slots, skill bonuses, god mode,
-a loot filter, per-skill XP and speed, giving items and currency, setting levels. Every setting is per character
-and applies the moment you change it.
+a loot filter, a list of materials no recipe should ask for (Coal, for example), per-skill XP and speed, giving
+items and currency, setting levels. Every setting is per character and applies the moment you change it.
 
 ![The Cheat Menu window](../assets/img/mod-cheat-menu.png)
 

@@ -24,7 +24,7 @@ The loader writes down everything it does in **`MelvorModLoader.log`**, in the g
 [16:39:58] [ActionQueue] Ready. Press F6 while a character is open.
 [16:39:58] Mod loaded: ActionQueue 0.5.0 (ActionQueue.dll)
 [16:39:58] [CheatMenu] Ready. Press F8 while a character is open.
-[16:39:58] Mod loaded: CheatMenu 0.4.2 (CheatMenu.dll)
+[16:39:58] Mod loaded: CheatMenu 0.5.0 (CheatMenu.dll)
 [16:39:58] 2 mod(s) loaded
 ```
 
@@ -47,7 +47,7 @@ When you ask for help, **attach this file**. It answers most questions at once.
   - `Mod FAILED to load: ... ` - the line says why. Usually the mod was made for another version of the game
     or the loader. Look for an update of that mod.
   - Not mentioned at all - the DLL is not where the loader looks. It must be `mods\<ModName>\<ModName>.dll`
-    (or directly in `mods`). A mod extracted into its own extra folder (`mods\CheatMenu-0.4.2\mods\CheatMenu\...`)
+    (or directly in `mods`). A mod extracted into its own extra folder (`mods\CheatMenu-0.5.0\mods\CheatMenu\...`)
     is too deep.
 - One broken mod never stops the others or the game: it is reported and skipped.
 

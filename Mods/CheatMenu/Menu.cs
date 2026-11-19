@@ -47,6 +47,11 @@ public sealed class Menu
     LineEdit _lootSearch = null!;
     OptionButton _lootShow = null!;
     Tree _lootTree = null!;
+    List<(Item Item, int Uses)> _matShown = new();
+    LineEdit _matSearch = null!;
+    OptionButton _matShow = null!;
+    Tree _matTree = null!;
+    Label _matStats = null!;
     Label _lootStats = null!;
 
     public bool Visible => _layer.Visible;
@@ -130,6 +135,7 @@ public sealed class Menu
         AddFeaturePage("Combat", Features.TabCombat);
         BuildPerSkill(AddPage("Per skill", () => Engine.ActiveCount(Features.TabPerSkill)));
         BuildLoot(AddPage("Loot filter", () => LootFilter.Count, scroll: false));
+        BuildMaterials(AddPage("Materials", () => Unneeded.Count, scroll: false));
         BuildTools(AddPage("Tools", () => AutoSell.Ids.Count));
 
         // ---- footer
@@ -166,6 +172,7 @@ public sealed class Menu
         }
         RefreshAutoSell();
         RefreshLoot();
+        RefreshMaterials();
         _character.Text = Engine.Character;
         Say("");
         Refresh();
@@ -652,6 +659,134 @@ public sealed class Menu
     void UpdateLootStats() =>
         _lootStats.Text = $"{_lootNote}{_lootShown.Count} of {_droppable.Count} items shown  |  {LootFilter.Count} rule(s)  |  " +
                           $"since this character was opened: {LootFilter.Sold:N0} sold, {LootFilter.Destroyed:N0} destroyed";
+
+    // ---------------------------------------------------------------- Materials
+
+    void BuildMaterials(VBoxContainer page)
+    {
+        Label intro = Style.Label(
+            "Pick the materials you no longer want to need. A material set to \"Not needed\" is taken out of every recipe and item upgrade " +
+            "that asks for it: bars without coal, potions without vials. Double-click a material to switch it.", Style.Muted, 12);
+        intro.AutowrapMode = TextServer.AutowrapMode.WordSmart;
+        intro.CustomMinimumSize = new Vector2(400, 0);
+        page.AddChild(intro);
+
+        var filters = new HBoxContainer();
+        filters.AddThemeConstantOverride("separation", 10);
+        _matSearch = new LineEdit { PlaceholderText = "Search materials...", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+        _matSearch.TextChanged += _ => RefreshMaterials();
+        _matShow = new OptionButton { CustomMinimumSize = new Vector2(230, 0) };
+        _matShow.AddItem("All materials, most used first");
+        _matShow.AddItem("Only the ones not needed");
+        _matShow.ItemSelected += _ => RefreshMaterials();
+        filters.AddChild(_matSearch);
+        filters.AddChild(_matShow);
+        page.AddChild(filters);
+
+        _matTree = new Tree
+        {
+            Columns = 3, HideRoot = true, SelectMode = Tree.SelectModeEnum.Multi, ColumnTitlesVisible = true,
+            SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 200)
+        };
+        _matTree.SetColumnTitle(0, "Material");
+        _matTree.SetColumnTitle(1, "Asked for by");
+        _matTree.SetColumnTitle(2, "In recipes");
+        for (int column = 0; column < 3; column++) _matTree.SetColumnTitleAlignment(column, HorizontalAlignment.Left);
+        _matTree.SetColumnExpand(0, true);
+        _matTree.SetColumnExpand(1, false);
+        _matTree.SetColumnExpand(2, false);
+        _matTree.SetColumnCustomMinimumWidth(1, 130);
+        _matTree.SetColumnCustomMinimumWidth(2, 130);
+        _matTree.ItemActivated += () =>
+        {
+            TreeItem? picked = _matTree.GetSelected();
+            if (picked == null) return;
+            Item item = _matShown[(int)picked.GetMetadata(0)].Item;
+            SetMaterials(new[] { item }, !Unneeded.IsRemoved(item));
+        };
+        page.AddChild(_matTree);
+
+        var actions = new HBoxContainer();
+        actions.AddThemeConstantOverride("separation", 10);
+        actions.AddChild(Style.Label("Selected materials:", Style.Muted));
+        actions.AddChild(MakeButton("Not needed", () => SetMaterials(SelectedMaterials(), true)));
+        actions.AddChild(MakeButton("Needed again", () => SetMaterials(SelectedMaterials(), false)));
+        actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        actions.AddChild(MakeButton("Everything needed again", () =>
+        {
+            Unneeded.Clear();
+            RefreshMaterials();
+            Repaint();
+            Say("Materials: every recipe asks for all of its materials again.");
+        }));
+        page.AddChild(actions);
+
+        _matStats = Style.Label("", Style.Muted, 12);
+        page.AddChild(_matStats);
+    }
+
+    List<Item> SelectedMaterials()
+    {
+        var picked = new List<Item>();
+        for (TreeItem? row = _matTree.GetNextSelected(null); row != null; row = _matTree.GetNextSelected(row))
+            picked.Add(_matShown[(int)row.GetMetadata(0)].Item);
+        return picked;
+    }
+
+    /// <summary>For tests: selects a material's row the way a click does. False when it is not in the list.</summary>
+    public bool PickMaterial(string name)
+    {
+        TreeItem? root = _matTree.GetRoot();
+        for (TreeItem? row = root?.GetFirstChild(); row != null; row = row.GetNext())
+        {
+            bool mine = row.GetText(0) == name;
+            if (mine) row.Select(0); else row.Deselect(0);
+        }
+        return SelectedMaterials().Count == 1;
+    }
+
+    void SetMaterials(IReadOnlyCollection<Item> items, bool removed)
+    {
+        if (items.Count == 0) { Say("Select one or more materials in the list first."); return; }
+        Unneeded.Set(items, removed);
+        RefreshMaterials(items);
+        Repaint();
+        string what = items.Count == 1 ? Actions.ItemName(items.First()) : $"{items.Count} materials";
+        Say(removed ? $"Materials: {what} -> no longer needed in any recipe." : $"Materials: {what} -> needed again.");
+    }
+
+    void RefreshMaterials() => RefreshMaterials(null);
+
+    void RefreshMaterials(IReadOnlyCollection<Item>? keepSelected)
+    {
+        if (_game == null) return;
+        IEnumerable<(Item Item, int Uses)> list = Unneeded.Materials;
+        if (_matShow.Selected == 1) list = list.Where(m => Unneeded.IsRemoved(m.Item));
+        string text = _matSearch.Text.Trim();
+        if (text != "") list = list.Where(m => Actions.ItemName(m.Item).Contains(text, StringComparison.OrdinalIgnoreCase));
+        _matShown = list.ToList();
+
+        _matTree.Clear();
+        TreeItem root = _matTree.CreateItem();
+        for (int i = 0; i < _matShown.Count; i++)
+        {
+            var (item, uses) = _matShown[i];
+            bool removed = Unneeded.IsRemoved(item);
+            TreeItem row = _matTree.CreateItem(root);
+            row.SetText(0, Actions.ItemName(item));
+            row.SetIcon(0, item.Icon);
+            row.SetIconMaxWidth(0, 22);
+            row.SetMetadata(0, i);
+            row.SetText(1, uses == 1 ? "1 recipe" : $"{uses} recipes");
+            row.SetCustomColor(1, Style.Muted);
+            row.SetSelectable(1, false);
+            row.SetText(2, removed ? "Not needed" : "Needed");
+            row.SetCustomColor(2, removed ? Style.Good : Style.Muted);
+            row.SetSelectable(2, false);
+            if (keepSelected != null && keepSelected.Contains(item)) row.Select(0);
+        }
+        _matStats.Text = $"{_matShown.Count} of {Unneeded.Materials.Count} materials shown  |  {Unneeded.Count} not needed";
+    }
 
     // ---------------------------------------------------------------- Tools
 

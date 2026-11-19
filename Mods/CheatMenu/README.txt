@@ -1,8 +1,9 @@
-Cheat Menu 0.4.2  -  a mod for Melvor Idle 2
+Cheat Menu 0.5.0  -  a mod for Melvor Idle 2
 ============================================
 
 One window with more than 60 settings and tools: bank slots, XP, game speed, skill bonuses,
-combat, per-skill XP and speed, a loot filter, and tools that give items, currency and levels.
+combat, per-skill XP and speed, a loot filter, a list of materials no recipe should ask for,
+and tools that give items, currency and levels.
 
 Tested with game version 0.11.6-alpha.1 and Melvor Mod Loader 0.1.3.
 
@@ -36,6 +37,13 @@ GOOD TO KNOW
 - Loot filter and auto-sell never touch a stack you have locked in the bank.
 - Game speed runs the whole game faster while you play. It does not change how fast the
   game computes offline progress.
+- "Skill action speed" and a skill's own speed on the Per skill page multiply: x2 and x4
+  together are x8. Together they stop at x20 (no action is left with no time at all).
+- A speed setting also counts for crops that are already growing: change it and the plots
+  show their new time at once.
+- Materials page: mark a material (Coal, for example) as "Not needed" and no recipe or item
+  upgrade asks for it any more. Your bank is not touched. "Needed again" puts it back.
+  Farming recipes follow after the character has been opened again.
 - This mod changes the balance of the game. Use it the way you enjoy playing.
 
 

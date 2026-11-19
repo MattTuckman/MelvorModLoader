@@ -118,6 +118,8 @@ public static class Features
                 Max = 100, Step = 5, ToMultiplier = Percent, Stats = { new("WoodcuttingAction", "InstantCutChance", "Woodcutting", "Action", 1) } },
         new() { Id = "skills.noStun", Tab = TabSkills, En = "Thieving: never stunned", Kind = FeatureKind.Toggle,
                 Stats = { new("ThievingAction", "StunAvoidanceChance", "Thieving", "Action", 1) } },
+        new() { Id = "skills.astroKnowledge", Tab = TabSkills, En = "Astrology: knowledge per study", Suffix = "x",
+                Min = 1, Max = 1000, Off = 1, ToMultiplier = Times, Stats = { new("AstrologyAction", "PercentKnowledge", "Astrology", "Action", 1) } },
 
         // ---------------- Combat ----------------
         new() { Id = "combat.god", Tab = TabCombat, En = "God mode", Kind = FeatureKind.Toggle,
@@ -199,7 +201,7 @@ public static class Features
         ["bank.buryReward"] = "Multiplies what you get for burying bones.",
         ["xp.multiplier"] = "Multiplies all XP you gain, in every skill.",
         ["speed.game"] = "Runs the whole game faster: skills, combat and timers.",
-        ["speed.actions"] = "Shortens every skill action. Combat is not affected.",
+        ["speed.actions"] = "Shortens every skill action. Combat is not affected. Multiplies with a skill's own speed on the Per skill page (x2 here and x4 there is x8); together they stop at x20.",
         ["speed.spawn"] = "Monsters appear sooner after a kill.",
         ["speed.offlineHours"] = "Raises the limit of offline progress you can collect.",
         ["skills.doubling"] = "Chance that a skill action gives double products.",
@@ -209,6 +211,7 @@ public static class Features
         ["skills.cheaper"] = "Recipes need fewer materials.",
         ["skills.instantCut"] = "Chance to fell a tree with a single hit.",
         ["skills.noStun"] = "A failed pickpocket never stuns you.",
+        ["skills.astroKnowledge"] = "Multiplies the Knowledge each study adds to a constellation. Astrology XP is a separate setting.",
         ["combat.god"] = "You take no damage in combat.",
         ["combat.damage"] = "Multiplies all damage you deal.",
         ["combat.attackSpeed"] = "You attack this many times faster.",

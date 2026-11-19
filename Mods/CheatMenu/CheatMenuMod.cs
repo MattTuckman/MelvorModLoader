@@ -25,6 +25,7 @@ public class CheatMenuMod : IMod
         _ctx = ctx;
         Settings.Dir = ctx.Directory;
         Engine.Log = ctx.Log;
+        Crops.Log = ctx.Log;
         ctx.Frame += Tick;
         GameSpeed.Tree = ctx.Tree;
         ctx.Tree.PhysicsFrame += GameSpeed.OnPhysicsFrame;
@@ -34,6 +35,7 @@ public class CheatMenuMod : IMod
     void Tick()
     {
         if (_ctx.Tree.Paused) return;   // the game is computing offline progress on its own thread: hands off
+        Engine.Guard();                 // costs nothing unless the game changed an action time
 
         // Notice a character being opened (or closed) a few times per second.
         if (++_frame % 20 == 0)

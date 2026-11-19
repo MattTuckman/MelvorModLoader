@@ -1382,6 +1382,954 @@ static class Tests
         yield return 5;
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // The player's report: "Skill action speed" x2 together with a skill's own speed x4, and the game stood
+    // still. The game adds the two reductions up (-50% and -75%), which is a time below zero.
+    static IEnumerator<int> SpeedTests(Game game, ModContext ctx)
+    {
+        Out("=== 5o. Hiz ayarlarinin birlesimi ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        var skills = ActionQueue.Targets.Skills(game);
+        var wcSkill = skills.First(s => s.Entity.Id == "MelvorBase:Woodcutting");
+        ActionQueue.Target tree = ActionQueue.Targets.All(wcSkill.Action)[0];
+        Item log = ActionQueue.Targets.Product(wcSkill.Action, tree)!;
+        int Logs() => s_bank.Inventory.GetQuantity(log);
+        string crash = "";
+        int Cut(int ticks)
+        {
+            int before = Logs();
+            try { for (int i = 0; i < ticks; i++) game.PropagateTick(); }
+            catch (Exception e) { crash = (e.InnerException ?? e).Message; }
+            return Logs() - before;
+        }
+        const int T = 12000;
+        ActionQueue.Targets.Start(game, wcSkill.Action, tree, out _);
+        int plain = Cut(T);
+
+        // 1. exactly what the player had set
+        Engine.SetValue("speed.actions", 2);
+        Engine.SetValue("skill.Woodcutting.speed", 4);
+        string reading = string.Join(", ", Engine.Diagnose("skill.Woodcutting.speed"));
+        int both = Cut(T);
+        Check("genel x2 + beceri x4: oyun durmuyor, x8 oluyor", crash == "" && wcSkill.Action.IsStarted && Near(both, plain * 8.0, 0.15),
+              $"normal {plain} odun, simdi {both} (beklenen ~{plain * 8}); oyunun okudugu sure indirimi: {reading}{(crash == "" ? "" : "; HATA: " + crash)}");
+
+        // 2. the same on every skill, the way the "Apply to all" button does it
+        var speedIds = Features.All.Where(f => f.Id.StartsWith("skill.") && f.Id.EndsWith(".speed")).Select(f => f.Id).ToList();
+        Engine.SetValues(speedIds, 4);
+        Engine.SetValue("skill.Smithing.speed", 2);
+        int again = Cut(T);
+        Check("oyuncunun ayarlarinin tamami", crash == "" && wcSkill.Action.IsStarted && Near(again, plain * 8.0, 0.15), $"{speedIds.Count} becerinin hizi ayarli; {again} odun (~{plain * 8}){(crash == "" ? "" : "; HATA: " + crash)}");
+
+        // 3. everything at its highest: each skill must still work, with a sane time per action
+        Engine.SetValue("speed.actions", Features.Get("speed.actions").Max);
+        Engine.SetValues(speedIds, Features.Get("skill.Woodcutting.speed").Max);
+        int top = Cut(T);
+        var lent = new List<(Item Item, int Amount)>();
+        foreach (Item any in Actions.Items(game))
+        {
+            int got = s_bank.Inventory.AddQuantity(any, 500);
+            if (got > 0) lent.Add((any, got));
+        }
+        foreach (var (_, action) in skills)
+        {
+            if (action is GamesByMalcs.Melvor2.Entities.Hunting.HuntingActionComponent hunt)
+                foreach (var animal in hunt.Locations.Values.SelectMany(l => l.Animals))
+                    if (animal.SelectedTrap == null && !animal.TraplessEnabled && animal.CompatibleTraps.Count > 0) animal.SelectTrap(animal.CompatibleTraps[0]);
+            if (action is GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent agi)
+                foreach (var course in agi.Courses.Values)
+                    if (course.SelectedPath == null && course.ActivePaths.Count > 0) course.SelectPath(course.ActivePaths.Values.First());
+        }
+        var lines = new List<string>();
+        var broken = new List<string>();
+        var normallyStopped = new List<string>();
+        double shortest = double.MaxValue;
+        foreach (var (entity, action) in skills)
+        {
+            if (entity.Id == "MelvorBase:Combat") continue;
+            ActionQueue.Target? started = null;
+            foreach (ActionQueue.Target target in ActionQueue.Targets.All(action).Take(40))
+                if (ActionQueue.Targets.Start(game, action, target, out _)) { started = target; break; }
+            if (started == null) { lines.Add($"{entity.DisplayName.Text}: baslamadi"); continue; }
+            string before = crash;
+            double wait = double.MaxValue;
+            int stoppedTicks = 0;
+            try
+            {
+                for (int i = 0; i < 600; i++)
+                {
+                    game.PropagateTick();
+                    if (action.IsStarted && action.ActionTimer is { } timer)
+                    {
+                        if (timer.IsStopped) stoppedTicks++; else wait = Math.Min(wait, timer.WaitTime);
+                    }
+                }
+            }
+            catch (Exception e) { crash = (e.InnerException ?? e).Message; }
+            if (crash != before) broken.Add($"{entity.DisplayName.Text}: {crash}");
+            if (stoppedTicks > 300) normallyStopped.Add(entity.DisplayName.Text);
+            if (wait < double.MaxValue) shortest = Math.Min(shortest, wait);
+            lines.Add($"{entity.DisplayName.Text} {(wait < double.MaxValue ? wait.ToString("0") + " ms" : "?")}");
+            game.ActionManager.TryStopActive(force: true);
+        }
+        foreach (var (item, amount) in lent) s_bank.Inventory.RemoveQuantity(item, amount);
+        Check("her sey en yuksekteyken hicbir beceri kilitlenmiyor", crash == "" && broken.Count == 0 && top > plain * 10 && shortest > 17,
+              $"odun {top} (normal {plain}); islem sureleri: {string.Join(", ", lines)}; en kisa {shortest:0} ms (bir tik 16,7 ms){(broken.Count == 0 ? "" : "; KIRILANLAR: " + string.Join(" | ", broken))}");
+        Out($"  saati normalde de duran beceriler (kurtarma bunlara dokunmamali): {(normallyStopped.Count == 0 ? "yok" : string.Join(", ", normallyStopped))}");
+
+        // 4. an action whose timer died earlier comes back when a speed setting is changed
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        ActionQueue.Targets.Start(game, wcSkill.Action, tree, out _);
+        Cut(600);
+        wcSkill.Action.ActionTimer!.Stop();                      // what the game's error left behind: started, but nothing fires
+        int dead = Cut(1200);
+        Engine.SetValue("speed.actions", 2);
+        int alive = Cut(1200);
+        Check("saati olmus is, hiz ayari degisince yeniden calisiyor", dead == 0 && alive > 0 && crash == "", $"saat durmusken {dead} odun; ayar degisince {alive} odun");
+
+        // 5. the settings on their own still do what they say
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        ActionQueue.Targets.Start(game, wcSkill.Action, tree, out _);
+        Engine.SetValue("speed.actions", 5);
+        int onlyAll = Cut(T);
+        Engine.SetValue("speed.actions", 1);
+        Engine.SetValue("skill.Woodcutting.speed", 5);
+        int onlyOne = Cut(T);
+        Check("tek basina ayarlar eskisi gibi", Near(onlyAll, plain * 5.0, 0.15) && Near(onlyOne, plain * 5.0, 0.15) && crash == "", $"yalniz genel x5: {onlyAll}; yalniz beceri x5: {onlyOne} (~{plain * 5})");
+
+        // 6. the menu is at its highest, and then the game itself takes more time off (a better tool, a potion)
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        ActionQueue.Targets.Start(game, wcSkill.Action, tree, out _);
+        Engine.SetValue("speed.actions", 20);
+        Cut(600);
+        crash = "";
+        Action takeBack = Engine.AddOutside("skill.Woodcutting.speed", 0.10);
+        string unguarded = string.Join(", ", Engine.Diagnose("skill.Woodcutting.speed"));
+        Engine.Guard();                                          // what the mod does on its next frame
+        string guarded = string.Join(", ", Engine.Diagnose("skill.Woodcutting.speed"));
+        int afterBonus = Cut(3000);
+        Check("oyunun kendi bonusu sonradan gelince de kilitlenmiyor", crash == "" && afterBonus > 0 && wcSkill.Action.IsStarted,
+              $"bonus gelince: {unguarded}; mod duzeltince: {guarded}; sonra {afterBonus} odun{(crash == "" ? "" : "; HATA: " + crash)}");
+        takeBack();
+        Engine.Guard();
+
+        // 6b. Hunting: its journal gives bonuses to "shortest tracking time", which the game adds to "tracking time".
+        //     Everything at its highest, then such a bonus arrives: no animal may end up with no time at all.
+        Engine.ResetAll();
+        Engine.SetValue("speed.actions", 20);
+        Engine.SetValue("skill.Hunting.speed", 20);
+        crash = "";
+        var hunting = skills.First(s => s.Entity.Id == "MelvorBase:Hunting").Action as GamesByMalcs.Melvor2.Entities.Hunting.HuntingActionComponent;
+        var animals = hunting!.Locations.Values.SelectMany(l => l.Animals).ToList();
+        double Shortest() => animals.Min(a => Math.Min(Math.Min(a.Stats.TrackingInterval.Value.Min, a.Stats.TrappingInterval.Value.Min), a.Stats.SurveyInterval.Value));
+        double before6b = Shortest();
+        var journal = new List<Action>
+        {
+            Engine.AddOutside(new StatRef("HuntingAction", "PercentMinTrackingInterval", "Hunting", "Action", -1), 0.30),
+            Engine.AddOutside(new StatRef("HuntingAction", "PercentMaxTrackingInterval", "Hunting", "Action", -1), 0.20),
+            Engine.AddOutside(new StatRef("HuntingAction", "PercentMinTrappingInterval", "Hunting", "Action", -1), 0.30),
+        };
+        double unguarded6b = Shortest();
+        Engine.Guard();
+        double guarded6b = Shortest();
+        string companions = string.Join(", ", Engine.Companions("skill.Hunting.speed"));
+        // and a hunt really runs through tracking and trapping without the game's error
+        var lentAgain = new List<(Item Item, int Amount)>();          // (traps and bait, as in the run above)
+        foreach (Item any in Actions.Items(game))
+        {
+            int got = s_bank.Inventory.AddQuantity(any, 500);
+            if (got > 0) lentAgain.Add((any, got));
+        }
+        ActionQueue.Target? huntTarget = ActionQueue.Targets.All(hunting).Take(40).FirstOrDefault(target => ActionQueue.Targets.Start(game, hunting, target, out _));
+        try { for (int i = 0; i < 3000; i++) game.PropagateTick(); }
+        catch (Exception e) { crash = (e.InnerException ?? e).Message; }
+        bool hunted = huntTarget != null && crash == "" && hunting.IsStarted;
+        game.ActionManager.TryStopActive(force: true);
+        foreach (var (item, amount) in lentAgain) s_bank.Inventory.RemoveQuantity(item, amount);
+        foreach (Action back in journal) back();
+        Engine.Guard();
+        Check("Hunting: gunluk bonusu ust uste binince de sure sifira inmiyor", guarded6b >= 100 && crash == "" && companions.Contains("PercentTrackingInterval+2") && companions.Contains("PercentTrappingInterval+2"),
+              $"{animals.Count} hayvanin en kisa suresi: once {before6b:0} ms, bonus gelince {unguarded6b:0} ms, mod duzeltince {guarded6b:0} ms; birlikte sayilanlar: {companions}; " +
+              $"3000 tik av: {(huntTarget == null ? "test duzeni baslatamadi (yukaridaki en-yuksek kontrolunde Hunting calisiyor)" : hunted ? "calisti" : "HATA: " + crash)}");
+        crash = "";
+
+        // 7. the protection is for times only: "100% cheaper" stays 100%
+        Engine.ResetAll();
+        Engine.SetValue("skills.cheaper", 100);
+        Engine.SetValue("combat.slayerFreeReroll", 1);
+        string cheaper = string.Join(", ", Engine.Diagnose("skills.cheaper").Distinct());
+        string reroll = string.Join(", ", Engine.Diagnose("combat.slayerFreeReroll"));
+        Check("koruma yalniz surelere: malzeme indirimi %100 kaliyor", cheaper == "PercentIngredientCost=-1" && reroll.EndsWith("=-1"), $"{cheaper}; {reroll}");
+
+        // 8. Astrology: Knowledge per study, set the way the player does it - in the menu's own box
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        var astro = skills.First(s => s.Entity.Id == "MelvorBase:Astrology");
+        var astroAction = (GamesByMalcs.Melvor2.Entities.Astrology.AstrologyActionComponent)astro.Action;
+        bool studying = false;
+        foreach (ActionQueue.Target target in ActionQueue.Targets.All(astro.Action).Take(40))
+            if (ActionQueue.Targets.Start(game, astro.Action, target, out _)) { studying = true; break; }
+        var star = astroAction.StudiedConstellation;
+        double perStudy = star?.Stats.Knowledge.Value ?? 0;
+        double had = star?.Knowledge ?? 0;
+        Cut(3600);
+        double gainedPlain = (star?.Knowledge ?? 0) - had;
+
+        CheatMenuMod menuMod = CheatMenuMod.Instance!;
+        if (menuMod.Menu is not { Visible: true }) menuMod.ToggleMenu();
+        yield return 5;
+        int skillsPage = Enumerable.Range(0, menuMod.Menu!.PageCount).First(i => menuMod.Menu.PageTitle(i) == "Skills");
+        menuMod.Menu.ShowPage(skillsPage);
+        yield return 3;
+        Label? rowName = menuMod.Menu.PageControl(skillsPage).FindChildren("*", "Label", true, false).Cast<Label>().FirstOrDefault(l => l.Text == "Astrology: knowledge per study");
+        SpinBox? box = null;
+        for (Node? up = rowName?.GetParent(); up != null && box == null && up != menuMod.Menu.PageControl(skillsPage); up = up.GetParent())
+            box = up.FindChildren("*", "SpinBox", true, false).Cast<SpinBox>().FirstOrDefault();
+        if (box != null) box.Value = 10;
+        yield return 3;
+        double perStudy10 = star?.Stats.Knowledge.Value ?? 0;
+        had = star?.Knowledge ?? 0;
+        Cut(3600);
+        double gained10 = (star?.Knowledge ?? 0) - had;
+        Check("Astrology: menuden 'knowledge per study' x10", studying && rowName != null && box != null && Engine.GetValue("skills.astroKnowledge") == 10
+              && perStudy > 0 && Near(perStudy10, perStudy * 10, 0.02) && Near(gained10, gainedPlain * 10, 0.15) && crash == "",
+              $"menude satir {(rowName != null ? "var" : "YOK")}, kutu {(box != null ? "var" : "YOK")}; calisma basina {perStudy:0.##} -> {perStudy10:0.##}; bir dakikada {gainedPlain:0.#} -> {gained10:0.#} bilgi");
+        menuMod.ToggleMenu();
+
+        game.ActionManager.TryStopActive(force: true);
+        Engine.ResetAll();
+        yield return 5;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // The player's wish: "high bars need far too much coal - take the need for coal out of the game", as a list
+    // of materials to choose from in the Cheat Menu.
+    static IEnumerator<int> MaterialTests(Game game, ModContext ctx)
+    {
+        Out("=== 5p. Gereksiz maddeler (Materials sayfasi) ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        Unneeded.Clear();
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        var skills = ActionQueue.Targets.Skills(game);
+        var smith = skills.First(s => s.Entity.Id == "MelvorBase:Smithing");
+        var items = Actions.Items(game);
+        Item coal = items.First(i => i.Id == "MelvorBase:Coal");
+        Item ironOre = items.First(i => i.Id == "MelvorBase:IronOre");
+        Item steelBar = items.First(i => i.Id == "MelvorBase:SteelBar");
+        Item silverBar = items.First(i => i.Id == "MelvorBase:SilverBar");
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void SetQty(Item i, int n)
+        {
+            int d = n - Qty(i);
+            if (d > 0) s_bank.Inventory.AddQuantity(i, d); else if (d < 0) s_bank.Inventory.RemoveQuantity(i, -d);
+        }
+        string crash = "";
+        void Ticks(int n)
+        {
+            try { for (int i = 0; i < n; i++) game.PropagateTick(); }
+            catch (Exception e) { crash = (e.InnerException ?? e).Message; }
+        }
+        var artisans = skills.Select(s => s.Action).OfType<GamesByMalcs.Melvor2.Components.ArtisanAction.ArtisanActionComponent>().ToList();
+        var herblore = skills.Select(s => s.Action).OfType<GamesByMalcs.Melvor2.Entities.Herblore.HerbloreActionComponent>().First();
+        int Asking(Item item) => artisans.Sum(c => c.ActiveRecipes.Values.Count(r => r.Stats.ItemCost.Values.Any(v => v.Value.Item == item)));
+        int Potions(Item item) => herblore.ActiveRecipes.Values.Count(r => r.Stats.ItemCost.Values.Any(v => v.Value.Item == item));
+        int Upgrades(Item item) => game.Data.GetDataRegistryOutput<GamesByMalcs.Melvor2.Components.ItemUpgrading.ItemUpgrade>().GetAllObjects().Count(u => u.Costs.Items.Any(q => q.Item == item));
+        int PlanSteps()
+        {
+            int ore = Qty(ironOre), fuel = Qty(coal), bars = Qty(steelBar);
+            SetQty(ironOre, 0); SetQty(coal, 0); SetQty(steelBar, 0);
+            int steps = ActionQueue.Planner.Compute(game, steelBar, 50, null, more: true).Steps.Count;
+            SetQty(ironOre, ore); SetQty(coal, fuel); SetQty(steelBar, bars);
+            return steps;
+        }
+
+        // ---- before: a Steel Bar needs coal, and without coal nothing is smelted
+        ActionQueue.Target steel = ActionQueue.Targets.All(smith.Action).First(x => x.Name == "Steel Bar");
+        ActionQueue.Targets.CanStart(smith.Action, steel, out string levelProblem);
+        int askingBefore = Asking(coal), potionsBefore = Potions(coal), planBefore = PlanSteps();
+        SetQty(ironOre, 60); SetQty(coal, 0); SetQty(steelBar, 0);
+        ActionQueue.Targets.Start(game, smith.Action, steel, out _);
+        Ticks(600);
+        int barsWithout = Qty(steelBar);
+        game.ActionManager.TryStopActive(force: true);
+
+        // ---- the player's path: F8, Materials, click Coal, "Not needed"
+        CheatMenuMod menuMod = CheatMenuMod.Instance!;
+        if (menuMod.Menu is not { Visible: true }) menuMod.ToggleMenu();
+        yield return 5;
+        Menu menu = menuMod.Menu!;
+        int pageIndex = Enumerable.Range(0, menu.PageCount).FirstOrDefault(i => menu.PageTitle(i) == "Materials", -1);
+        if (pageIndex < 0) { Check("Materials sayfasi", false, "menude boyle bir sayfa yok"); yield break; }
+        menu.ShowPage(pageIndex);
+        yield return 3;
+        Control page = menu.PageControl(pageIndex);
+        Tree tree = page.FindChildren("*", "Tree", true, false).Cast<Tree>().First();
+        Button Press(string text) => page.FindChildren("*", "Button", true, false).Cast<Button>().First(b => b.Text == text);
+        string Row(string name)
+        {
+            for (TreeItem? row = tree.GetRoot()?.GetFirstChild(); row != null; row = row.GetNext())
+                if (row.GetText(0) == name) return $"{row.GetText(0)} | {row.GetText(1)} | {row.GetText(2)}";
+            return "(yok)";
+        }
+        string firstRows = string.Join(", ", Enumerable.Range(0, 6).Select(i => tree.GetRoot()?.GetChild(i)?.GetText(0) ?? "?"));
+        string rowBefore = Row("Coal");
+        bool picked = menu.PickMaterial("Coal");
+        Press("Not needed").EmitSignal(BaseButton.SignalName.Pressed);
+        yield return 3;
+        string rowAfter = Row("Coal");
+        int askingAfter = Asking(coal), potionsAfter = Potions(coal), planAfter = PlanSteps();
+
+        SetQty(ironOre, 60); SetQty(coal, 0); SetQty(steelBar, 0);
+        bool started = ActionQueue.Targets.Start(game, smith.Action, steel, out string startProblem);
+        Ticks(1500);
+        int bars = Qty(steelBar), oreUsed = 60 - Qty(ironOre);
+        SetQty(coal, 25);                                        // coal the player still has is left alone
+        Ticks(600);
+        int coalKept = Qty(coal);
+        Check("Coal 'Not needed': komursuz Steel Bar dokuluyor", levelProblem == "" && barsWithout == 0 && picked && started && bars > 0 && oreUsed >= bars && askingBefore >= 9 && askingAfter == 0
+              && potionsBefore > 0 && potionsAfter == 0 && coalKept == 25 && crash == "" && rowAfter.EndsWith("Not needed"),
+              $"listenin basi: {firstRows}; satir once '{rowBefore}', sonra '{rowAfter}'; komur isteyen tarif {askingBefore} -> {askingAfter}, iksir {potionsBefore} -> {potionsAfter}; " +
+              $"komursuz: once {barsWithout} kulce, sonra {bars} kulce ({oreUsed} demir cevheri gitti); bankadaki 25 komur: {coalKept}{(started ? "" : "; BASLAMADI: " + startProblem + levelProblem)}{(crash == "" ? "" : "; HATA: " + crash)}");
+        Check("Is Sirasi plani da komuru istemiyor", planBefore >= 2 && planAfter == planBefore - 1, $"50 Steel Bar plani: {planBefore} adim -> {planAfter} adim");
+
+        // ---- item upgrades use the same list (silver bars are asked for by a great many of them)
+        int upgradesBefore = Upgrades(silverBar);
+        Unneeded.Set(new[] { silverBar }, true);
+        int upgradesAfter = Upgrades(silverBar);
+        Unneeded.Set(new[] { silverBar }, false);
+        int upgradesBack = Upgrades(silverBar);
+        Check("esya yukseltmeleri de ayni listeye uyuyor", upgradesBefore > 0 && upgradesAfter == 0 && upgradesBack == upgradesBefore, $"Silver Bar isteyen yukseltme: {upgradesBefore} -> {upgradesAfter} -> geri alininca {upgradesBack}");
+
+        // ---- the list is remembered: the character is opened again
+        Unneeded.Bind(game, Engine.Character);
+        int rememberedCount = Unneeded.Count, askingReopened = Asking(coal);
+
+        // ---- and switched back: "Needed again"
+        menu.ShowPage(pageIndex);
+        yield return 3;
+        bool pickedAgain = menu.PickMaterial("Coal");
+        Press("Needed again").EmitSignal(BaseButton.SignalName.Pressed);
+        yield return 3;
+        int askingBack = Asking(coal), potionsBack = Potions(coal);
+        SetQty(coal, 0);
+        Ticks(900);
+        bool stoppedForCoal = !smith.Action.IsStarted;
+        Check("hatirlaniyor ve geri alinabiliyor", rememberedCount == 1 && askingReopened == 0 && pickedAgain && askingBack == askingBefore && potionsBack == potionsBefore && stoppedForCoal && Unneeded.Count == 0 && crash == "",
+              $"yeniden acilinca listede {rememberedCount} madde, komur isteyen tarif {askingReopened}; 'Needed again' sonrasi {askingBack} tarif + {potionsBack} iksir yine komur istiyor; komur bitince dokum {(stoppedForCoal ? "durdu" : "DURMADI")}; satir: '{Row("Coal")}'");
+
+        Unneeded.Clear();
+        menuMod.ToggleMenu();
+        game.ActionManager.TryStopActive(force: true);
+        SetQty(ironOre, 0); SetQty(steelBar, 0);
+        Engine.ResetAll();
+        yield return 5;
+    }
+
+    // A look at the game's own top bar (Bank, Shop, Quests...), for mods that add a button to it.
+    static IEnumerator<int> HeaderProbe(Game game, ModContext ctx)
+    {
+        Out("=== ust cubuk ===");
+        yield return 10;
+        Node? header = null;
+        void Search(Node n) { if (header != null) return; if (n is GamesByMalcs.Melvor2.GameMenus.Header.GameHeader) { header = n; return; } foreach (Node c in n.GetChildren()) Search(c); }
+        Search(ctx.Tree.Root);
+        if (header == null) { Out("GameHeader bulunamadi"); yield break; }
+        Out("header: " + header.GetPath());
+        Node? bank = null;
+        void Find(Node n) { if (bank != null) return; if (n is GamesByMalcs.Melvor2.GameMenus.Pages.BankNavigationButton) { bank = n; return; } foreach (Node c in n.GetChildren()) Find(c); }
+        Find(header);
+        if (bank == null) { Out("Bank dugmesi bulunamadi"); yield break; }
+        Node row = bank.GetParent();
+        Out($"satir: {row.GetPath()} ({row.GetClass()}), {row.GetChildCount()} cocuk");
+        void Dump(Node n, int depth)
+        {
+            string extra = "";
+            if (n is Control c) extra += $" size={c.Size} min={c.CustomMinimumSize} vis={c.Visible} mouse={c.MouseFilter}";
+            if (n is Label l) extra += $" text='{l.Text}' font={l.GetThemeFontSize("font_size")} color={l.GetThemeColor("font_color")} settings={(l.LabelSettings != null ? l.LabelSettings.FontSize + "/" + l.LabelSettings.FontColor : "-")}";
+            if (n is TextureRect tr) extra += $" tex={tr.Texture?.ResourcePath} expand={tr.ExpandMode} stretch={tr.StretchMode}";
+            if (n is BaseButton b) extra += $" button flat={(n as Button)?.Flat} toggle={b.ToggleMode}";
+            if (n is MarginContainer m) extra += $" margins={m.GetThemeConstant("margin_left")},{m.GetThemeConstant("margin_top")},{m.GetThemeConstant("margin_right")},{m.GetThemeConstant("margin_bottom")}";
+            if (n is BoxContainer bc) extra += $" sep={bc.GetThemeConstant("separation")}";
+            if (n is PanelContainer pc) extra += $" panel={pc.GetThemeStylebox("panel")?.GetClass()}";
+            Out(new string(' ', depth * 2) + $"{n.Name} [{n.GetClass()} / {n.GetType().Name}]{extra}");
+            if (depth < 6) foreach (Node child in n.GetChildren()) Dump(child, depth + 1);
+        }
+        foreach (Node child in row.GetChildren())
+            if (child is GamesByMalcs.Melvor2.GameMenus.Pages.BankNavigationButton or GamesByMalcs.Melvor2.GameMenus.Pages.ShopNavigationButton or GamesByMalcs.Melvor2.GameMenus.Pages.SimpleNavigationButton)
+                Dump(child, 1);
+            else Out($"  {child.Name} [{child.GetType().Name}]");
+        Out("bitti: ust cubuk");
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // The Merchant mod: a button in the game's top bar between Bank and Shop, raw materials for sale at a
+    // multiple of the bank price, goods bought above bank price, new goods every few hours.
+    static IEnumerator<int> MerchantTests(Game game, ModContext ctx)
+    {
+        Out("=== 5r. Merchant ===");
+        game.ActionManager.TryStopActive(force: true);
+        Merchant.MerchantMod mod = Merchant.MerchantMod.Instance!;
+        // A fixed clock, and ModTest's own page in merchant.json wiped (other characters' pages are left alone).
+        DateTime clock = new DateTime(2026, 11, 19, 9, 30, 0, DateTimeKind.Utc);
+        Merchant.Market.Now = () => clock;
+        string file = Path.Combine(Merchant.Market.Dir, "merchant.json");
+        if (File.Exists(file))
+        {
+            var all = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(file))!.AsObject();
+            all.Remove(game.CharacterName);
+            File.WriteAllText(file, all.ToJsonString());
+        }
+        Merchant.Market.Unbind();
+        Merchant.Market.Bind(game);
+
+        var gold = Actions.Currencies(game).First(c => c.Id == "MelvorBase:GoldPieces");
+        long Gold() => s_bank.Wallet.GetQuantity(gold);
+        void SetGold(long n) { long d = n - Gold(); if (d > 0) s_bank.Wallet.AddQuantity(gold, d); else if (d < 0) s_bank.Wallet.RemoveQuantity(gold, -d); }
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void SetQty(Item i, int n) { int d = n - Qty(i); if (d > 0) s_bank.Inventory.AddQuantity(i, d); else if (d < 0) s_bank.Inventory.RemoveQuantity(i, -d); }
+        long goldAtStart = Gold();
+        Engine.Bind(game);
+        Engine.SetValue("bank.slots", 10000);
+
+        // ---- 1. the button in the game's own top bar
+        yield return 45;
+        Button? top = mod.TopBarButton;
+        string order = top == null ? "(dugme yok)" : string.Join(", ", top.GetParent().GetChildren().Select(n => n.Name.ToString().Replace("NavigationButton", "")));
+        int at = top?.GetIndex() ?? -1;
+        bool between = top != null && at > 0 && top.GetParent().GetChild(at - 1).Name == "BankNavigationButton" && top.GetParent().GetChild(at + 1).Name == "ShopNavigationButton";
+        Control? bankButton = top?.GetParent().GetChild(at - 1) as Control;
+        Check("ust cubukta Bank ile Shop arasinda Merchant dugmesi", between && top!.Visible && top.Size.X >= 60 && Math.Abs(top.Size.Y - bankButton!.Size.Y) < 1,
+              $"sira: {order}; boyut {top?.Size} (Bank {bankButton?.Size})");
+        if (top == null) yield break;
+
+        // ---- 2. a click on it opens the window
+        string? markBefore = mod.Mark;
+        string tipBefore = top.TooltipText;
+        top.EmitSignal(BaseButton.SignalName.Pressed);
+        yield return 5;
+        Merchant.MerchantWindow win = mod.Window!;
+        string? markOpen = mod.Mark;
+        var offers = Merchant.Market.Offers;
+        var wanted = Merchant.Market.Wanted;
+        Out($"  {win.GoldText}; {win.NextText}");
+        for (int i = 0; i < win.SaleRows; i++) Out("  SATIS  " + win.SaleText(i));
+        for (int i = 0; i < win.WantedRows; i++) Out("  ARANAN " + win.WantedText(i));
+        bool pricesRight = offers.All(o => o.Price == (long)Math.Ceiling(Merchant.Market.BankPrice(o.Item) * (o.Rare ? 4m : o.Deal ? 1.6m : 2m)))
+                           && wanted.All(w => w.Pays == (long)Math.Ceiling(Merchant.Market.BankPrice(w.Item) * 1.5m));
+        var gameView = Merchant.MerchantPage.View(ctx.Tree)!;
+        bool isPage = win.Root != null && gameView.EntityViewContainer.IsAncestorOf(win.Root) && gameView.EntityViewContainer.GetChildCount() == 1
+                      && Merchant.MerchantPage.Current(gameView) is Merchant.MerchantPage;
+        Label? pageTitle = gameView.Header.FindChildren("*", "Label", true, false).OfType<Label>().FirstOrDefault(l => l.Text == "Merchant" && l.IsVisibleInTree() && !top.IsAncestorOf(l));
+        Check("Merchant oyunun kendi sayfasi olarak aciliyor (Bank/Shop'un yerinde, ust baslikta adi)", isPage && pageTitle != null,
+              $"oyunun sayfa alaninda: {isPage}; ust baslik: {(pageTitle == null ? "YOK" : "'" + pageTitle.Text + "'")}; sayfa alanindaki gorunum sayisi {gameView.EntityViewContainer.GetChildCount()}");
+        Check("pencere aciliyor: satilanlar ve arananlar listeleniyor", win.Visible && win.SaleRows == offers.Count && offers.Count >= 4 && win.WantedRows == wanted.Count && wanted.Count >= 1
+              && pricesRight && offers.Count(o => o.Deal) == 1 && win.NextText.Contains("2h 30m"),
+              $"{offers.Count} urun satista ({offers.Count(o => o.Rare)} nadir, firsat: {offers.FirstOrDefault(o => o.Deal)?.Item.Id}), {wanted.Count} aranan; fiyat kurali {(pricesRight ? "tutuyor" : "TUTMUYOR")}; '{win.NextText}'");
+        Check("dugmedeki isaret: yeni mal gelince yaniyor, pencere acilinca sonuyor", markBefore != null && tipBefore.Contains("New goods have arrived") && markOpen == null,
+              $"acmadan once: {markBefore ?? "yok"}, ipucu '{tipBefore.Replace("\n", " / ")}'; acinca: {markOpen ?? "sondu"}");
+        string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+        Directory.CreateDirectory(shotDir);
+        yield return 3;
+        void Shot(string name)
+        {
+            Image? picture = ctx.Tree.Root.GetTexture()?.GetImage();          // there is none when the game runs without a window
+            if (picture != null) Out($"  goruntu {name}: " + picture.SavePng(Path.Combine(shotDir, name)));
+        }
+        Shot("merchant-1-pencere.png");
+
+        // ---- 3. buying, through the window's own buttons
+        Merchant.Offer first = offers[0];
+        SetGold(1_000_000);
+        yield return 35;                                         // the window brings its numbers up to date twice a second
+        int had = Qty(first.Item);
+        long cost10 = Merchant.Market.Cost(first, 10);
+        win.BuyButton(0, 1).EmitSignal(BaseButton.SignalName.Pressed);        // "10"
+        string said10 = win.StatusText;
+        bool bought10 = Qty(first.Item) == had + 10 && Gold() == 1_000_000 - cost10 && first.Bought == 10;
+        // "All" with gold for exactly seven more
+        long cost7 = Merchant.Market.Cost(first, 7);
+        SetGold(cost7);
+        yield return 35;
+        string rowSeven = win.SaleText(0);
+        win.BuyButton(0, 3).EmitSignal(BaseButton.SignalName.Pressed);        // "All"
+        bool boughtSeven = Qty(first.Item) == had + 17 && Gold() == 0 && first.Bought == 17;
+        yield return 35;
+        string rowBroke = win.SaleText(0);
+        bool allGreyed = Enumerable.Range(0, 4).All(b => win.BuyButton(0, b).Disabled);
+        win.BuyButton(0, 0).EmitSignal(BaseButton.SignalName.Pressed);        // a click that slips through buys nothing
+        bool nothingFree = Qty(first.Item) == had + 17 && Gold() == 0;
+        string saidBroke = win.StatusText;
+        // the whole stock of the last row
+        int last = offers.Count - 1;
+        Merchant.Offer small = offers[last];
+        int hadSmall = Qty(small.Item);
+        long costAll = Merchant.Market.Cost(small, small.Left);
+        int stockSmall = small.Stock;
+        SetGold(50_000_000);
+        yield return 35;
+        win.BuyButton(last, 3).EmitSignal(BaseButton.SignalName.Pressed);
+        yield return 35;
+        bool soldOut = small.Left == 0 && Qty(small.Item) == hadSmall + stockSmall && Gold() == 50_000_000 - costAll && win.SaleText(last).Contains("sold out")
+                       && Enumerable.Range(0, 4).All(b => win.BuyButton(last, b).Disabled);
+        double dearer = (double)costAll / (small.Price * stockSmall);
+        Check("satin alma: para dusuyor, banka artiyor, stok azaliyor; fiyat hic degismiyor", bought10 && boughtSeven && allGreyed && nothingFree && soldOut && dearer == 1.0 && cost10 == first.Price * 10,
+              $"'10': '{said10}'; 7'lik parayla 'All': satir '{rowSeven}' -> {(boughtSeven ? "7 aldi, altin 0" : "YANLIS")}; parasizken satir '{rowBroke}', tiklaninca: '{saidBroke}'; " +
+              $"son satirin tamami ({stockSmall} adet): liste fiyatinin {dearer:0.00} kati tuttu, sonra '{win.SaleText(last)}'");
+
+        // ---- 4. selling what he is looking for
+        Merchant.Want want = wanted[0];
+        int hadWant = Qty(want.Item);
+        SetQty(want.Item, 25);
+        SetGold(1000);
+        yield return 35;
+        string wantRow = win.WantedText(0);
+        win.SellButton(0, 1).EmitSignal(BaseButton.SignalName.Pressed);       // "10"
+        string saidSell = win.StatusText;
+        bool sold10 = Qty(want.Item) == 15 && Gold() == 1000 + want.Pays * 10 && want.Sold == 10;
+        SetQty(want.Item, want.Wants + 40);                                    // far more than he wants
+        yield return 35;
+        long goldBefore = Gold();
+        int leftBefore = want.Left;
+        win.SellButton(0, 3).EmitSignal(BaseButton.SignalName.Pressed);       // "All"
+        yield return 35;
+        bool onlyWhatHeWants = want.Left == 0 && Qty(want.Item) == want.Wants + 40 - leftBefore && Gold() == goldBefore + want.Pays * leftBefore
+                               && win.WantedText(0).Contains("has enough") && Enumerable.Range(0, 4).All(b => win.SellButton(0, b).Disabled);
+        Check("aranan urunu satma: bankanin 1,5 kati, yalniz istedigi kadar", sold10 && onlyWhatHeWants && want.Pays == (long)Math.Ceiling(Merchant.Market.BankPrice(want.Item) * 1.5m),
+              $"satir '{wantRow}'; '10': '{saidSell}'; fazlasiyla 'All': {leftBefore} tane aldi, sonra '{win.WantedText(0)}'");
+        SetQty(want.Item, hadWant);
+
+        // ---- 5. the game is closed and opened again in the same visit: everything is as it was left
+        string before = string.Join(";", offers.Select(o => $"{o.Item.Id}:{o.Bought}/{o.Stock}@{o.Price}")) + "|" + string.Join(";", wanted.Select(w => $"{w.Item.Id}:{w.Sold}/{w.Wants}"));
+        Merchant.Market.Unbind();
+        Merchant.Market.Bind(game);
+        string after = string.Join(";", Merchant.Market.Offers.Select(o => $"{o.Item.Id}:{o.Bought}/{o.Stock}@{o.Price}")) + "|" + string.Join(";", Merchant.Market.Wanted.Select(w => $"{w.Item.Id}:{w.Sold}/{w.Wants}"));
+        // ---- and four hours later he is back with new goods
+        clock = clock.AddHours(4);
+        Merchant.Market.Tick(game);
+        yield return 35;
+        var fresh = Merchant.Market.Offers;
+        string freshNames = string.Join(", ", fresh.Select(o => Merchant.Market.Name(o.Item)));
+        Check("ayni ziyarette hatirlaniyor; 4 saat sonra yeni mallar", before == after && fresh.All(o => o.Bought == 0) && Merchant.Market.Wanted.All(w => w.Sold == 0)
+              && win.SaleRows == fresh.Count && string.Join(";", fresh.Select(o => o.Item.Id)) != string.Join(";", offers.Select(o => o.Item.Id)) && win.NextText.Contains("2h 30m")
+              && mod.Mark == null,
+              $"yeniden acinca ayni: {before == after}; yeni ziyaret: {freshNames}; '{win.NextText}'; pencere acikken isaret: {mod.Mark ?? "yanmiyor"}");
+
+        // ---- 6. three hundred visits: never a money machine
+        var madeOf = new Dictionary<Item, HashSet<Item>>();
+        foreach (var recipe in game.Data.GetDataRegistryOutput<GamesByMalcs.Melvor2.Components.ArtisanAction.ArtisanRecipe>().GetAllObjects()
+                     .Concat(game.Data.GetDataRegistryOutput<GamesByMalcs.Melvor2.Entities.Cooking.CookingRecipe>().GetAllObjects()))
+        {
+            Item? product = recipe.Products.FirstOrDefault()?.Item;
+            if (product == null) continue;
+            if (!madeOf.TryGetValue(product, out HashSet<Item>? parts)) madeOf[product] = parts = new HashSet<Item>();
+            foreach (var part in recipe.Ingredients.Items) parts.Add(part.Item);
+        }
+        int loops = 0, sellBack = 0, visitsWithCoal = 0, fewest = int.MaxValue, most = 0;
+        var seen = new HashSet<Item>();
+        var seenWanted = new HashSet<Item>();
+        string example = "";
+        for (long visit = 500000; visit < 500300; visit++)
+        {
+            var (sale, looking) = Merchant.Market.Goods(game, game.CharacterName, visit);
+            fewest = Math.Min(fewest, sale.Count); most = Math.Max(most, sale.Count);
+            foreach (var o in sale) seen.Add(o.Item);
+            foreach (var w in looking) seenWanted.Add(w.Item);
+            if (sale.Any(o => o.Item.Id == "MelvorBase:Coal")) visitsWithCoal++;
+            // buying something and selling it straight back, to him or to the bank
+            // (his own buying price is the highest anyone pays; equal is no gain)
+            sellBack += sale.Count(o => o.Price < (long)Math.Ceiling(Merchant.Market.BankPrice(o.Item) * 1.5m) || o.Price <= Merchant.Market.BankPrice(o.Item) || looking.Any(w => w.Item == o.Item));
+            // buying the materials of something he is looking for
+            foreach (var w in looking)
+            {
+                var needs = new HashSet<Item>();
+                var open = new Queue<Item>();
+                open.Enqueue(w.Item);
+                while (open.Count > 0)
+                    if (madeOf.TryGetValue(open.Dequeue(), out HashSet<Item>? parts))
+                        foreach (Item part in parts)
+                            if (needs.Add(part)) open.Enqueue(part);
+                var hit = sale.FirstOrDefault(o => needs.Contains(o.Item));
+                if (hit != null) { loops++; if (example == "") example = $"{Merchant.Market.Name(w.Item)} araniyor ama {Merchant.Market.Name(hit.Item)} satiliyor"; }
+            }
+        }
+        Check("300 ziyaret: al-sat ya da al-isle-sat ile para basilamiyor", loops == 0 && sellBack == 0 && fewest >= 4,
+              $"ziyaret basina {fewest}-{most} urun; 300 ziyarette {seen.Count} farkli urun satildi, {seenWanted.Count} farkli urun arandi; komur {visitsWithCoal} ziyarette vardi{(example == "" ? "" : "; ORNEK: " + example)}");
+
+        // A way to earn money in one visit, in words; "" when there is none.
+        string Hole(List<Merchant.Offer> sale, List<Merchant.Want> looking)
+        {
+            foreach (var o in sale)
+                if (o.Price < (long)Math.Ceiling(Merchant.Market.BankPrice(o.Item) * 1.5m) || looking.Any(w => w.Item == o.Item))
+                    return $"{Merchant.Market.Name(o.Item)} al-geri sat";
+            foreach (var w in looking)
+            {
+                var needs = new HashSet<Item>();
+                var open = new Queue<Item>();
+                open.Enqueue(w.Item);
+                while (open.Count > 0)
+                    if (madeOf.TryGetValue(open.Dequeue(), out HashSet<Item>? parts))
+                        foreach (Item part in parts)
+                            if (needs.Add(part)) open.Enqueue(part);
+                var hit = sale.FirstOrDefault(o => needs.Contains(o.Item));
+                if (hit != null) return $"{Merchant.Market.Name(w.Item)} araniyor ama {Merchant.Market.Name(hit.Item)} satiliyor";
+            }
+            return "";
+        }
+
+        // ---- 7. the standing order, placed through the window's own list
+        List<Item> orderable = Merchant.Market.Orderable(game);
+        Item pick = orderable.FirstOrDefault(i => i.Id == "MelvorBase:Coal") ?? orderable[0];
+        string pickName = Merchant.Market.Name(pick);
+        var shelfBefore = Merchant.Market.Offers;
+        bool listRight = win.OrderBox.ItemCount == orderable.Count + 1 && win.OrderBox.Selected == 0 && win.OrderBox.GetItemText(0) == "Nothing ordered";
+        bool listFitsScreen = false;
+        string noteNone = win.OrderNote;
+        win.OrderBox.ShowPopup();                                 // what the player sees after a click on the list
+        yield return 8;
+        Shot("merchant-5-siparis-listesi.png");
+        PopupMenu orderList = win.OrderBox.GetPopup();
+        Rect2 orderButton = win.OrderBox.GetGlobalRect();
+        float screenBottom = win.OrderBox.GetViewportRect().End.Y;
+        listFitsScreen = orderList.Visible && orderList.Position.Y >= (int)orderButton.End.Y - 1 && orderList.Position.Y + orderList.Size.Y <= screenBottom && orderList.Size.Y >= 200;
+        Out($"  siparis listesi acik: {orderList.Visible}, yer {orderList.Position}, boyut {orderList.Size}; dugmenin alti {orderButton.End.Y:0}, ekranin alti {screenBottom:0}");
+        orderList.Hide();
+        yield return 3;
+        bool picked = win.PickOrder(pickName);
+        string saidOrder = win.StatusText;
+        yield return 35;
+        string noteWaiting = win.OrderNote;
+        bool placed = picked && Merchant.Market.Order == pick && ReferenceEquals(shelfBefore, Merchant.Market.Offers) && saidOrder.StartsWith("Ordered") && noteWaiting.Contains("from the next one on");
+        Merchant.Market.Unbind();                                 // the game is closed and opened again
+        Merchant.Market.Bind(game);
+        bool kept = Merchant.Market.Order == pick;
+        clock = clock.AddHours(4);
+        Merchant.Market.Tick(game);
+        yield return 35;
+        var withOrder = Merchant.Market.Offers;
+        Merchant.Offer? brought = withOrder.FirstOrDefault();
+        long pickPrice = (long)Math.Ceiling(Merchant.Market.BankPrice(pick) * 2m);
+        bool arrived = brought != null && brought.Item == pick && brought.Ordered && !brought.Deal && brought.Price == pickPrice && brought.Stock >= 20
+                       && withOrder.Count(o => o.Item == pick) == 1 && withOrder.Count(o => !o.Rare) == 8 && win.SaleText(0).Contains("[ORDERED]")
+                       && win.OrderNote == $"He brings {pickName} on every visit." && win.OrderBox.GetItemText(win.OrderBox.Selected) == pickName;
+        Out("  SIPARIS " + win.SaleText(0) + "   |   " + win.OrderNote);
+        Shot("merchant-2-siparis.png");
+        SetGold(1_000_000);
+        yield return 35;
+        int hadPick = Qty(pick);
+        win.BuyButton(0, 2).EmitSignal(BaseButton.SignalName.Pressed);        // "100"
+        bool boughtOrder = brought != null && (brought.Stock < 100 || (Qty(pick) == hadPick + 100 && Gold() == 1_000_000 - pickPrice * 100));
+        string saidBought = win.StatusText;
+        clock = clock.AddHours(4);                                // a standing order: there again on the visit after
+        Merchant.Market.Tick(game);
+        yield return 35;
+        bool again = Merchant.Market.Offers.FirstOrDefault() is { Ordered: true, Bought: 0 } second && second.Item == pick;
+        bool cancelled = win.PickOrder("Nothing ordered") && Merchant.Market.Order == null && win.StatusText.StartsWith("Order cancelled");
+        string saidCancel = win.StatusText;
+        clock = clock.AddHours(4);
+        Merchant.Market.Tick(game);
+        yield return 35;
+        bool gone = Merchant.Market.Offers.All(o => !o.Ordered) && win.OrderBox.Selected == 0;
+        Check("siparis: listeden secilen madde sonraki her ziyarette rafta", listRight && listFitsScreen && placed && kept && arrived && boughtOrder && again && cancelled && gone,
+              $"listede {win.OrderBox.ItemCount - 1} madde, acilinca ekrana sigiyor: {listFitsScreen}; once: '{noteNone}'; '{pickName}' secilince: '{saidOrder}' / '{noteWaiting}'; kapatip acinca duruyor: {kept}; " +
+              $"sonraki ziyaret: {(arrived ? "en ustte, ORDERED" : "YOK/YANLIS")}; '100': '{saidBought}'; bir sonraki ziyarette yine: {again}; iptal: '{saidCancel}', sonraki ziyarette yok: {gone}");
+
+        // every material that can be ordered, forty visits each: always there, never wanted, never a money machine
+        int orderVisits = 0, missing = 0, wantedToo = 0;
+        string orderHole = "";
+        foreach (Item item in orderable)
+            for (long visit = 600000; visit < 600040; visit++)
+            {
+                var (sale, looking) = Merchant.Market.Goods(game, game.CharacterName, visit, item);
+                orderVisits++;
+                if (sale.Count(o => o.Item == item && o.Ordered) != 1 || sale[0].Item != item) missing++;
+                if (looking.Any(w => w.Item == item)) wantedToo++;
+                string hole = Hole(sale, looking);
+                if (hole != "" && orderHole == "") orderHole = $"{Merchant.Market.Name(item)} siparisiyle: {hole}";
+            }
+        Check("siparisle de para basilamiyor", missing == 0 && wantedToo == 0 && orderHole == "",
+              $"{orderable.Count} madde x 40 ziyaret = {orderVisits} ziyaret; siparis rafta degil: {missing}; siparis ayni anda araniyor: {wantedToo}{(orderHole == "" ? "" : "; ORNEK: " + orderHole)}");
+
+        // ---- 8. F3 leaves the page for the one the player came from; a click on another page of the game leaves it too
+        mod.ToggleWindow();
+        yield return 5;
+        var cameFrom = Merchant.MerchantPage.Current(gameView);
+        bool backWhereWeWere = !win.Visible && cameFrom is GamesByMalcs.Melvor2.GameMenus.Pages.EntityPage && gameView.EntityViewContainer.GetChildCount() == 1;
+        mod.ToggleWindow();
+        yield return 5;
+        bool openAgain = win.Visible && win.SaleRows == Merchant.Market.Offers.Count;
+        gameView.SetCurrentPage(game.Data.GetObject<GamesByMalcs.Melvor2.GameMenus.Pages.EntityPage>("MelvorBase:Bank"));   // what a click on Bank does
+        yield return 5;
+        bool bankTookOver = !win.Visible && Merchant.MerchantPage.Current(gameView)?.Id == "MelvorBase:Bank" && gameView.EntityViewContainer.GetChildCount() == 1;
+        Shot("merchant-6-sonra-banka.png");
+        if (cameFrom != null) gameView.SetCurrentPage(cameFrom);
+        yield return 5;
+        Check("sayfadan cikis: F3 gelinen sayfaya donuyor, Bank'a tiklayinca Bank aciliyor", backWhereWeWere && openAgain && bankTookOver,
+              $"F3: {(backWhereWeWere ? "geri dondu (" + cameFrom!.Id + ")" : "DONMEDI")}; yeniden acildi: {openAgain}; Bank'a gecince Merchant kapandi: {bankTookOver}");
+
+        // ---- 9. the mark on the top bar button, with the window closed
+        // The next visit's wanted goods are taken out of the bank first, so only "new goods" is news.
+        long nextVisit = Merchant.Market.Visit + 1;
+        var nextWanted = Merchant.Market.Goods(game, game.CharacterName, nextVisit).Wanted;
+        var hadBefore = nextWanted.ToDictionary(w => w.Item, w => Qty(w.Item));
+        foreach (var w in nextWanted) SetQty(w.Item, 0);
+        yield return 45;
+        string? markQuiet = mod.Mark;                              // seen, nothing to sell: off
+        clock = clock.AddHours(4);
+        yield return 45;                                           // the mod itself notices the new visit
+        string? markNew = mod.Mark;
+        string tipNew = top.TooltipText;
+        bool sameWanted = Merchant.Market.Visit == nextVisit && Merchant.Market.Wanted.Select(w => w.Item).SequenceEqual(nextWanted.Select(w => w.Item));
+        Shot("merchant-3-isaret.png");
+        top.EmitSignal(BaseButton.SignalName.Pressed);             // looked at
+        yield return 5;
+        mod.ToggleWindow();
+        yield return 45;
+        string? markLooked = mod.Mark;
+        Merchant.Market.Unbind();                                  // closing and opening the game does not light it again
+        yield return 45;
+        string? markRestart = mod.Mark;
+        Merchant.Want sought = Merchant.Market.Wanted[0];
+        SetQty(sought.Item, 5);                                    // something he is looking for turns up in the bank
+        yield return 45;
+        string? markSell = mod.Mark;
+        string tipSell = top.TooltipText;
+        Shot("merchant-4-isaret-yesil.png");
+        top.EmitSignal(BaseButton.SignalName.Pressed);
+        yield return 5;
+        mod.ToggleWindow();
+        yield return 45;
+        string? markTold = mod.Mark;
+        Check("isaret: yeni mal altin, satilacak mal yesil; bakinca sonuyor, yeniden acinca yanmiyor",
+              markQuiet == null && markNew == "gold" && tipNew.Contains("New goods have arrived") && sameWanted && markLooked == null && markRestart == null
+              && markSell == "green" && tipSell.Contains(Merchant.Market.Name(sought.Item)) && tipSell.Contains("you have 5") && markTold == null,
+              $"sakin: {markQuiet ?? "yok"}; 4 saat sonra: {markNew ?? "yok"}; bakinca: {markLooked ?? "yok"}; oyunu kapatip acinca: {markRestart ?? "yok"}; " +
+              $"bankaya 5 {Merchant.Market.Name(sought.Item)} gelince: {markSell ?? "yok"}, ipucu '{tipSell.Replace("\n", " / ")}'; bakinca: {markTold ?? "yok"}");
+        foreach (var (item, count) in hadBefore) SetQty(item, count);
+
+        Merchant.Market.Now = () => DateTime.UtcNow;
+        SetGold(goldAtStart);
+        Merchant.Market.Unbind();
+        yield return 5;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // A player's report: with "Skill action speed" a crop takes longer to grow, not shorter.
+    static IEnumerator<int> FarmTests(Game game, ModContext ctx)
+    {
+        Out("=== 5s. Farming: hiz ayari ve ekili urunun suresi ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.Entities.TryGetObjectById("MelvorBase:Farming", out GameEntity? farmEntity);
+        var farm = farmEntity!.Components.Values.OfType<GamesByMalcs.Melvor2.Entities.Farming.FarmingPassiveComponent>().First();
+        var gold = Actions.Currencies(game).First(c => c.Id == "MelvorBase:GoldPieces");
+        long goldAtStart = s_bank.Wallet.GetQuantity(gold);
+        s_bank.Wallet.AddQuantity(gold, 50_000_000);
+        var lent = new List<(Item Item, int Amount)>();
+        foreach (Item any in Actions.Items(game))
+        {
+            int got = s_bank.Inventory.AddQuantity(any, 500);
+            if (got > 0) lent.Add((any, got));
+        }
+
+        // A plot and something the character is able to plant in it.
+        var recipes = game.Data.GetDataRegistryOutput<GamesByMalcs.Melvor2.Entities.Farming.FarmingRecipe>().GetAllObjects()
+            .Where(r => r.Requirements.AreMet && (r.DisplayRequirements == null || r.DisplayRequirements.AreMet) && r.BaseInterval >= 600000).ToList();
+        var crop = recipes.FirstOrDefault(r => r.Id == "MelvorBase:Lettuce") ?? recipes.FirstOrDefault();
+        var plot = crop == null ? null : farm.ActivePlots.Values.FirstOrDefault(p => p.Plot.Category == crop.Category && (p.IsPurchased || p.Plot.Requirements.AreMet));
+        if (crop == null || plot == null) { Check("ekilebilir bir urun ve tarla var", false, $"urun: {crop?.Id ?? "yok"}, tarla: {plot?.Plot.Id ?? "yok"}"); yield break; }
+        bool boughtNow = !plot.IsPurchased;
+        if (boughtNow) plot.Purchase();
+        if (plot.CanReset) plot.Reset();
+        plot.SelectRecipe(crop);
+        if (plot.CanPlant) plot.Plant();
+        yield return 2;
+        var timer = plot.State.Timer;
+        double Minutes() => timer!.WaitTime / 60000.0;
+        double LeftMinutes() => timer!.TicksLeft * (1000.0 / 60) / 60000.0;
+        double baseMinutes = crop.BaseInterval / 60000.0;
+        Check("urun ekildi, suresi oyunun normal suresi", timer is { IsRunning: true } && Near(Minutes(), baseMinutes, 0.01),
+              $"{crop.DisplayName.Text}, tarla {plot.Plot.Id}{(boughtNow ? " (simdi satin alindi)" : "")}; sure {(timer == null ? "yok" : Minutes().ToString("0.0"))} dk (normal {baseMinutes:0.0} dk)");
+        if (timer is not { IsRunning: true }) yield break;
+
+        // A tenth of the time passes, then the player turns the speed up.
+        int tenth = timer.WaitTicks / 10;
+        for (int i = 0; i < tenth; i++) game.PropagateTick();
+        double progress = timer.Progress;
+        string before = $"{Minutes():0.0} dk'lik surenin {LeftMinutes():0.0} dk'si kaldi";
+        Engine.SetValue("speed.actions", 20);
+        yield return 3;
+        string at20 = $"{Minutes():0.00} dk'lik surenin {LeftMinutes():0.00} dk'si kaldi";
+        bool faster = Near(Minutes(), baseMinutes / 20, 0.01) && Near(LeftMinutes(), baseMinutes / 20 * 0.9, 0.01) && Math.Abs(timer.Progress - progress) < 0.001 && timer.IsRunning;
+        Engine.SetValue("speed.actions", 5);
+        yield return 3;
+        string at5 = $"{Minutes():0.0} dk'lik surenin {LeftMinutes():0.0} dk'si kaldi";
+        bool five = Near(Minutes(), baseMinutes / 5, 0.01) && Near(LeftMinutes(), baseMinutes / 5 * 0.9, 0.01);
+        Engine.SetValue("speed.actions", 1);
+        yield return 3;
+        string off = $"{Minutes():0.0} dk'lik surenin {LeftMinutes():0.0} dk'si kaldi";
+        bool back = Near(Minutes(), baseMinutes, 0.01) && Near(LeftMinutes(), baseMinutes * 0.9, 0.01) && Math.Abs(timer.Progress - progress) < 0.001;
+        Engine.SetValue("skill.Farming.speed", 20);              // the skill's own speed setting does the same
+        yield return 3;
+        bool own = Near(Minutes(), baseMinutes / 20, 0.01) && Near(LeftMinutes(), baseMinutes / 20 * 0.9, 0.01);
+        Check("hiz ayari degisince tarladaki urun de hizlaniyor, gecen sure korunuyor", faster && five && back && own,
+              $"ayarsiz: {before}; x20: {at20}; x5: {at5}; kapatinca: {off}; Farming'in kendi hizi x20: {Minutes():0.00} dk'lik surenin {LeftMinutes():0.00} dk'si kaldi");
+
+        // It is really ready when the shown time is over - not earlier, not later.
+        int left = timer.TicksLeft;
+        for (int i = 0; i < left - 60; i++) game.PropagateTick();
+        bool notYet = !plot.CanHarvest && ReferenceEquals(plot.State.Timer, timer) && timer.IsRunning;
+        for (int i = 0; i < 120; i++) game.PropagateTick();
+        bool ready = plot.CanHarvest || !ReferenceEquals(plot.State.Timer, timer);
+        Check("gosterilen sure dolunca urun gercekten hazir", notYet && ready,
+              $"bitmesine 1 saniye kala hazir degil: {notYet}; sure dolunca: {(plot.CanHarvest ? "hasada hazir" : plot.State.GetType().Name)}");
+
+        // A game bonus arriving on its own leaves the crops as the game has them.
+        if (plot.CanReset) plot.Reset();
+        Engine.ResetAll();
+        yield return 40;                                          // (the half second after a change is over)
+        plot.SelectRecipe(crop);
+        if (plot.CanPlant) plot.Plant();
+        yield return 2;
+        var second = plot.State.Timer;
+        Action takeBack = Engine.AddOutside("skill.Farming.speed", 0.5);
+        yield return 5;
+        bool untouched = second != null && Near(second.WaitTime / 60000.0, baseMinutes, 0.01);
+        takeBack();
+        Check("oyunun kendi bonusu ekili urune dokunmuyor (oyunun normal davranisi)", untouched, $"baska yerden %50 hiz bonusu gelince ekili urunun suresi: {(second == null ? "yok" : (second.WaitTime / 60000.0).ToString("0.0"))} dk");
+
+        if (plot.CanReset) plot.Reset();
+        Engine.ResetAll();
+        foreach (var (item, amount) in lent) s_bank.Inventory.RemoveQuantity(item, amount);
+        long extra = s_bank.Wallet.GetQuantity(gold) - goldAtStart;
+        if (extra > 0) s_bank.Wallet.RemoveQuantity(gold, extra);
+        yield return 2;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Developer probe: what the game's own Bank and Shop pages are built of (nodes, panels, fonts), so a mod's
+    // page can be built of the same things.
+    static string Box(StyleBox? box) => box switch
+    {
+        null => "-",
+        StyleBoxFlat f => $"Flat(bg {f.BgColor.ToHtml()}, border {f.BorderColor.ToHtml()} {f.BorderWidthTop}, radius {f.CornerRadiusTopLeft}, pad {f.ContentMarginLeft:0}/{f.ContentMarginTop:0})",
+        StyleBoxTexture x => $"Texture({x.Texture?.ResourcePath}, margins {x.TextureMarginLeft:0}/{x.TextureMarginTop:0}/{x.TextureMarginRight:0}/{x.TextureMarginBottom:0}, pad {x.ContentMarginLeft:0}/{x.ContentMarginTop:0}, modulate {x.ModulateColor.ToHtml()})",
+        StyleBoxEmpty => "Empty",
+        _ => box.GetType().Name,
+    };
+
+    static void DumpNode(Node node, int depth, int maxDepth, ref int lines, int maxLines)
+    {
+        if (lines >= maxLines) return;
+        string line = new string(' ', depth * 2) + node.Name + " <" + node.GetClass() + (node.GetType().Name != node.GetClass() ? "/" + node.GetType().Name : "") + ">";
+        if (node is Control c)
+        {
+            line += $" {c.Size.X:0}x{c.Size.Y:0}" + (c.Visible ? "" : " HIDDEN");
+            if (c.ThemeTypeVariation != "") line += " variation=" + c.ThemeTypeVariation;
+            if (c.Theme != null) line += " theme=" + c.Theme.ResourcePath;
+            if (c.Modulate != Colors.White) line += " modulate=" + c.Modulate.ToHtml();
+            if (c.SelfModulate != Colors.White) line += " self=" + c.SelfModulate.ToHtml();
+            if (c.Material != null) line += " material=" + c.Material.GetType().Name;
+        }
+        switch (node)
+        {
+            case Label l:
+                Font? font = l.LabelSettings?.Font ?? l.GetThemeFont("font");
+                line += $" '{(l.Text.Length > 28 ? l.Text[..28] : l.Text)}' size {(l.LabelSettings?.FontSize ?? l.GetThemeFontSize("font_size"))} color {(l.LabelSettings?.FontColor ?? l.GetThemeColor("font_color")).ToHtml()}"
+                        + $" font {font?.ResourcePath}{(l.LabelSettings != null ? " settings=" + l.LabelSettings.ResourcePath + $" outline {l.LabelSettings.OutlineSize} shadow {l.LabelSettings.ShadowSize}" : "")}";
+                break;
+            case RichTextLabel r:
+                line += $" rich '{(r.Text.Length > 28 ? r.Text[..28] : r.Text)}' size {r.GetThemeFontSize("normal_font_size")}";
+                break;
+            case BaseButton b:
+                line += $" '{(b is Button bb ? bb.Text : "")}' normal={Box(b.GetThemeStylebox("normal"))} hover={Box(b.GetThemeStylebox("hover"))} size {b.GetThemeFontSize("font_size")} color {b.GetThemeColor("font_color").ToHtml()}";
+                break;
+            case PanelContainer or Panel:
+                line += " panel=" + Box(((Control)node).GetThemeStylebox("panel"));
+                break;
+            case TextureRect tr:
+                line += $" tex={tr.Texture?.ResourcePath} stretch={tr.StretchMode}";
+                break;
+            case NinePatchRect np:
+                line += $" ninepatch={np.Texture?.ResourcePath} margins {np.PatchMarginLeft}/{np.PatchMarginTop}/{np.PatchMarginRight}/{np.PatchMarginBottom}";
+                break;
+            case LineEdit le:
+                line += $" lineedit normal={Box(le.GetThemeStylebox("normal"))}";
+                break;
+            case BoxContainer bc:
+                line += $" sep {bc.GetThemeConstant("separation")}";
+                break;
+            case MarginContainer mc:
+                line += $" margins {mc.GetThemeConstant("margin_left")}/{mc.GetThemeConstant("margin_top")}/{mc.GetThemeConstant("margin_right")}/{mc.GetThemeConstant("margin_bottom")}";
+                break;
+            case ScrollContainer sc:
+                line += $" scroll";
+                break;
+        }
+        Out(line);
+        lines++;
+        if (depth >= maxDepth) return;
+        int shown = 0;
+        string lastKind = "";
+        int sameKind = 0;
+        foreach (Node child in node.GetChildren(true))
+        {
+            string kind = child.GetType().Name + "/" + child.GetChildCount();
+            sameKind = kind == lastKind ? sameKind + 1 : 0;
+            lastKind = kind;
+            if (sameKind >= 2) continue;                          // a third identical sibling tells nothing new
+            if (++shown > 14) { Out(new string(' ', depth * 2 + 2) + $"... ({node.GetChildCount(true)} children)"); lines++; break; }
+            DumpNode(child, depth + 1, maxDepth, ref lines, maxLines);
+        }
+    }
+
+    static IEnumerator<int> PagesProbe(Game game, ModContext ctx)
+    {
+        var view = ctx.Tree.Root.GetNode("Main/ApplicationViewContainer/GameView") as GamesByMalcs.Melvor2.GameMenus.GameView;
+        if (view == null) { Out("GameView yok"); yield break; }
+        string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+        Directory.CreateDirectory(shotDir);
+        Out("ana tema: " + (ctx.Tree.Root.Theme?.ResourcePath ?? "(yok)") + "; proje temasi: " + ProjectSettings.GetSetting("gui/theme/custom") + "; font: " + ProjectSettings.GetSetting("gui/theme/custom_font"));
+        Out($"EntityViewContainer: {view.EntityViewContainer.GetPath()} {view.EntityViewContainer.Size}, margins {view.EntityViewContainer.GetThemeConstant("margin_left")}/{view.EntityViewContainer.GetThemeConstant("margin_top")}");
+        Out($"BlurPanel: gorunur {view.BlurPanel.Visible}, panel {Box(view.BlurPanel.GetThemeStylebox("panel"))}, material {view.BlurPanel.Material?.GetType().Name}; DimTheLights: {view.DimTheLightsPanel.Visible} self {view.DimTheLightsPanel.SelfModulate}");
+        foreach (string id in new[] { "MelvorBase:Bank", "MelvorBase:Shop" })
+        {
+            var page = game.Data.GetObject<GamesByMalcs.Melvor2.GameMenus.Pages.EntityPage>(id);
+            view.SetCurrentPage(page);
+            yield return 40;
+            Out($"=== {id}: blur {page.ApplyBackgroundBlur}, arka plan sayisi {page.TimeOfDayBackgrounds.Count}; widgets gorunur {view.Widgets.Visible} ===");
+            Image? picture = ctx.Tree.Root.GetTexture()?.GetImage();
+            if (picture != null) Out("  goruntu: " + picture.SavePng(Path.Combine(shotDir, "sayfa-" + id.Split(':')[1] + ".png")));
+            int lines = 0;
+            if (System.Environment.GetEnvironmentVariable("MML_PAGES") != "cards") DumpNode(view.EntityViewContainer, 0, id.EndsWith("Bank") ? 11 : 13, ref lines, 330);
+        }
+        // one shop category opened: what a purchase card is built of
+        game.Entities.TryGetObjectById("MelvorBase:Shop", out GameEntity? shopEntity);
+        var shop = shopEntity!.Components.Values.OfType<GamesByMalcs.Melvor2.Components.Shop.ShopComponent>().First();
+        var category = shop.PurchasesByCategory.Keys.FirstOrDefault(c => c.Id.Contains("Item")) ?? shop.PurchasesByCategory.Keys.Skip(1).First();
+        shop.SelectCategory(category);
+        yield return 50;
+        Out($"=== Shop kategorisi {category.Id} ===");
+        Image? cards = ctx.Tree.Root.GetTexture()?.GetImage();
+        if (cards != null) Out("  goruntu: " + cards.SavePng(Path.Combine(shotDir, "sayfa-Shop-kategori.png")));
+        Node? list = view.EntityViewContainer.FindChild("SubcategoryContainer", true, false);
+        int cardLines = 0;
+        if (list != null) DumpNode(list, 0, 16, ref cardLines, 170);
+    }
+
     public static IEnumerator<int> Run(Game game, ModContext ctx)
     {
         s_game = game;
@@ -1406,6 +2354,42 @@ static class Tests
         {
             IEnumerator<int> docs = DocsCheck(game, ctx);
             while (docs.MoveNext()) yield return docs.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "speed")
+        {
+            IEnumerator<int> speedOnly = SpeedTests(game, ctx);
+            while (speedOnly.MoveNext()) yield return speedOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "farm")
+        {
+            IEnumerator<int> farmOnly = FarmTests(game, ctx);
+            while (farmOnly.MoveNext()) yield return farmOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "pages")
+        {
+            IEnumerator<int> pages = PagesProbe(game, ctx);
+            while (pages.MoveNext()) yield return pages.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "merchant")
+        {
+            IEnumerator<int> merchantOnly = MerchantTests(game, ctx);
+            while (merchantOnly.MoveNext()) yield return merchantOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "header")
+        {
+            IEnumerator<int> probe = HeaderProbe(game, ctx);
+            while (probe.MoveNext()) yield return probe.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "materials")
+        {
+            IEnumerator<int> materialsOnly = MaterialTests(game, ctx);
+            while (materialsOnly.MoveNext()) yield return materialsOnly.Current;
             yield break;
         }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "saved")
@@ -2347,6 +3331,15 @@ static class Tests
               $"{speedIds.Count} becerinin hizi 4, XP carpanlari degismedi");
         Engine.ResetAll();
 
+        // ---------- 5o. speed settings together ----------
+        IEnumerator<int> speedTests = SpeedTests(game, ctx);
+        while (speedTests.MoveNext()) yield return speedTests.Current;
+        IEnumerator<int> materialTests = MaterialTests(game, ctx);
+        while (materialTests.MoveNext()) yield return materialTests.Current;
+        IEnumerator<int> merchantTests = MerchantTests(game, ctx);
+        while (merchantTests.MoveNext()) yield return merchantTests.Current;
+        Engine.Bind(game);
+
         // ---------- 5l. Multitask ----------
         IEnumerator<int> multiTests = MultiTests(game, ctx);
         while (multiTests.MoveNext()) yield return multiTests.Current;
@@ -2368,7 +3361,7 @@ static class Tests
         Rect2 rect = panel.GetGlobalRect();
         Check("menu ekrana sigiyor", rect.Position.X >= 0 && rect.Position.Y >= 0 && rect.End.X <= screen.X && rect.End.Y <= screen.Y,
               $"ekran {screen.X}x{screen.Y}, pencere {rect.Size.X}x{rect.Size.Y} @ ({rect.Position.X},{rect.Position.Y}), en kucuk boyut {panel.GetCombinedMinimumSize().X}x{panel.GetCombinedMinimumSize().Y}");
-        Check("menu sayfalari", mod.Menu.PageCount == 8, string.Join(", ", Enumerable.Range(0, mod.Menu.PageCount).Select(mod.Menu.PageTitle)));
+        Check("menu sayfalari", mod.Menu.PageCount == 9, string.Join(", ", Enumerable.Range(0, mod.Menu.PageCount).Select(mod.Menu.PageTitle)));
         for (int i = 0; i < mod.Menu.PageCount; i++)
         {
             mod.Menu.ShowPage(i);

@@ -15,18 +15,19 @@ Ready-to-use zips are on Nexus Mods. Extract each into the game folder.
 | Mod | What it does | Key |
 | --- | --- | --- |
 | [Melvor Mod Loader](https://www.nexusmods.com/melvoridle2/mods/2) | Required by everything below. Also hosts the Modder's Kit and the optional Debug Menu. | |
-| [Cheat Menu](https://www.nexusmods.com/melvoridle2/mods/3) | 60+ settings and tools in one window: XP, speed, bank, skills, combat, loot filter. | F8 |
+| [Cheat Menu](https://www.nexusmods.com/melvoridle2/mods/3) | 60+ settings and tools in one window: XP, speed, bank, skills, combat, loot filter, materials no recipe needs. | F8 |
 | [Bulk Sell](https://www.nexusmods.com/melvoridle2/mods/4) | Bulk sell window and "Sell junk", "Bury all", "Open all" buttons in the bank. | F7 |
 | [Action Queue](https://www.nexusmods.com/melvoridle2/mods/5) | Chain actions: "cut 1,000 logs, burn them, then go fishing". Its planner turns "I want 100 of this item" into the steps to get there. | F6 |
 | [Save Backup](https://www.nexusmods.com/melvoridle2/mods/6) | Dated copies of your saves on every start. | |
 | [Multitask](https://www.nexusmods.com/melvoridle2/mods/8) | Two slots keep extra actions running beside your main one: fish while you cook, mine while you fight. A cheat. | F5 |
+| [Merchant](Mods/Merchant) (in development, source only) | A travelling merchant with a page of his own next to the Bank and the Shop: raw materials for sale, goods he buys above bank price, new every 4 hours. | F3 |
 
 ## What is in this repository
 
 | Folder | Contents |
 | --- | --- |
 | `Loader` | The loader itself and the mod API (`IMod`, `ModContext`, `GameAccess`). |
-| `Mods` | Source of the six mods. Each folder has the `README.txt` that ships in its zip. |
+| `Mods` | Source of the mods. Each folder has the `README.txt` that ships in its zip. |
 | `ModdersKit` | [`MODDING.md`](ModdersKit/MODDING.md), the guide for mod authors, and a complete example mod. |
 | `Dev` | The automated test rig: starts the game hidden on a test character and checks every feature. |
 | `nexus` | The page texts used on Nexus Mods. |
