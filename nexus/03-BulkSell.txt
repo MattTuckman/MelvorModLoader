@@ -15,12 +15,15 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\BulkSell-0.2.1.zip   (name: Bulk Sell, version 0.2.1)
+MAIN FILE:  dist\BulkSell-0.2.2.zip   (name: Bulk Sell, version 0.2.2)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\banka-2-toplu-satis.png (main image), banka-1-dugmeler.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.2.2
+- The kind filter "No skill uses it" is now called "Untagged": it shows items the bank has no kind for
+
 0.2.1
 - Leaves the game alone while it computes offline progress
 
@@ -41,13 +44,13 @@ Quality of life, not a cheat: everything goes through the game's own functions a
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Bulk Sell [b]0.2.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open the bank: the new buttons sit next to the search box. [b]F7[/b] opens the bulk sell window from anywhere.
+This is Bulk Sell [b]0.2.2[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open the bank: the new buttons sit next to the search box. [b]F7[/b] opens the bulk sell window from anywhere.
 
 [size=5][b]Bulk sell window[/b][/size]
 [list]
 [*]Every sellable stack in one table: icon, amount, price each, what you would get.
 [*]Click a row to mark it. "All shown", "None" and "Invert shown" mark many at once.
-[*]Filter by search text, by bank tab and by kind (Woodcutting, Smithing, ... or "No skill uses it").
+[*]Filter by search text, by bank tab and by kind (Woodcutting, Smithing, ... or "Untagged").
 [*][b]Keep of each:[/b] leave a number of every marked item in the bank.
 [*]Click a column title to sort, for example most valuable first.
 [*]The bottom line always shows how many items go and for how much. Selling needs a second click.
@@ -70,7 +73,7 @@ The game already lets you select several stacks with Ctrl and Shift. This mod ad
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]BulkSell-0.2.1.zip[/b] there. The mod ends up in [b]mods\BulkSell[/b].
+[*]Extract [b]BulkSell-0.2.2.zip[/b] there. The mod ends up in [b]mods\BulkSell[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

@@ -38,9 +38,12 @@ public sealed class Menu
     bool _syncing;
 
     Game? _game;
-    List<Item> _items = new(), _shownItems = new(), _autoSellItems = new();
+    List<Item> _items = new(), _autoSellItems = new();
     List<Currency> _currencies = new();
-    OptionButton _itemPick = null!, _currencyPick = null!, _skillPick = null!, _autoSellPick = null!;
+    OptionButton _currencyPick = null!, _skillPick = null!, _autoSellPick = null!;
+    /// <summary>Searchable, grouped item lists: one to give an item, one to put an item on the auto-sell list.</summary>
+    PickList<Item> _giveItem = null!, _autoSellAdd = null!;
+    static readonly Theme s_theme = Style.Build();
 
     // Loot filter page
     List<Item> _droppable = new(), _lootShown = new();
@@ -73,7 +76,7 @@ public sealed class Menu
         center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _layer.AddChild(center);
 
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1120, 700), Theme = Style.Build() };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1120, 700), Theme = s_theme };
         StyleBoxFlat frame = Style.Box(Style.Window, 8, Style.AccentDim, 1);
         frame.ShadowColor = new Color(0, 0, 0, 0.55f);
         frame.ShadowSize = 14;
@@ -168,8 +171,11 @@ public sealed class Menu
             _droppable = LootFilter.Droppable(game);
             Fill(_currencyPick, _currencies.Select(c => c.DisplayName.Text));
             Fill(_skillPick, Actions.Skills(game).Select(s => s.DisplayName.Text));
-            FilterItems("");
         }
+        // The bank counts in the item lists are those of the moment the menu opens.
+        List<PickEntry<Item>> picks = ItemPicks.For(game, _items);
+        _giveItem.SetEntries(picks);
+        _autoSellAdd.SetEntries(picks);
         RefreshAutoSell();
         RefreshLoot();
         RefreshMaterials();
@@ -179,8 +185,19 @@ public sealed class Menu
         _layer.Visible = true;
     }
 
+    /// <summary>For tests: the "Give item" list (count, search, groups, popup) and the auto-sell list.</summary>
+    public int GiveItemCount => _giveItem.Count;
+    public List<string> GiveItemSearch(string text) { _giveItem.SetFilter(text); return _giveItem.VisibleKeys; }
+    public List<string> GiveItemGroups => _giveItem.VisibleGroups;
+    public void OpenGiveItem() => _giveItem.Open();
+    public Rect2I GiveItemPopup => _giveItem.PopupRect;
+    public bool PickAutoSell(string itemId) => _autoSellAdd.Pick(itemId);
+    public string AutoSellChoice => _autoSellAdd.ButtonText;
+
     public void Hide()
     {
+        _giveItem.Close();
+        _autoSellAdd.Close();
         _layer.Visible = false;
         Settings.Flush();
     }
@@ -803,29 +820,30 @@ public sealed class Menu
             Say($"+{currencyAmount.Value:N0} {c.DisplayName.Text}");
         })));
 
-        var itemSearch = new LineEdit { PlaceholderText = "Search item...", CustomMinimumSize = new Vector2(150, 0), ClearButtonEnabled = true };
-        itemSearch.TextChanged += FilterItems;
-        _itemPick = new OptionButton { CustomMinimumSize = new Vector2(230, 0), FitToLongestItem = false, ClipText = true };
+        _giveItem = new PickList<Item>("Choose an item", s_theme);
+        _giveItem.Control.CustomMinimumSize = new Vector2(330, 0);
+        _giveItem.Control.TooltipText = "Click and type to search. Items are grouped by the bank's own kinds.";
         SpinBox itemAmount = MakeSpin(1, int.MaxValue, 1, 100);
-        page.AddChild(ToolRow("Give item", itemSearch, _itemPick, itemAmount, MakeButton("Add", () =>
+        page.AddChild(ToolRow("Give item", _giveItem.Control, itemAmount, MakeButton("Add", () =>
         {
-            if (_game == null || _itemPick.Selected < 0 || _itemPick.Selected >= _shownItems.Count) return;
-            Item item = _shownItems[_itemPick.Selected];
-            Actions.AddItem(_game, item, (int)itemAmount.Value);
-            Say($"+{itemAmount.Value:N0} {Actions.ItemName(item)}");
+            if (_game == null || _giveItem.Selected is not { } chosen) { Say("Choose an item first."); return; }
+            Actions.AddItem(_game, chosen.Value, (int)itemAmount.Value);
+            Say($"+{itemAmount.Value:N0} {Actions.ItemName(chosen.Value)}");
         })));
 
-        // Auto-sell list (uses the item picked in the row above)
-        _autoSellPick = new OptionButton { CustomMinimumSize = new Vector2(230, 0), FitToLongestItem = false, ClipText = true };
+        // Auto-sell list: its own item list, so it does not depend on the row above.
+        _autoSellAdd = new PickList<Item>("Choose an item to sell", s_theme);
+        _autoSellAdd.Control.CustomMinimumSize = new Vector2(260, 0);
+        _autoSellPick = new OptionButton { CustomMinimumSize = new Vector2(200, 0), FitToLongestItem = false, ClipText = true, TooltipText = "The items being sold now." };
         PanelContainer autoSell = ToolRow("Auto-sell from bank",
-            MakeButton("Add the item picked above", () =>
+            _autoSellAdd.Control,
+            MakeButton("Add", () =>
             {
-                if (_itemPick.Selected < 0 || _itemPick.Selected >= _shownItems.Count) return;
-                Item item = _shownItems[_itemPick.Selected];
-                AutoSell.Add(item);
+                if (_autoSellAdd.Selected is not { } chosen) { Say("Choose the item to sell first."); return; }
+                AutoSell.Add(chosen.Value);
                 RefreshAutoSell();
                 Repaint();
-                Say($"Auto-sell: {Actions.ItemName(item)} added.");
+                Say($"Auto-sell: {Actions.ItemName(chosen.Value)} added.");
             }),
             _autoSellPick,
             MakeButton("Remove", () =>
@@ -884,11 +902,4 @@ public sealed class Menu
         Fill(_autoSellPick, _autoSellItems.Select(Actions.ItemName));
     }
 
-    void FilterItems(string text)
-    {
-        text = text.Trim();
-        _shownItems = (text == "" ? _items : _items.Where(i => Actions.ItemName(i).Contains(text, StringComparison.OrdinalIgnoreCase)))
-            .Take(150).ToList();
-        Fill(_itemPick, _shownItems.Select(Actions.ItemName));
-    }
 }

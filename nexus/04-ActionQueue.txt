@@ -15,12 +15,18 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.6.1.zip   (name: Action Queue, version 0.6.1)
+MAIN FILE:  dist\ActionQueue-0.7.0.zip   (name: Action Queue, version 0.7.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\sira-2-pencere.png (main image), sira-5-yan-yana.png, sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.7.0
+- New: searchable, grouped lists. Click a list (what to do, the item to count, the item to plan, the idle action) and type to search; arrows and Enter work. Entries are grouped like each skill's own page, in the game's order, with the game's pictures (suggested by a player, thank you!)
+- Things you have not unlocked yet are dimmed with the level they need; you can still queue them for later
+- Quest-only targets (Wood Debris, Fortress Wall...) appear only while their quest step is active, as in the game, and the planner no longer builds plans on them
+- Item lists are no longer cut off after 150 or 200 entries
+
 0.6.1
 - New goal: "it has been done this many times". Counts every finished action the way mastery does: each catch at a fishing spot whatever fish it gives, each hit on a tree or rock, each finished bar or potion, each agility lap, each monster killed. A pause does not reset the count (suggested by a player, thank you!)
 
@@ -70,7 +76,7 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.6.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+This is Action Queue [b]0.7.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
 
 [size=5][b]An example[/b][/size]
 [list=1]
@@ -119,7 +125,7 @@ Plans cover Woodcutting, Mining, Fishing, Hunting, Smithing, Cooking, Crafting, 
 
 [size=5][b]How it works[/b][/size]
 [list]
-[*][b]Pick what to do:[/b] choose a skill and an action from the lists, or press "Use what I am doing now".
+[*][b]Pick what to do:[/b] choose a skill, then click the list and type to search (grouped like the skill page, with the game's pictures), or press "Use what I am doing now".
 [*][b]Pick when it ends:[/b] when it stops by itself, when you own a number of an item, when you have made a number more of an item (whatever the bank already holds), when it has been done a number of times (every catch, hit, finished bar, lap or kill counts, like mastery), when a skill reaches a level, after a number of minutes, or when only a number of an item are left (fight until only 5 of your food are left). For the item goal the item is filled in with what the action makes (Smithing: Gold Bar counts Gold Bars); you can still pick another one.
 [*][b]Start the queue.[/b] One line at the top of the screen shows the current step and its progress.
 [*][b]Start over at the end[/b] turns the queue into a loop.
@@ -153,7 +159,7 @@ On its own the queue does one step after another. Add the [url=https://www.nexus
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.6.1.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.7.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

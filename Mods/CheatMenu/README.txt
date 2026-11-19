@@ -1,4 +1,4 @@
-Cheat Menu 0.5.0  -  a mod for Melvor Idle 2
+Cheat Menu 0.5.1  -  a mod for Melvor Idle 2
 ============================================
 
 One window with more than 60 settings and tools: bank slots, XP, game speed, skill bonuses,
@@ -35,6 +35,8 @@ GOOD TO KNOW
   written into your save: remove the mod and the character is back to normal.
   What the tools give you (items, currency, levels) does stay.
 - Loot filter and auto-sell never touch a stack you have locked in the bank.
+- "Give item" and "Auto-sell from bank" each have their own item list: click it and type
+  to search all items; they are grouped by the bank's own kinds.
 - Game speed runs the whole game faster while you play. It does not change how fast the
   game computes offline progress.
 - "Skill action speed" and a skill's own speed on the Per skill page multiply: x2 and x4

@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>CheatMenu</AssemblyName>
     <RootNamespace>CheatMenu</RootNamespace>
-    <Version>0.5.0</Version>
+    <Version>0.5.1</Version>
     <Product>Melvor Idle 2 Cheat Menu</Product>
     <AssemblyTitle>Cheat Menu</AssemblyTitle>
     <Description>Cheat and tuning menu for Melvor Idle 2 (requires Melvor Mod Loader). Opens with F8.</Description>

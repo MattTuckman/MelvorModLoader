@@ -88,6 +88,8 @@ static class Style
 
         // Drop-down lists.
         t.SetStylebox("panel", "PopupMenu", Box(Card, 5, Line, 1, 4, 4));
+        // PopupPanel (the searchable pick lists) has its own panel; without it the game's theme draws it see-through.
+        t.SetStylebox("panel", "PopupPanel", Box(Card, 6, Line, 1, 8, 8));
         t.SetStylebox("hover", "PopupMenu", Box(AccentDim, 3));
         t.SetColor("font_color", "PopupMenu", Text);
         t.SetColor("font_hover_color", "PopupMenu", Colors.White);

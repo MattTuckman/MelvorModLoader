@@ -181,15 +181,7 @@ static class Tests
         var smithing = qSkills.First(s => s.Entity.Id == "MelvorBase:Smithing");
         ActionQueue.Target? bar = ActionQueue.Targets.All(smithing.Action).FirstOrDefault(x => x.Name.EndsWith(" Bar"));
         if (bar != null) queueWindow.Choose(smithing.Entity.Id, bar.Id);
-        foreach (Node n in queueWindow.Panel.FindChildren("*", "OptionButton", true, false))
-        {
-            var pick = (OptionButton)n;
-            if (pick.ItemCount == 5 && pick.GetItemText(1).StartsWith("I own"))
-            {
-                pick.Select(1);
-                pick.EmitSignal(OptionButton.SignalName.ItemSelected, 1);
-            }
-        }
+        queueWindow.ChooseUntil(ActionQueue.Until.Item);
         yield return 20;
         Shot("sira-2-pencere.png");
         // The planner: the longest plan that is not locked, for 100 of the item.
@@ -1031,6 +1023,235 @@ static class Tests
         foreach (var (lentItem, amount) in lent) s_bank.Inventory.RemoveQuantity(lentItem, Math.Min(amount, s_bank.Inventory.GetQuantity(lentItem)));
         Engine.ResetAll();
         combat.Player.Health.Set(combat.Player.Health.Max);
+    }
+
+    /// <summary>
+    /// A player's request: "the target list has 50-100 entries, add a search and group them like the skill pages".
+    /// The shared searchable, grouped pick list in the Action Queue and the Cheat Menu, driven like a player would.
+    /// </summary>
+    static IEnumerator<int> PickTests(Game game, ModContext ctx)
+    {
+        Out("=== 5p. Aranabilir, gruplu secim listeleri ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.SetIdle(null);
+        var skills = ActionQueue.Targets.Skills(game);
+        bool windowed = DisplayServer.GetName() != "headless";
+        string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+        Directory.CreateDirectory(shotDir);
+        string Shot(string name) => windowed ? ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, name)).ToString() : "(penceresiz)";
+        Rect2 screen = ctx.Tree.Root.GetVisibleRect();
+        bool Inside(Rect2I r) => r.Size.X > 0 && r.Position.X >= screen.Position.X - 1 && r.Position.Y >= screen.Position.Y - 1 && r.End.X <= screen.End.X + 1 && r.End.Y <= screen.End.Y + 1;
+
+        // ---- 1. every skill: the list is built from the game's own categories, keys are unique and match the queue's
+        var notes = new List<string>();
+        bool allOk = true;
+        int muted = 0, mutedWithHint = 0;
+        foreach (var (entity, action) in skills)
+        {
+            var cat = ActionQueue.QueueWindow.CatalogOf(game, entity, action);
+            var known = ActionQueue.Targets.All(action).Select(t => ActionQueue.QueueWindow.CatalogKey(t.Id, t.Extra)).ToHashSet();
+            bool unique = cat.Select(c => c.Key).Distinct().Count() == cat.Count;
+            bool same = cat.All(c => known.Contains(c.Key));
+            int groups = cat.Select(c => c.Group).Distinct().Count();
+            if (cat.Count == 0 || !unique || !same) allOk = false;
+            muted += cat.Count(c => c.Muted);
+            mutedWithHint += cat.Count(c => c.Muted && c.Hint != "");
+            notes.Add($"{entity.DisplayName.Text} {cat.Count}/{known.Count} ({groups} grup{(unique && same ? "" : " SORUN")})");
+        }
+        Check("her becerinin listesi oyunun kategorileriyle kuruluyor; anahtarlar tek ve siranin hedefleriyle ayni; kilitliler ipuclu",
+              allOk && skills.Count >= 12 && muted > 0 && mutedWithHint == muted, $"{string.Join("; ", notes)}; kilitli {muted}, ipuclu {mutedWithHint}");
+
+        // ---- 1b. pictures: every entry and every group has one, and never the game's "missing artwork" placeholder
+        //          (every fishing spot has that in the data; the fish it gives stands in for it)
+        var iconNotes = new List<string>();
+        bool iconsOk = true;
+        foreach (var (entity, action) in skills)
+        {
+            var cat = ActionQueue.QueueWindow.CatalogOf(game, entity, action);
+            int noIcon = cat.Count(c => c.Icon == "" || c.Icon.Contains("missing_artwork"));
+            int groups = cat.Where(c => c.Group != "").Select(c => c.Group).Distinct().Count();
+            int noGroupIcon = cat.Where(c => c.Group != "").GroupBy(c => c.Group).Count(g => g.First().GroupIcon == "" || g.First().GroupIcon.Contains("missing_artwork"));
+            if (noIcon > 0 || noGroupIcon > 0) { iconNotes.Add($"{entity.DisplayName.Text}: {noIcon}/{cat.Count} resimsiz is, {noGroupIcon}/{groups} resimsiz grup"); }
+            if (noIcon > 0 || noGroupIcon > 0) iconsOk = false;
+        }
+        int missingTotal = skills.Sum(s => ActionQueue.QueueWindow.CatalogOf(game, s.Entity, s.Action).Count(c => c.Icon.Contains("missing_artwork") || c.GroupIcon.Contains("missing_artwork")));
+        Check("resimler: her becerinin her isi ve grubu resimli; hicbir satirda oyunun 'missing artwork' yer tutucusu yok",
+              iconsOk && missingTotal == 0, iconNotes.Count == 0 ? "her beceride her is ve grup resimli" : string.Join("; ", iconNotes));
+
+        // ---- 2. targets the game does not show yet (quest steps) are left out, the ones it shows are in
+        var wcSkill = skills.First(s => s.Action is GamesByMalcs.Melvor2.Entities.Woodcutting.WoodcuttingActionComponent);
+        var woodcutting = (GamesByMalcs.Melvor2.Entities.Woodcutting.WoodcuttingActionComponent)wcSkill.Action;
+        var wcKeys = ActionQueue.QueueWindow.CatalogOf(game, wcSkill.Entity, woodcutting).Select(c => c.Key).ToHashSet();
+        var hiddenNow = woodcutting.Trees.Keys.Where(r => r.DisplayRequirements is { AreMet: false } || r.Category?.DisplayRequirements is { AreMet: false }).ToList();
+        var shownNow = woodcutting.Trees.Keys.Except(hiddenNow).ToList();
+        Check("oyunun gostermedigi gorev hedefleri listede yok, gosterdikleri var (Woodcutting)",
+              hiddenNow.All(r => !wcKeys.Contains(r.Id)) && shownNow.All(r => wcKeys.Contains(r.Id)) && shownNow.Count > 0,
+              $"gizli {hiddenNow.Count}: {string.Join(", ", hiddenNow.Take(6).Select(r => r.DisplayName.Text))}; gorunen {shownNow.Count}");
+
+        // ---- 2b. the planner never builds a plan on such a hidden target (Wood Debris gives 10 Oak Logs per cut)
+        var allMakers = ActionQueue.Planner.Makers(game);
+        var hiddenMakers = allMakers.Values.SelectMany(l => l).Where(m => m.Hidden).ToList();
+        var planNotes = new List<string>();
+        bool plansClean = true;
+        foreach (Item product in hiddenMakers.Select(m => m.Product).Distinct().Take(12))
+        {
+            ActionQueue.PlanResult p = ActionQueue.Planner.Compute(game, product, 100, more: true);
+            bool clean = p.Steps.All(s => s.Maker is not { Hidden: true });
+            plansClean &= clean;
+            string first = p.Steps.LastOrDefault(s => s.Item == product)?.Maker?.Name ?? (p.Problem != "" ? p.Problem : "-");
+            planNotes.Add($"{product.DisplayName.GetPluralText(1)} -> {first}{(clean ? "" : " GIZLI")}");
+        }
+        var makeableNow = ActionQueue.Planner.Makeable(game).ToHashSet();
+        bool listClean = allMakers.Where(kv => kv.Value.All(m => m.Hidden || !m.Main)).All(kv => !makeableNow.Contains(kv.Key));
+        Check("planlayici oyunun gizledigi gorev hedeflerini kullanmiyor; yalniz onlarla yapilan esya plan listesinde yok",
+              hiddenMakers.Count > 0 && plansClean && listClean, $"{hiddenMakers.Count} gizli yol; {string.Join("; ", planNotes)}");
+
+        // ---- 3. the window's target list: search, nothing found, keyboard, Escape, folding
+        ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+        if (queueMod.Window is not { Visible: true }) queueMod.ToggleWindow();
+        yield return 5;
+        ActionQueue.QueueWindow qw = queueMod.Window!;
+        qw.ShowStepForm();
+        var crafting = skills.First(s => s.Entity.Id == "MelvorBase:Crafting");
+        var craftCat = ActionQueue.QueueWindow.CatalogOf(game, crafting.Entity, crafting.Action);
+        string firstOpen = craftCat.First(c => !c.Muted).Key;
+        qw.Choose(crafting.Entity.Id, firstOpen);
+        ActionQueue.PickProbe target = qw.TargetProbe;
+        target.Open();
+        yield return 5;
+        List<string> folded = target.FoldedGroups(), groupsShown = target.VisibleGroups();
+        string selectedGroup = craftCat.First(c => c.Key == firstOpen).Group;
+        bool foldOk = target.Count() <= 40 || (folded.Count > 0 && !folded.Contains(selectedGroup));
+        Rect2I topRect = target.PopupRect();
+        string shot1 = Shot("secim-1-hedef.png");
+        target.SetFilter("ring");
+        List<string> ringKeys = target.VisibleKeys();
+        bool ringOk = ringKeys.Count > 0 && ringKeys.Count < target.Count() && ringKeys.All(k => target.Entry(k) is { } e && (e.Text + e.Group + e.Subgroup).ToLowerInvariant().Contains("ring"));
+        string ringCount = target.CountText();
+        yield return 3;
+        string shot2 = Shot("secim-2-arama.png");
+        target.SetFilter("zzzq qqzz");
+        bool noneOk = target.VisibleKeys().Count == 0 && target.CountText() == "No matches";
+        target.SetFilter("");
+        bool backOk = target.VisibleKeys().Count == target.Count();
+        // Keyboard: type, the first match is ready; Down to the next; Enter picks it, once.
+        target.SetFilter("leather");
+        string? firstHit = target.Highlighted();
+        target.PressKey(Key.Down);
+        string? second = target.Highlighted();
+        int picksBefore = target.Picks;
+        target.PressKey(Key.Enter);
+        bool enterOk = second != null && second != firstHit && target.SelectedKey() == second && target.Picks == picksBefore + 1 && !target.IsOpen();
+        Item? counted = qw.CountedItem;
+        // Escape closes and changes nothing.
+        target.Open();
+        target.SetFilter("ring");
+        target.PressKey(Key.Escape);
+        bool escOk = !target.IsOpen() && target.SelectedKey() == second && target.Picks == picksBefore + 1;
+        Check("hedef listesi: arama daraltiyor, bulunamazsa 'No matches', ok tuslari + Enter seciyor (bir kez), Esc bir sey degistirmiyor, uzun liste katli aciliyor",
+              foldOk && ringOk && noneOk && backOk && enterOk && escOk && Inside(topRect),
+              $"Crafting {target.Count()} hedef, {groupsShown.Count} grup ({string.Join(", ", groupsShown.Take(4))}...), katli {folded.Count}; 'ring' {ringCount}; " +
+              $"Enter ile secilen '{(second == null ? "-" : target.Entry(second)?.Text)}', sayilacak esya '{counted?.DisplayName.GetPluralText(1)}'; popup {topRect} ekran {screen}; goruntu {shot1}/{shot2}");
+
+        // A look at the fishing list, the one that had no pictures.
+        var fishingSkill = skills.First(s => s.Entity.Id == "MelvorBase:Fishing");
+        qw.Choose(fishingSkill.Entity.Id, ActionQueue.QueueWindow.CatalogOf(game, fishingSkill.Entity, fishingSkill.Action).First().Key);
+        target.Open();
+        yield return 10;
+        bool fishOpen = target.IsOpen();
+        Out($"  goruntu secim-6-balik.png: {Shot("secim-6-balik.png")} (liste acik: {fishOpen}, {target.PopupRect()})");
+        target.Close();
+        Check("bir liste Esc ile kapandiktan sonra yeniden aciliyor", fishOpen, $"acik: {fishOpen}");
+
+        // ---- 4. the item list: no cut at 150 any more; a late item can be found and picked
+        qw.ChooseUntil(ActionQueue.Until.Item);
+        ActionQueue.PickProbe items = qw.ItemProbe;
+        Item late = game.Data.GetDataRegistryOutput<Item>().GetAllObjects().OrderBy(i => i.DisplayName.GetPluralText(1), StringComparer.OrdinalIgnoreCase).Last();
+        items.SetFilter(late.DisplayName.GetPluralText(1));
+        bool lateFound = items.VisibleKeys().Contains(late.Id);
+        bool latePicked = items.Pick(late.Id) && qw.CountedItem == late;
+        items.SetFilter("");
+        Check("esya listesi: 150 sinirinda kesilmiyor; alfabede en sondaki esya bulunup seciliyor", items.Count() > 1000 && lateFound && latePicked,
+              $"{items.Count()} esya; en son: {late.DisplayName.GetPluralText(1)}; gruplar: {items.VisibleGroups().Count}");
+
+        // ---- 5. the planner's list: every makeable item, picking one plans it
+        ActionQueue.PickProbe plan = qw.PlanProbe;
+        int makeable = ActionQueue.Planner.Makeable(game).Count;
+        Item planItem = ActionQueue.Planner.Makeable(game).First(i => i.DisplayName.GetPluralText(1).EndsWith("Bar"));
+        qw.PlanFor(planItem.Id, 10, more: true);
+        string noteBefore = qw.PlanNote;
+        bool planPicked = plan.Pick(planItem.Id);
+        Check("plan listesi: yapilabilen her esya var, secince plan cikiyor", plan.Count() == makeable && planPicked && qw.PlanNote.Contains("step"),
+              $"{plan.Count()}/{makeable}; '{planItem.DisplayName.GetPluralText(1)}': {qw.PlanNote}");
+        qw.ShowStepForm();
+
+        // ---- 6. the idle row: a saved idle action the game hides right now is shown as such, not swapped
+        ActionQueue.Maker wood = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).First(m => m.Entity.Id == wcSkill.Entity.Id && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+        if (hiddenNow.FirstOrDefault() is { } quest)
+        {
+            ActionQueue.Queue.SetIdle(new ActionQueue.Step { Entity = wcSkill.Entity.Id, TargetId = quest.Id, Name = $"Woodcutting: {quest.DisplayName.Text}" });
+            yield return 2;
+            ActionQueue.PickProbe idle = qw.IdleProbe;
+            var entry = idle.Entry(quest.Id);
+            Check("kayitli bos is oyunun su an gizledigi bir hedefse: kayboluyor degil, 'hidden now' diye gorunuyor",
+                  idle.SelectedKey() == quest.Id && entry is { Hint: "hidden now", Muted: true } && qw.IdleShown.Contains(quest.DisplayName.Text),
+                  $"secili '{idle.SelectedKey()}', ipucu '{entry?.Hint}', satir '{qw.IdleShown}'");
+        }
+        else Out("  gizli gorev hedefi yok (test karakterinin gorevleri), bu deneme atlandi");
+        bool idleChosen = qw.ChooseIdle(wood.Entity.Id, wood.Target.Id);
+        yield return 2;
+        ActionQueue.PickProbe idleList = qw.IdleProbe;
+        idleList.Open();
+        yield return 5;
+        Rect2I bottomRect = idleList.PopupRect();
+        string shot3 = Shot("secim-3-bos-is.png");
+        idleList.Close();
+        // The game's UI scale: the popup must still fit.
+        float scaleWas = ctx.Tree.Root.ContentScaleFactor;
+        ctx.Tree.Root.ContentScaleFactor = 1.2f;
+        yield return 10;
+        Rect2 bigScreen = ctx.Tree.Root.GetVisibleRect();
+        target.Open();
+        yield return 5;
+        Rect2I scaledRect = target.PopupRect();
+        string shot4 = Shot("secim-4-olcek.png");
+        target.Close();
+        ctx.Tree.Root.ContentScaleFactor = scaleWas;
+        yield return 10;
+        bool scaledInside = scaledRect.Size.X > 0 && scaledRect.Position.X >= bigScreen.Position.X - 1 && scaledRect.Position.Y >= bigScreen.Position.Y - 1
+                            && scaledRect.End.X <= bigScreen.End.X + 1 && scaledRect.End.Y <= bigScreen.End.Y + 1;
+        Check("pencerenin altindaki liste yukari aciliyor ve ekrana sigiyor; oyunun UI olcegi 1.2'de de sigiyor",
+              idleChosen && Inside(bottomRect) && bottomRect.End.Y <= screen.End.Y && scaledInside,
+              $"bos is popup {bottomRect}; olcek 1.2: {scaledRect} ekran {bigScreen}; goruntu {shot3}/{shot4}");
+        ActionQueue.Queue.SetIdle(null);
+        queueMod.ToggleWindow();
+
+        // ---- 7. Cheat Menu: "Give item" and auto-sell have their own searchable item lists
+        CheatMenuMod cheat = CheatMenuMod.Instance!;
+        cheat.ToggleMenu();
+        yield return 5;
+        Menu menu = cheat.Menu!;
+        int allItems = Actions.Items(game).Count;
+        List<string> logs = menu.GiveItemSearch("log");
+        bool logsOk = logs.Count > 3 && logs.All(id => game.Data.GetDataRegistryOutput<Item>().GetAllObjects().First(i => i.Id == id) is { } i
+                       && (i.DisplayName.GetPluralText(1) + " " + string.Join(" ", i.BankTags.Select(t => t.BankTag.DisplayName.Text))).Contains("log", StringComparison.OrdinalIgnoreCase));
+        menu.GiveItemSearch("");
+        Item sellThis = Actions.Items(game).First(i => i.DisplayName.GetPluralText(1).Contains("Log"));
+        bool autoOk = menu.PickAutoSell(sellThis.Id) && menu.AutoSellChoice == sellThis.DisplayName.GetPluralText(1);
+        for (int i = 0; i < menu.PageCount; i++) if (menu.PageTitle(i) == "Tools") menu.ShowPage(i);
+        yield return 5;
+        menu.OpenGiveItem();
+        yield return 5;
+        Rect2I cheatRect = menu.GiveItemPopup;
+        string shot5 = Shot("secim-5-hile-esya.png");
+        cheat.ToggleMenu();
+        Check("Cheat Menu: 'Give item' tum esyalari gruplu ve aranabilir gosteriyor; auto-sell kendi listesinden seciyor",
+              menu.GiveItemCount == allItems && allItems > 1000 && logsOk && autoOk && menu.GiveItemGroups.Count > 5 && (!windowed || Inside(cheatRect)),
+              $"{menu.GiveItemCount}/{allItems} esya, {menu.GiveItemGroups.Count} grup; 'log' {logs.Count}; auto-sell secimi '{menu.AutoSellChoice}'; popup {cheatRect}; goruntu {shot5}");
     }
 
     static IEnumerator<int> MultiTests(Game game, ModContext ctx)
@@ -3109,6 +3330,35 @@ static class Tests
         {
             IEnumerator<int> materialsOnly = MaterialTests(game, ctx);
             while (materialsOnly.MoveNext()) yield return materialsOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "popexp")
+        {
+            // Probe: which way of closing a pick list keeps it from opening again?
+            ActionQueue.ActionQueueMod qm = ActionQueue.ActionQueueMod.Instance!;
+            if (qm.Window is not { Visible: true }) qm.ToggleWindow();
+            yield return 5;
+            ActionQueue.PickProbe p = qm.Window!.TargetProbe;
+            var steps = new List<string>();
+            p.Open(); yield return 5; steps.Add($"ac1={p.IsOpen()}");
+            p.Close(); yield return 5; steps.Add($"kapat={p.IsOpen()}");
+            p.Open(); yield return 5; steps.Add($"ac2={p.IsOpen()}");
+            p.Close(); yield return 5;
+            p.Open(); yield return 5; p.PressKey(Key.Escape); yield return 5; steps.Add($"esc={p.IsOpen()}");
+            p.Open(); yield return 1; steps.Add($"ac3(1kare)={p.IsOpen()}"); yield return 5; steps.Add($"ac3(6kare)={p.IsOpen()}");
+            p.Close(); yield return 5;
+            p.Open(); yield return 5; p.SetFilter("a"); p.PressKey(Key.Enter); yield return 5; steps.Add($"enter={p.IsOpen()}");
+            p.Open(); yield return 5; steps.Add($"ac4={p.IsOpen()}");
+            p.Close(); yield return 5;
+            p.Open(); p.Close(); p.Open(); yield return 5; steps.Add($"hizli={p.IsOpen()}");
+            Out("popexp: " + string.Join(", ", steps));
+            qm.ToggleWindow();
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "picks")
+        {
+            IEnumerator<int> picksOnly = PickTests(game, ctx);
+            while (picksOnly.MoveNext()) yield return picksOnly.Current;
             yield break;
         }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "times")

@@ -19,15 +19,16 @@ public sealed class QueueWindow
         "only this many of an item are left", "I make this many more of an item", "it has been done this many times",
     };
 
+    /// <summary>One theme for the window and for the popups of its pick lists (a popup is a window of its own).</summary>
+    static readonly Theme s_theme = Style.Build();
     readonly CanvasLayer _layer = new() { Layer = 118, Name = "ActionQueue", Visible = false };
     readonly Label _status = Style.Label("", Style.Good);
     readonly Label _now = Style.Label("", Style.Muted, 12);
     readonly OptionButton _skillPick = new() { CustomMinimumSize = new Vector2(170, 0) };
-    readonly OptionButton _targetPick = new() { CustomMinimumSize = new Vector2(300, 0), FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+    readonly PickList<Target> _target = new("Choose what to do", s_theme);
     readonly OptionButton _untilPick = new() { CustomMinimumSize = new Vector2(250, 0) };
     readonly SpinBox _amount = new() { MinValue = 1, MaxValue = 100_000_000, Step = 1, Value = 1000, CustomMinimumSize = new Vector2(120, 0), SelectAllOnFocus = true };
-    readonly LineEdit _itemSearch = new() { PlaceholderText = "Search item...", CustomMinimumSize = new Vector2(140, 0), ClearButtonEnabled = true };
-    readonly OptionButton _itemPick = new() { CustomMinimumSize = new Vector2(210, 0), FitToLongestItem = false, ClipText = true };
+    readonly PickList<Item> _item = new("Choose an item", s_theme);
     readonly OptionButton _levelPick = new() { CustomMinimumSize = new Vector2(170, 0) };
     readonly Tree _table;
     readonly Button _run = new() { CustomMinimumSize = new Vector2(150, 0) };
@@ -36,9 +37,8 @@ public sealed class QueueWindow
 
     // "When the queue waits or ends, do": an action for the idle time.
     readonly OptionButton _idleSkill = new() { CustomMinimumSize = new Vector2(170, 0) };
-    readonly OptionButton _idleTarget = new() { CustomMinimumSize = new Vector2(220, 0), FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+    readonly PickList<Target> _idleTarget = new("Choose what to do", s_theme);
     readonly Label _idleState = Style.Label("", Style.Muted, 12);
-    List<Target> _idleTargets = new();
 
     // The card on top has two faces: the form for one step, and the planner.
     readonly Button _stepMode = new() { Text = "Add one step", ToggleMode = true };
@@ -46,12 +46,11 @@ public sealed class QueueWindow
     readonly VBoxContainer _stepForm = new(), _planForm = new() { Visible = false };
     readonly OptionButton _planKind = new() { CustomMinimumSize = new Vector2(132, 0) };
     readonly SpinBox _planAmount = new() { MinValue = 1, MaxValue = 100_000_000, Step = 1, Value = 100, CustomMinimumSize = new Vector2(120, 0), SelectAllOnFocus = true };
-    readonly LineEdit _planSearch = new() { PlaceholderText = "Search item...", CustomMinimumSize = new Vector2(150, 0), ClearButtonEnabled = true };
-    readonly OptionButton _planPick = new() { CustomMinimumSize = new Vector2(220, 0), FitToLongestItem = false, ClipText = true };
+    readonly PickList<Item> _planPick = new("Choose an item to plan", s_theme);
     readonly Label _planNote = Style.Label("", Style.Muted, 12);
     readonly Button _planAdd = new() { Text = "Add these steps to the queue" };
     Tree _planTable = null!;
-    List<Item> _makeable = new(), _shownMakeable = new();
+    List<Item> _makeable = new();
     PlanResult? _plan;
     string _planShown = "";
 
@@ -70,8 +69,7 @@ public sealed class QueueWindow
 
     Game? _game;
     List<(GameEntity Entity, ActionComponent Action)> _skills = new();
-    List<Target> _targets = new();
-    List<Item> _items = new(), _shownItems = new();
+    List<Item> _items = new();
     List<string> _levelSkills = new();
     bool _syncing;
     Until _lastKind;
@@ -90,7 +88,7 @@ public sealed class QueueWindow
         center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _layer.AddChild(center);
 
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1000, 700), Theme = Style.Build() };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1000, 700), Theme = s_theme };
         StyleBoxFlat frame = Style.Box(Style.Window, 8, Style.AccentDim, 1);
         frame.ShadowColor = new Color(0, 0, 0, 0.55f);
         frame.ShadowSize = 14;
@@ -176,9 +174,12 @@ public sealed class QueueWindow
         what.AddThemeConstantOverride("separation", 10);
         what.AddChild(Fixed("Do", 50));
         _skillPick.ItemSelected += _ => FillTargets(null);
-        _targetPick.ItemSelected += _ => SuggestItem();
+        _target.Picked += _ => { if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem(); };
+        _target.Control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        _target.Control.CustomMinimumSize = new Vector2(300, 0);
+        _target.Control.TooltipText = "Click and type to search. The groups are the ones of the skill's own page.";
         what.AddChild(_skillPick);
-        what.AddChild(_targetPick);
+        what.AddChild(_target.Control);
         Button useNow = MakeButton("Use what I am doing now", UseCurrent);
         useNow.TooltipText = "Fills in the skill and the action your character is performing right now.";
         what.AddChild(useNow);
@@ -191,11 +192,8 @@ public sealed class QueueWindow
         _untilPick.ItemSelected += _ => UntilChanged();
         until.AddChild(_untilPick);
         until.AddChild(_amount);
-        _itemSearch.TextChanged += FilterItems;
-        _itemSearch.TooltipText = "Filled in with what the chosen action makes. Type here to count a different item.";
-        _itemPick.TooltipText = "The item that is counted in the bank.";
-        until.AddChild(_itemSearch);
-        until.AddChild(_itemPick);
+        _item.Control.CustomMinimumSize = new Vector2(280, 0);
+        until.AddChild(_item.Control);
         until.AddChild(_levelPick);
         until.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         until.AddChild(MakeButton("Add step", AddStep));
@@ -233,9 +231,11 @@ public sealed class QueueWindow
         idleRow.AddChild(idleLabel);
         _idleSkill.TooltipText = idleLabel.TooltipText;
         _idleSkill.ItemSelected += i => { if (!_syncing) { if (i <= 0) Queue.SetIdle(null); else { FillIdleTargets(null); PickIdle(); } } };
-        _idleTarget.ItemSelected += _ => { if (!_syncing) PickIdle(); };
+        _idleTarget.Picked += _ => PickIdle();
+        _idleTarget.Control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        _idleTarget.Control.CustomMinimumSize = new Vector2(220, 0);
         idleRow.AddChild(_idleSkill);
-        idleRow.AddChild(_idleTarget);
+        idleRow.AddChild(_idleTarget.Control);
         Button idleNow = MakeButton("Use what I am doing now", UseCurrentForIdle);
         idleNow.TooltipText = "Uses the skill and the action your character is performing right now.";
         idleRow.AddChild(idleNow);
@@ -293,11 +293,10 @@ public sealed class QueueWindow
         _planAmount.ValueChanged += _ => Replan();
         row.AddChild(_planAmount);
         row.AddChild(Style.Label("of", Style.Muted));
-        _planSearch.TextChanged += FilterMakeable;
-        row.AddChild(_planSearch);
-        _planPick.TooltipText = "Every item one of your skills can make or gather.";
-        _planPick.ItemSelected += _ => Replan();
-        row.AddChild(_planPick);
+        _planPick.Control.TooltipText = "Every item one of your skills can make or gather. Click and type to search.";
+        _planPick.Control.CustomMinimumSize = new Vector2(340, 0);
+        _planPick.Picked += _ => { _planShown = ""; Replan(); };
+        row.AddChild(_planPick.Control);
         row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         StyleBoxFlat go = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
         _planAdd.AddThemeStyleboxOverride("normal", go);
@@ -416,21 +415,26 @@ public sealed class QueueWindow
             _levelSkills = game.LeveledEntities.Select(s => s.DisplayName.Text).ToList();
             Fill(_skillPick, _skills.Select(s => s.Entity.DisplayName.Text));
             Fill(_idleSkill, _skills.Select(s => s.Entity.DisplayName.Text).Prepend("Nothing"));
-            _idleTargets = new List<Target>();
             Fill(_levelPick, _levelSkills);
-            FilterItems("");
-            FillTargets(null);
             _makeable = Planner.Makeable(game);
-            _planSearch.Text = "";
-            FilterMakeable("");
+            _target.SetEntries(new List<PickEntry<Target>>());
+            FillTargets(null);
         }
+        else FillTargets(_target.SelectedKey, suggest: false);   // what is locked or shown may have changed since
+        // The bank counts in the item lists are those of the moment the window opens.
+        _item.SetEntries(Catalog.Items(game, _items));
+        _planPick.SetEntries(Catalog.Items(game, _makeable));
         UntilChanged();
         Repaint();
         Pulse();
         _layer.Visible = true;
     }
 
-    public void Hide() => _layer.Visible = false;
+    public void Hide()
+    {
+        foreach (var pick in new Action[] { _target.Close, _item.Close, _idleTarget.Close, _planPick.Close }) pick();
+        _layer.Visible = false;
+    }
 
     /// <summary>Called about once a second while open.</summary>
     public void Pulse()
@@ -616,24 +620,15 @@ public sealed class QueueWindow
     public string SideText => _side.Visible ? _side.Text : "(hidden)";
     public void PressSide() => _side.ButtonPressed = !_side.ButtonPressed;
 
-    void FilterMakeable(string text)
-    {
-        text = text.Trim();
-        _shownMakeable = (text == "" ? _makeable : _makeable.Where(i => i.DisplayName.GetPluralText(1).Contains(text, StringComparison.OrdinalIgnoreCase)))
-            .Take(200).ToList();
-        Fill(_planPick, _shownMakeable.Select(i => i.DisplayName.GetPluralText(1)));
-        Replan();
-    }
-
     /// <summary>Works the plan out again and redraws it, but only when something in it has changed.</summary>
     void Replan()
     {
         if (_game == null || !_planForm.Visible) return;
-        Item? item = _planPick.Selected >= 0 && _planPick.Selected < _shownMakeable.Count ? _shownMakeable[_planPick.Selected] : null;
+        Item? item = _planPick.Selected?.Value;
         if (item == null)
         {
             _plan = null;
-            DrawPlan("none", () => { _planNote.Text = "No item with that name can be made by your skills."; });
+            DrawPlan("none", () => { _planNote.Text = "Choose the item you want: click the list and type its name."; });
             return;
         }
         PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value, more: _planKind.Selected == 0);
@@ -737,19 +732,7 @@ public sealed class QueueWindow
     {
         _planMode.ButtonPressed = true;
         _planKind.Select(more ? 0 : 1);
-        _planSearch.Text = "";
-        FilterMakeable("");
-        int at = _shownMakeable.FindIndex(i => i.Id == itemId);
-        if (at < 0)
-        {
-            Item? item = _makeable.FirstOrDefault(i => i.Id == itemId);
-            if (item == null) return null;
-            _planSearch.Text = item.DisplayName.GetPluralText(1);
-            FilterMakeable(_planSearch.Text);
-            at = _shownMakeable.FindIndex(i => i.Id == itemId);
-            if (at < 0) return null;
-        }
-        _planPick.Select(at);
+        if (!_planPick.Select(itemId)) return null;
         _planAmount.Value = own;
         _planShown = "";
         Replan();
@@ -774,16 +757,30 @@ public sealed class QueueWindow
 
     // ---------------------------------------------------------------- the "new step" form
 
-    void FillTargets(string? selectId)
+    /// <summary>
+    /// Fills the target list of the chosen skill. <paramref name="select"/> is a list key (or a plain target id);
+    /// without one, the first thing the character may do now is chosen. <paramref name="suggest"/> fills in the item
+    /// and level that go with it (not when the list is only refreshed).
+    /// </summary>
+    void FillTargets(string? select, bool suggest = true)
     {
-        if (_skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count) return;
-        _targets = Targets.All(_skills[_skillPick.Selected].Action);
-        int at = selectId == null ? 0 : Math.Max(0, _targets.FindIndex(t => t.Id == selectId));
-        Fill(_targetPick, _targets.Select(t => t.Name), at);
+        if (_game == null || _skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count) return;
+        var (entity, action) = _skills[_skillPick.Selected];
+        List<PickEntry<Target>> entries = Catalog.For(_game, entity, action, select);
+        _target.SetEntries(entries, KeyIn(entries, select) ?? entries.FirstOrDefault(e => !e.Muted)?.Key ?? entries.FirstOrDefault()?.Key);
+        if (!suggest) return;
         // A level goal is usually about the skill being trained.
-        int level = _levelSkills.IndexOf(_skills[_skillPick.Selected].Entity.DisplayName.Text);
+        int level = _levelSkills.IndexOf(entity.DisplayName.Text);
         if (level >= 0) _levelPick.Select(level);
         if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem();
+    }
+
+    /// <summary>The list key meant by <paramref name="select"/>: a key, or a target id (the first entry with it).</summary>
+    static string? KeyIn(List<PickEntry<Target>> entries, string? select)
+    {
+        if (select == null) return null;
+        if (entries.Any(e => e.Key == select)) return select;
+        return entries.FirstOrDefault(e => e.Value.Id == select)?.Key;
     }
 
     /// <summary>
@@ -792,15 +789,10 @@ public sealed class QueueWindow
     /// </summary>
     void SuggestItem()
     {
-        if (_skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _targetPick.Selected < 0 || _targetPick.Selected >= _targets.Count) return;
+        if (_skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _target.Selected is not { } chosen) return;
         if ((Until)_untilPick.Selected == Until.ItemLeft) return;   // counting down: the item was chosen on purpose
-        Item? product = Targets.Product(_skills[_skillPick.Selected].Action, _targets[_targetPick.Selected]);
-        if (product == null) return;
-        string name = product.DisplayName.GetPluralText(1);
-        _itemSearch.Text = name;      // setting the text from code does not raise TextChanged
-        FilterItems(name);
-        int at = _shownItems.IndexOf(product);
-        if (at >= 0) _itemPick.Select(at);
+        Item? product = Targets.Product(_skills[_skillPick.Selected].Action, chosen.Value);
+        if (product != null) _item.Select(product.Id);
     }
 
     void SuggestFood()
@@ -811,12 +803,7 @@ public sealed class QueueWindow
         if (food == null && _game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? b) && b is GamesByMalcs.Melvor2.Entities.Bank.BankEntity bank)
             food = bank.Inventory.Stacks.Where(s => s.Quantity > 0 && s.Item.Capabilities.TryGet<GamesByMalcs.Melvor2.Components.CombatFood.FoodCapability>(out _))
                 .OrderByDescending(s => s.Quantity).FirstOrDefault()?.Item;
-        if (food == null) return;
-        string name = food.DisplayName.GetPluralText(1);
-        _itemSearch.Text = name;
-        FilterItems(name);
-        int at = _shownItems.IndexOf(food);
-        if (at >= 0) _itemPick.Select(at);
+        if (food != null) _item.Select(food.Id);
     }
 
     /// <summary>For tests: pick how a step ends, the way the list does.</summary>
@@ -824,18 +811,29 @@ public sealed class QueueWindow
     public double AmountShown => _amount.Value;
     public void SetAmount(double value) => _amount.Value = value;
 
-    /// <summary>For tests: choose a skill and one of its actions the way the two lists do.</summary>
+    /// <summary>For tests: choose a skill and one of its actions the way the two lists do (a list key or a target id).</summary>
     public bool Choose(string entityId, string targetId)
     {
         int skill = _skills.FindIndex(s => s.Entity.Id == entityId);
         if (skill < 0) return false;
         _skillPick.Select(skill);
         FillTargets(targetId);
-        return _targetPick.Selected >= 0 && _targets[_targetPick.Selected].Id == targetId;
+        return _target.Selected is { } chosen && (chosen.Value.Id == targetId || chosen.Key == targetId);
     }
 
     /// <summary>For tests: the item the "until I own" goal would count right now.</summary>
-    public Item? CountedItem => _itemPick.Selected >= 0 && _itemPick.Selected < _shownItems.Count ? _shownItems[_itemPick.Selected] : null;
+    public Item? CountedItem => _item.Selected?.Value;
+
+    /// <summary>For tests: the pick lists of the window.</summary>
+    public PickProbe TargetProbe => _targetProbe ??= PickProbe.Of(_target);
+    public PickProbe ItemProbe => _itemProbe ??= PickProbe.Of(_item);
+    public PickProbe IdleProbe => _idleProbe ??= PickProbe.Of(_idleTarget);
+    public PickProbe PlanProbe => _planProbe ??= PickProbe.Of(_planPick);
+    PickProbe? _targetProbe, _itemProbe, _idleProbe, _planProbe;
+    /// <summary>For tests: the catalog's entries (key, group) for a skill, without the window.</summary>
+    public static List<(string Key, string Text, string Group, string Subgroup, bool Muted, string Hint, string Icon, string GroupIcon)> CatalogOf(Game game, GameEntity skill, ActionComponent action) =>
+        Catalog.For(game, skill, action).Select(e => (e.Key, e.Text, e.Group, e.Subgroup, e.Muted, e.Hint, e.Icon?.ResourcePath ?? "", e.GroupIcon?.ResourcePath ?? "")).ToList();
+    public static string CatalogKey(string id, string extra) => Catalog.Key(id, extra);
 
     void UseCurrent()
     {
@@ -845,7 +843,7 @@ public sealed class QueueWindow
         int skill = active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
         if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
         _skillPick.Select(skill);
-        FillTargets(target.Id);
+        FillTargets(Catalog.Key(target));
         Say($"Filled in: {_skills[skill].Entity.DisplayName.Text}: {target.Name}");
     }
 
@@ -854,19 +852,23 @@ public sealed class QueueWindow
     void FillIdleTargets(Step? select)
     {
         int skill = _idleSkill.Selected - 1;
-        if (skill < 0 || skill >= _skills.Count) { _idleTargets = new List<Target>(); _idleTarget.Clear(); return; }
-        _idleTargets = Targets.All(_skills[skill].Action);
-        int at = select == null ? 0 : Math.Max(0, _idleTargets.FindIndex(t => t.Id == select.TargetId && t.Extra == select.Extra));
-        Fill(_idleTarget, _idleTargets.Select(t => t.Name), at);
+        if (_game == null || skill < 0 || skill >= _skills.Count) { _idleTarget.SetEntries(new List<PickEntry<Target>>()); return; }
+        var (entity, action) = _skills[skill];
+        string? key = select == null ? null : Catalog.Key(select.TargetId, select.Extra);
+        List<PickEntry<Target>> entries = Catalog.For(_game, entity, action, key);
+        string? pick = KeyIn(entries, key) ?? (select == null ? entries.FirstOrDefault(e => !e.Muted)?.Key ?? entries.FirstOrDefault()?.Key : null);
+        _idleTarget.SetEntries(entries, pick);
+        // A saved idle action the game does not offer any more: show it, do not swap it for another one.
+        if (pick == null && select != null) _idleTarget.ShowMissing(key!, select.Name);
     }
 
     void PickIdle()
     {
         int skill = _idleSkill.Selected - 1;
         if (skill < 0 || skill >= _skills.Count) { Queue.SetIdle(null); return; }
-        if (_idleTarget.Selected < 0 || _idleTarget.Selected >= _idleTargets.Count) return;
+        if (_idleTarget.Selected is not { } chosen) return;
         GameEntity entity = _skills[skill].Entity;
-        Target target = _idleTargets[_idleTarget.Selected];
+        Target target = chosen.Value;
         Queue.SetIdle(new Step { Entity = entity.Id, TargetId = target.Id, Extra = target.Extra, Name = $"{entity.DisplayName.Text}: {target.Name}" });
         Say($"When the queue waits or ends, your character does: {entity.DisplayName.Text}: {target.Name}.");
     }
@@ -880,7 +882,7 @@ public sealed class QueueWindow
         if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
         _syncing = true;
         _idleSkill.Select(skill + 1);
-        FillIdleTargets(new Step { TargetId = target.Id, Extra = target.Extra });
+        FillIdleTargets(new Step { TargetId = target.Id, Extra = target.Extra, Name = target.Name });
         _syncing = false;
         PickIdle();
     }
@@ -894,18 +896,17 @@ public sealed class QueueWindow
         if (idle == null || skill < 0)
         {
             if (_idleSkill.ItemCount > 0) _idleSkill.Select(0);
-            _idleTarget.Visible = false;
+            _idleTarget.Control.Visible = false;
         }
         else
         {
-            bool shown = _idleSkill.Selected == skill + 1 && _idleTarget.Selected >= 0 && _idleTarget.Selected < _idleTargets.Count
-                && _idleTargets[_idleTarget.Selected].Id == idle.TargetId && _idleTargets[_idleTarget.Selected].Extra == idle.Extra;
+            bool shown = _idleSkill.Selected == skill + 1 && _idleTarget.SelectedKey == Catalog.Key(idle.TargetId, idle.Extra);
             if (!shown)
             {
                 _idleSkill.Select(skill + 1);
                 FillIdleTargets(idle);
             }
-            _idleTarget.Visible = true;
+            _idleTarget.Control.Visible = true;
         }
         _syncing = false;
         string state = idle == null ? "" : Queue.IdleState;
@@ -922,10 +923,12 @@ public sealed class QueueWindow
         if (skill < 0) return false;
         _idleSkill.Select(skill + 1);
         _idleSkill.EmitSignal(OptionButton.SignalName.ItemSelected, skill + 1);
-        int at = _idleTargets.FindIndex(t => t.Id == targetId);
-        if (at < 0) return false;
-        _idleTarget.Select(at);
-        _idleTarget.EmitSignal(OptionButton.SignalName.ItemSelected, at);
+        string? Find() => _idleTarget.Entry(targetId) != null ? targetId
+            : _idleTarget.VisibleKeys.Select(k => _idleTarget.Entry(k)).FirstOrDefault(e => e?.Value.Id == targetId)?.Key;
+        string? key = Find();
+        // A target the game hides right now (a quest target) is kept in the list the way a saved step is.
+        if (key == null) { FillIdleTargets(new Step { TargetId = targetId, Name = targetId }); key = Find(); }
+        if (key == null || !_idleTarget.Pick(key)) return false;
         return Queue.Idle?.TargetId == targetId;
     }
 
@@ -934,17 +937,17 @@ public sealed class QueueWindow
     public void PressAddStep() => AddStep();
     public void PressRun() => _run.EmitSignal(BaseButton.SignalName.Pressed);
     public string StatusShown => _status.Text;
-    public bool ItemPickerShown => _itemPick.Visible;
+    public bool ItemPickerShown => _item.Control.Visible;
     /// <summary>For tests: what the idle row shows ("Nothing" or "skill | action"), and its state line.</summary>
     public string IdleShown => _idleSkill.Selected <= 0 ? "Nothing"
-        : $"{_idleSkill.GetItemText(_idleSkill.Selected)} | {(_idleTarget.Visible && _idleTarget.Selected >= 0 ? _idleTarget.GetItemText(_idleTarget.Selected) : "?")}";
+        : $"{_idleSkill.GetItemText(_idleSkill.Selected)} | {(_idleTarget.Control.Visible && _idleTarget.Selected != null ? _idleTarget.Selected.Text : "?")}";
     public string IdleStateShown => _idleState.Visible ? _idleState.Text : "";
 
     void UntilChanged()
     {
         var kind = (Until)_untilPick.Selected;
         _amount.Visible = kind != Until.Stops;
-        _itemSearch.Visible = _itemPick.Visible = kind is Until.Item or Until.ItemLeft or Until.Made;
+        _item.Control.Visible = kind is Until.Item or Until.ItemLeft or Until.Made;
         _amount.MinValue = kind == Until.ItemLeft ? 0 : 1;
         if (kind == Until.ItemLeft && _lastKind != Until.ItemLeft)
         {
@@ -966,19 +969,11 @@ public sealed class QueueWindow
         if (kind == Until.Level && _amount.Value > 999) _amount.Value = 99;
     }
 
-    void FilterItems(string text)
-    {
-        text = text.Trim();
-        _shownItems = (text == "" ? _items : _items.Where(i => i.DisplayName.GetPluralText(1).Contains(text, StringComparison.OrdinalIgnoreCase)))
-            .Take(150).ToList();
-        Fill(_itemPick, _shownItems.Select(i => i.DisplayName.GetPluralText(1)));
-    }
-
     void AddStep()
     {
-        if (_skillPick.Selected < 0 || _targetPick.Selected < 0 || _targetPick.Selected >= _targets.Count) return;
+        if (_skillPick.Selected < 0 || _target.Selected is not { } chosen) { Say("Choose what to do first."); return; }
         GameEntity entity = _skills[_skillPick.Selected].Entity;
-        Target target = _targets[_targetPick.Selected];
+        Target target = chosen.Value;
         var step = new Step
         {
             Entity = entity.Id, TargetId = target.Id, Extra = target.Extra,
@@ -987,10 +982,9 @@ public sealed class QueueWindow
         };
         if (step.Until is Until.Item or Until.ItemLeft or Until.Made)
         {
-            if (_itemPick.Selected < 0 || _itemPick.Selected >= _shownItems.Count) { Say("Pick the item to count first."); return; }
-            Item item = _shownItems[_itemPick.Selected];
-            step.Subject = item.Id;
-            step.SubjectName = item.DisplayName.GetPluralText(1);
+            if (_item.Selected is not { } counted) { Say("Pick the item to count first."); return; }
+            step.Subject = counted.Value.Id;
+            step.SubjectName = counted.Value.DisplayName.GetPluralText(1);
         }
         else if (step.Until == Until.Level)
         {

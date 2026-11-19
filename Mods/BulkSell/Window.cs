@@ -263,7 +263,7 @@ public sealed class Window
         _kindPick.Clear();
         _kindPick.AddItem("Any kind");
         foreach (string k in _kinds) _kindPick.AddItem(k);
-        _kindPick.AddItem("No skill uses it");
+        _kindPick.AddItem("Untagged");
         int at = _kinds.IndexOf(kind);
         _kindPick.Select(at >= 0 ? at + 1 : 0);
 

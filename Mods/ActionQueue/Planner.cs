@@ -36,6 +36,11 @@ public sealed class Maker
     public bool Certain = true;
     /// <summary>True when the product is what this action is mainly for (not a side product).</summary>
     public bool Main = true;
+    /// <summary>
+    /// True while the game does not show this action on its skill page (a quest target outside its quest step).
+    /// A plan never uses it; it is still known, so a step already in the queue can be followed.
+    /// </summary>
+    public bool Hidden;
 
     public string Name => $"{Entity.DisplayName.Text}: {Target.Name}";
 }
@@ -91,8 +96,11 @@ public static class Planner
         var all = new List<Maker>();
         foreach ((GameEntity entity, ActionComponent action) in Targets.Skills(game))
         {
+            int from = all.Count;
             try { Collect(entity, action, all); }
             catch (Exception e) { Queue.Log($"Planner: {entity.DisplayName.Text} could not be read: {e.Message}"); }
+            HashSet<string> hidden = Catalog.HiddenIds(game, action);
+            for (int i = from; i < all.Count; i++) all[i].Hidden = hidden.Contains(all[i].Target.Id);
         }
         var index = new Dictionary<Item, List<Maker>>();
         foreach (Maker m in all)
@@ -210,7 +218,7 @@ public static class Planner
 
     /// <summary>The items a plan can be asked for: everything some action on the queue produces as its main product.</summary>
     public static List<Item> Makeable(Game game) =>
-        Makers(game).Where(m => m.Value.Any(x => x.Main)).Select(m => m.Key)
+        Makers(game).Where(m => m.Value.Any(x => x.Main && !x.Hidden)).Select(m => m.Key)
             .OrderBy(i => i.DisplayName.GetPluralText(1), StringComparer.OrdinalIgnoreCase).ToList();
 
     // ---------------------------------------------------------------- the bank, now and after the queue
@@ -251,9 +259,14 @@ public static class Planner
 
     // ---------------------------------------------------------------- the plan
 
-    /// <summary>The best way to make an item right now: unlocked before locked, a main product before a side product, then the fastest.</summary>
+    /// <summary>
+    /// The best way to make an item right now: unlocked before locked, a main product before a side product, then the
+    /// fastest. Actions the game does not show at the moment (quest targets) are never chosen: the player could not
+    /// find them on the skill page, and they only exist for the quest.
+    /// </summary>
     static Maker? Choose(List<Maker>? candidates, Dictionary<Maker, string> problems)
     {
+        candidates = candidates?.Where(m => !m.Hidden).ToList();
         if (candidates == null || candidates.Count == 0) return null;
         return candidates
             .OrderBy(m => Problem(m, problems) == "" ? 0 : 1)

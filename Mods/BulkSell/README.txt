@@ -1,4 +1,4 @@
-Bulk Sell 0.2.1  -  a mod for Melvor Idle 2
+Bulk Sell 0.2.2  -  a mod for Melvor Idle 2
 ===========================================
 
 Quality-of-life buttons for the bank. Not a cheat: everything goes through the game's own

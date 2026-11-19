@@ -15,12 +15,16 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\CheatMenu-0.5.0.zip   (name: Cheat Menu, version 0.5.0)
+MAIN FILE:  dist\CheatMenu-0.5.1.zip   (name: Cheat Menu, version 0.5.1)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\menu-5-combat.png (main image), menu-1-bank.png, menu-3-speed.png, menu-4-skills.png, menu-6-per-skill.png, menu-7-loot-filter.png, menu-8-materials.png, menu-9-tools.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.5.1
+- "Give item" and "Auto-sell from bank" have searchable lists of every item, grouped by the bank's own kinds (no longer cut off after 150)
+- Auto-sell has its own item list and Add button instead of "Add the item picked above"
+
 0.5.0
 - Fixed: "Skill action speed" together with a skill's own speed could stop the game (everything froze until the setting was turned off). The two now multiply (x2 and x4 are x8) and stop at x20 together. The game's own speed bonuses are counted too, including those for a single animal or recipe (Hunting journal levels, for example).
 - Fixed: a speed setting changed after planting did not count for crops already growing, so their old time stayed on the plot. Crops now get their new time at once.
@@ -47,7 +51,7 @@ Every setting applies the moment you change it and is remembered per character.[
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Cheat Menu [b]0.5.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F8[/b].
+This is Cheat Menu [b]0.5.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F8[/b].
 
 Your settings are [b]not written into your save file[/b]. They live in a small file next to the mod and are applied again each time you open that character. Remove the mod and the character is back to normal. Only what the Tools page gives you (items, currency, levels) stays.
 
@@ -118,7 +122,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]CheatMenu-0.5.0.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
+[*]Extract [b]CheatMenu-0.5.1.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
