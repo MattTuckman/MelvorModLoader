@@ -65,6 +65,7 @@ five minutes) from the same place you downloaded this loader.
 HELP AND UPDATES
 ----------------
 Discord: https://discord.gg/q6aexZZSAf
-GitHub:  https://github.com/falorfrozen-cmd
+Wiki:    https://falorfrozen-cmd.github.io/MelvorModLoader/  (guides for players and mod authors)
+GitHub:  https://github.com/falorfrozen-cmd/MelvorModLoader  (source code, MIT license)
 When something does not work, look at "MelvorModLoader.log" in the game folder
 (it is rewritten on every start) and include it when you ask for help.
