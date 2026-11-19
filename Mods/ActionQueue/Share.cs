@@ -93,7 +93,7 @@ public static class Share
 
         foreach (PackedStep s in packed.S)
         {
-            if (s == null || string.IsNullOrWhiteSpace(s.E) || string.IsNullOrWhiteSpace(s.T) || s.U < 0 || s.U > (int)Until.Made
+            if (s == null || string.IsNullOrWhiteSpace(s.E) || string.IsNullOrWhiteSpace(s.T) || s.U < 0 || s.U > (int)Until.Times
                 || double.IsNaN(s.A) || double.IsInfinity(s.A) || s.A < 0 || s.A > 1_000_000_000)
             {
                 problem = "That code holds a step that makes no sense, so none of it was taken.";

@@ -1,4 +1,4 @@
-Action Queue 0.6.0  -  a mod for Melvor Idle 2
+Action Queue 0.6.1  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -30,8 +30,12 @@ Open a character and press F6.
   1. Pick a skill and what to do (or press "Use what I am doing now").
   2. Pick when the step ends: when it stops by itself, when you own a number of an item,
      when you have made a number more of an item (whatever the bank already holds),
-     when a skill reaches a level, after a number of minutes, or when only a number of an
-     item are left (for example: fight until only 5 of your food are left).
+     when it has been done a number of times, when a skill reaches a level, after a
+     number of minutes, or when only a number of an item are left (for example: fight
+     until only 5 of your food are left).
+     "Done this many times" counts each finished action, the way mastery does: every
+     catch at a fishing spot (whatever fish it gives), every hit on a tree or rock,
+     every finished bar or potion, every lap of an agility course, every monster killed.
      For that goal the food you are eating is filled in (or, with none chosen, the food
      your bank has most of) and the number starts at 5.
      For the item goal, the item is filled in with what the chosen action makes

@@ -788,6 +788,251 @@ static class Tests
         queueMod.ToggleWindow();
     }
 
+    /// <summary>
+    /// A player's request: "complete action X a number of times" (fishing mastery counts catches, not one kind of
+    /// fish; a time limit is no good since each catch takes a range of seconds). The goal "it has been done this
+    /// many times", for every skill, through the window.
+    /// </summary>
+    static IEnumerator<int> TimesTests(Game game, ModContext ctx)
+    {
+        Out("=== 5o. Is Sirasi: 'bu kadar kez yap' hedefi ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.SetRepeat(false);
+        ActionQueue.Queue.SetIdle(null);
+        ActionQueue.Queue.SetSideBySide(true);
+        mt::Multitask.Slots.Bind(game);
+        mt::Multitask.MultitaskMod mtMod = mt::Multitask.MultitaskMod.Instance!;
+        if (mtMod.Window is not { Visible: true }) mtMod.ToggleWindow();
+        yield return 5;
+        mt::Multitask.SlotWindow win = mtMod.Window!;
+        mtMod.ToggleWindow();
+        void Slots(int on) { for (int i = 0; i < mt::Multitask.Slots.Count; i++) if (mt::Multitask.Slots.IsOn(i) != (i < on)) win.PressSwitch(i); }
+        double clock = Time.GetTicksMsec() / 1000.0;
+        void Look() { clock += 1; mt::Multitask.Slots.Tick(game, clock); }
+        Slots(0);
+        game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combatEntity);
+        var combat = (CombatEntity)combatEntity!;
+        void Second() { for (int i = 0; i < 60; i++) game.PropagateTick(); combat.Player.Health.Set(combat.Player.Health.Max); ActionQueue.Queue.Tick(game, 1); Look(); }
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        ActionQueue.Step TimesStep(GameEntity e, ActionQueue.Target t, int n) => new()
+        {
+            Entity = e.Id, TargetId = t.Id, Extra = t.Extra, Name = $"{e.DisplayName.Text}: {t.Name}", Until = ActionQueue.Until.Times, Amount = n,
+        };
+
+        // Plenty of everything, and the choices a player makes on the Hunting and Agility pages, as in 5i.
+        var lent = new List<(Item Item, int Amount)>();
+        foreach (Item any in Actions.Items(game)) { int got = s_bank.Inventory.AddQuantity(any, 300); if (got > 0) lent.Add((any, got)); }
+        var skills = ActionQueue.Targets.Skills(game);
+        foreach (var (_, action) in skills)
+        {
+            if (action is GamesByMalcs.Melvor2.Entities.Hunting.HuntingActionComponent hunt)
+                foreach (var animal in hunt.Locations.Values.SelectMany(l => l.Animals))
+                    if (animal.SelectedTrap == null && !animal.TraplessEnabled && animal.CompatibleTraps.Count > 0) animal.SelectTrap(animal.CompatibleTraps[0]);
+            if (action is GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent agi)
+                foreach (var course in agi.Courses.Values)
+                    if (course.SelectedPath == null && course.ActivePaths.Count > 0) course.SelectPath(course.ActivePaths.Values.First());
+        }
+        ActionQueue.Target? FirstStartable(ActionComponent action)
+        {
+            foreach (ActionQueue.Target t in ActionQueue.Targets.All(action).Take(60))
+                if (ActionQueue.Targets.Start(game, action, t, out _)) { game.ActionManager.TryStopActive(force: true); return t; }
+            return null;
+        }
+
+        // ---- 1. every skill: the step ends after exactly that many, and never hangs
+        var results = new List<string>();
+        int fine = 0, tried = 0;
+        foreach (var (entity, action) in skills)
+        {
+            ActionQueue.Target? target = FirstStartable(action);
+            if (target == null) { results.Add($"{entity.DisplayName.Text}: baslatilamadi"); continue; }
+            tried++;
+            int n = action is CombatActionComponent ? 2 : action is GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent ? 1 : 3;
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(TimesStep(entity, target, n));
+            ActionQueue.Queue.Start();
+            int loops = 0;
+            for (; loops < 900 && ActionQueue.Queue.Running; loops++) Second();
+            ActionQueue.Step s = ActionQueue.Queue.Steps[0];
+            bool ok = !ActionQueue.Queue.Running && s.State == "done" && !action.IsStarted;
+            if (ok) fine++;
+            results.Add($"{entity.DisplayName.Text} {n}x: {(ok ? "tamam" : "SORUN '" + s.State + "'")} {loops} sn");
+            game.ActionManager.TryStopActive(force: true);
+            yield return 0;
+        }
+        Check("her beceride 'N kez' adimi o sayida bitiyor, takilmiyor", fine == tried && tried == skills.Count && tried >= 12, string.Join("; ", results));
+
+        // ---- 2. the player's case: fishing a spot with several kinds of fish, 20 catches
+        ActionQueue.Maker? fishSpot = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l)
+            .Where(m => m.Entity.DisplayName.Text == "Fishing" && ActionQueue.Targets.CanStart(m.Action, m.Target, out _))
+            .GroupBy(m => m.Target.Id).Where(g => g.Count() >= 2).Select(g => g.First()).FirstOrDefault();
+        if (fishSpot == null) Out("  birden cok balik veren nokta yok, balik denemesi atlandi");
+        else
+        {
+            var fishing = (GamesByMalcs.Melvor2.Entities.Fishing.FishingActionComponent)fishSpot.Action;
+            int caught = 0;
+            var byKind = new Dictionary<string, int>();
+            EventHandler<GamesByMalcs.Melvor2.Entities.Fishing.RecipeFishedEventArgs> onFish = (_, e) => { caught++; string k = e.Item?.DisplayName.GetPluralText(1) ?? "?"; byKind[k] = byKind.GetValueOrDefault(k) + 1; };
+            fishing.RecipeFished += onFish;
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(TimesStep(fishSpot.Entity, fishSpot.Target, 20));
+            ActionQueue.Queue.Start();
+            int loops = 0;
+            for (; loops < 900 && ActionQueue.Queue.Running; loops++) Second();
+            fishing.RecipeFished -= onFish;
+            int most = byKind.Count == 0 ? 0 : byKind.Values.Max();
+            ActionQueue.Step s = ActionQueue.Queue.Steps[0];
+            Check($"balik: '{fishSpot.Target.Name}' 20 kez = tam 20 tutus (tek bir balik turu 20'ye ulasmadan)",
+                  !ActionQueue.Queue.Running && s.State == "done" && caught == 20 && most < 20 && !fishing.IsStarted,
+                  $"{loops} sn; oyunun saydigi tutus {caught}; turler: {string.Join(", ", byKind.Select(k => $"{k.Value} {k.Key}"))}; sonunda '{s.State}'");
+        }
+
+        // ---- 3. smithing: a recipe takes several steps; "3 times" means three finished bars, not three steps
+        var artisanSkill = skills.FirstOrDefault(s => s.Action is GamesByMalcs.Melvor2.Components.ArtisanAction.ArtisanActionComponent a
+            && ActionQueue.Targets.All(s.Action).Any(t => ActionQueue.Targets.CanStart(s.Action, t, out _)));
+        if (artisanSkill.Action is GamesByMalcs.Melvor2.Components.ArtisanAction.ArtisanActionComponent artisan)
+        {
+            ActionQueue.Target target = FirstStartable(artisan)!;
+            Item? product = ActionQueue.Targets.Product(artisan, target);
+            int before = product == null ? 0 : Qty(product), steps = 0, crafts = 0;
+            EventHandler<GamesByMalcs.Melvor2.Components.ArtisanAction.StepSkippedEventArgs> onStep = (_, _) => steps++;
+            artisan.StepPerformed += onStep;
+            artisan.RecipeCreated += OnCraft;
+            void OnCraft(object? _, EventArgs __) => crafts++;
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(TimesStep(artisanSkill.Entity, target, 3));
+            ActionQueue.Queue.Start();
+            int loops = 0;
+            for (; loops < 900 && ActionQueue.Queue.Running; loops++) Second();
+            artisan.StepPerformed -= onStep;
+            artisan.RecipeCreated -= OnCraft;
+            int made = product == null ? -1 : Qty(product) - before;
+            Check($"{artisanSkill.Entity.DisplayName.Text}: 3 kez = 3 bitmis tarif, ara adimlar sayilmiyor",
+                  !ActionQueue.Queue.Running && ActionQueue.Queue.Steps[0].State == "done" && crafts == 3 && steps > 3 && made >= 3,
+                  $"{target.Name}: {loops} sn; tarif {crafts}, ara adim {steps}; {made} {product?.DisplayName.GetPluralText(1)} geldi");
+        }
+        else Out("  baslatilabilen artisan tarifi yok, deneme atlandi");
+
+        // ---- 4. agility: obstacles are parts, a lap is the whole
+        var agiSkill = skills.FirstOrDefault(s => s.Action is GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent);
+        // The course with the most obstacles the test character may run (a one-obstacle lap proves nothing).
+        int ObstaclesOf(GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent a, ActionQueue.Target t) =>
+            a.Courses.Values.FirstOrDefault(c => c.Course.Id == t.Id)?.SelectedPath?.Obstacles.Count ?? 0;
+        if (agiSkill.Action is GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent agility
+            && ActionQueue.Targets.All(agility).Where(t => ActionQueue.Targets.CanStart(agility, t, out _)).OrderByDescending(t => ObstaclesOf(agility, t)).FirstOrDefault() is { } lapCourse)
+        {
+            int perLap = ObstaclesOf(agility, lapCourse);
+            Out($"  agility parkuru: {lapCourse.Name}, turda {perLap} engel");
+            int obstacles = 0, laps = 0;
+            EventHandler<GamesByMalcs.Melvor2.Entities.Agility.AgilityObstacleAttemptedEventArgs> onObstacle = (_, _) => obstacles++;
+            EventHandler<GamesByMalcs.Melvor2.Entities.Agility.AgilityCourseEventArgs> onLap = (_, _) => laps++;
+            agility.ObstacleAttempted += onObstacle;
+            agility.CourseCompleted += onLap;
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(TimesStep(agiSkill.Entity, lapCourse, 2));
+            ActionQueue.Queue.Start();
+            int loops = 0;
+            for (; loops < 1500 && ActionQueue.Queue.Running; loops++) Second();
+            agility.ObstacleAttempted -= onObstacle;
+            agility.CourseCompleted -= onLap;
+            Check("agility: 2 kez = 2 tur, engeller tek tek sayilmiyor",
+                  // The game reports every obstacle but the last of a lap (the last one is the lap itself).
+                  !ActionQueue.Queue.Running && ActionQueue.Queue.Steps[0].State == "done" && laps == 2 && perLap >= 2 && obstacles >= 2 * (perLap - 1) && obstacles > laps,
+                  $"{lapCourse.Name}: {loops} sn; tur {laps}, engel {obstacles} (turda {perLap})");
+        }
+
+        // ---- 5. combat: kills
+        var fightSkill = skills.First(s => s.Action is CombatActionComponent);
+        if (FirstStartable(fightSkill.Action) is { } monster)
+        {
+            int kills = 0;
+            EventHandler<GamesByMalcs.Melvor2.Components.Characters.EnemyKilledEventArgs> onKill = (_, _) => kills++;
+            combat.Enemy.Killed += onKill;
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(TimesStep(fightSkill.Entity, monster, 4));
+            ActionQueue.Queue.Start();
+            int loops = 0;
+            for (; loops < 900 && ActionQueue.Queue.Running; loops++) Second();
+            combat.Enemy.Killed -= onKill;
+            Check("savas: 4 kez = 4 dusman olduruldu", !ActionQueue.Queue.Running && ActionQueue.Queue.Steps[0].State == "done" && kills == 4 && !combat.Action.IsStarted,
+                  $"{monster.Name}: {loops} sn; olduruldu {kills}");
+        }
+
+        // ---- 6. through the window, with a pause in the middle; the share code keeps the goal
+        ActionQueue.Maker wood = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).First(m => m.Entity.DisplayName.Text == "Woodcutting" && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+        var woodcutting = (GamesByMalcs.Melvor2.Entities.Woodcutting.WoodcuttingActionComponent)wood.Action;
+        ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+        if (queueMod.Window is not { Visible: true }) queueMod.ToggleWindow();
+        yield return 5;
+        ActionQueue.QueueWindow qw = queueMod.Window!;
+        qw.ShowStepForm();
+        ActionQueue.Queue.Clear();
+        bool chosen = qw.Choose(wood.Entity.Id, wood.Target.Id);
+        qw.ChooseUntil(ActionQueue.Until.Times);
+        bool itemHidden = !qw.ItemPickerShown;
+        qw.SetAmount(12);
+        qw.PressAddStep();
+        ActionQueue.Step w = ActionQueue.Queue.Steps[0];
+        int hits = 0;
+        EventHandler<GamesByMalcs.Melvor2.Entities.Woodcutting.TreeDamagedEventArgs> onHit = (_, _) => hits++;
+        woodcutting.TreeDamaged += onHit;
+        qw.PressRun();
+        for (int i = 0; i < 600 && hits < 5; i++) Second();
+        qw.PressRun();                                                   // Pause
+        int atPause = hits;
+        for (int i = 0; i < 4; i++) for (int t = 0; t < 60; t++) game.PropagateTick();   // paused: those hits are not the queue's
+        int duringPause = hits - atPause;
+        qw.PressRun();                                                   // Start again
+        ActionQueue.Queue.Tick(game, 0);                                 // the queue takes the step up again at its next look
+        int hitsAtResume = hits;
+        int loops6 = 0;
+        for (; loops6 < 600 && ActionQueue.Queue.Running; loops6++) Second();
+        woodcutting.TreeDamaged -= onHit;
+        int queueHits = atPause + (hits - hitsAtResume);
+        string code = ActionQueue.Queue.ExportCode(null) ?? "";
+        bool back = ActionQueue.Share.TryImport(code, out _, out List<ActionQueue.Step> backSteps, out _, out _) && backSteps[0].Until == ActionQueue.Until.Times && backSteps[0].Amount == 12;
+        Check("pencereden 'N kez': esya kutusu gizli, duraklatip devam edince sayim suruyor, paylasim kodu koruyor",
+              chosen && itemHidden && w.Goal == "12 times" && w.State == "done" && queueHits == 12 && back,
+              $"hedef '{w.Goal}'; duraklatinca {atPause} vurus, duraklamadayken {duringPause}; siranin vuruslari {queueHits}; kod geri: {back}");
+
+        // ---- 7. side by side: two "N times" steps on two skills count only their own
+        if (fishSpot != null)
+        {
+            Slots(1);
+            var fishing = (GamesByMalcs.Melvor2.Entities.Fishing.FishingActionComponent)fishSpot.Action;
+            int caught = 0, cut = 0;
+            EventHandler<GamesByMalcs.Melvor2.Entities.Fishing.RecipeFishedEventArgs> onFish = (_, _) => caught++;
+            EventHandler<GamesByMalcs.Melvor2.Entities.Woodcutting.TreeDamagedEventArgs> onCut = (_, _) => cut++;
+            fishing.RecipeFished += onFish;
+            woodcutting.TreeDamaged += onCut;
+            ActionQueue.Queue.Clear();
+            ActionQueue.Queue.Add(TimesStep(fishSpot.Entity, fishSpot.Target, 8));
+            ActionQueue.Queue.Add(TimesStep(wood.Entity, wood.Target, 15));
+            ActionQueue.Queue.Start();
+            int both = 0, loops = 0;
+            for (; loops < 900 && ActionQueue.Queue.Running; loops++) { Second(); if (fishing.IsStarted && woodcutting.IsStarted) both++; }
+            fishing.RecipeFished -= onFish;
+            woodcutting.TreeDamaged -= onCut;
+            Check("yan yana iki 'N kez' adimi: her biri yalniz kendi isini sayiyor",
+                  !ActionQueue.Queue.Running && both > 3 && caught == 8 && cut == 15 && ActionQueue.Queue.Steps.All(s => s.State == "done"),
+                  $"{loops} sn, {both} sn birlikte; tutus {caught}/8, vurus {cut}/15");
+            Slots(0);
+            Look();
+        }
+
+        ActionQueue.Queue.Clear();
+        queueMod.ToggleWindow();
+        game.ActionManager.TryStopActive(force: true);
+        foreach (var (lentItem, amount) in lent) s_bank.Inventory.RemoveQuantity(lentItem, Math.Min(amount, s_bank.Inventory.GetQuantity(lentItem)));
+        Engine.ResetAll();
+        combat.Player.Health.Set(combat.Player.Health.Max);
+    }
+
     static IEnumerator<int> MultiTests(Game game, ModContext ctx)
     {
         Out("=== 5l. Multitask (son islerin birlikte calismasi) ===");
@@ -2866,6 +3111,24 @@ static class Tests
             while (materialsOnly.MoveNext()) yield return materialsOnly.Current;
             yield break;
         }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "times")
+        {
+            IEnumerator<int> timesOnly = TimesTests(game, ctx);
+            while (timesOnly.MoveNext()) yield return timesOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "made")
+        {
+            IEnumerator<int> madeOnly = MadeTests(game, ctx);
+            while (madeOnly.MoveNext()) yield return madeOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "idle")
+        {
+            IEnumerator<int> idleOnly = IdleTests(game, ctx);
+            while (idleOnly.MoveNext()) yield return idleOnly.Current;
+            yield break;
+        }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "saved")
         {
             IEnumerator<int> savedOnly = SavedQueueTests(game, ctx);
@@ -3118,18 +3381,6 @@ static class Tests
             return (q - s_bank.Inventory.GetQuantity(log), burned);
         }
         var burn0 = Burn(20000);
-        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "made")
-        {
-            IEnumerator<int> madeOnly = MadeTests(game, ctx);
-            while (madeOnly.MoveNext()) yield return madeOnly.Current;
-            yield break;
-        }
-        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "idle")
-        {
-            IEnumerator<int> idleOnly = IdleTests(game, ctx);
-            while (idleOnly.MoveNext()) yield return idleOnly.Current;
-            yield break;
-        }
         Check("ates yakmayi baslatma", burning && burn0.Made > 0 && burn0.Used > 0, $"{Actions.ItemName(log)}: {burn0.Made} islem, {burn0.Used} malzeme harcandi");
         Engine.SetValue("skills.preservation", 100);
         var burn1 = Burn(20000);

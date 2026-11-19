@@ -9,11 +9,14 @@ using GamesByMalcs.Melvor2.Data.Items;
 using GamesByMalcs.Melvor2.Entities;
 using GamesByMalcs.Melvor2.Entities.Bank;
 using GamesByMalcs.Melvor2.Entities.Combat;
+using GamesByMalcs.Melvor2.Components.ArtisanAction;
+using GamesByMalcs.Melvor2.Entities.Agility;
+using GamesByMalcs.Melvor2.EventBus;
 
 namespace ActionQueue;
 
 /// <summary>When a step is over.</summary>
-public enum Until { Stops, Item, Level, Minutes, ItemLeft, Made }   // new kinds go at the end: saved queues store the number
+public enum Until { Stops, Item, Level, Minutes, ItemLeft, Made, Times }   // new kinds go at the end: saved queues store the number
 
 /// <summary>Idle: not started yet. Waiting: its turn has come but it cannot run right now. Done: over (also when skipped).</summary>
 public enum RunState { Idle, Running, Waiting, Done }
@@ -35,9 +38,9 @@ public sealed class Step
     /// <summary>Where the step stands in the current run (not saved).</summary>
     public RunState Run;
     internal double Seconds, RetryAt, GrewAt;
-    internal long Pile, GainedAtStart;
-    /// <summary>"Make N more": what came in before a pause, so carrying on does not start counting from zero.</summary>
-    internal long MadeBefore;
+    internal long Pile, GainedAtStart, DoneAtStart;
+    /// <summary>"Make N more" / "N times": what was counted before a pause, so carrying on does not start from zero.</summary>
+    internal long CountBefore;
     internal int OwnedAtStart;
     internal bool Ran, CountGains;
     internal string Following = "";   // a slayer step: the task monster it is fighting at the moment
@@ -49,6 +52,7 @@ public sealed class Step
         Until.ItemLeft => Amount <= 0 ? $"until no {SubjectName} is left in the bank" : $"until only {Amount:N0} {SubjectName} are left in the bank",
         Until.Level => $"until {SubjectName} level {Amount:0}",
         Until.Minutes => $"for {Amount:0.#} minute(s)",
+        Until.Times => Amount == 1 ? "once" : $"{Amount:N0} times",
         _ => "until it stops by itself",
     };
 }
@@ -98,6 +102,8 @@ public static class Queue
     static double s_clock;
     /// <summary>Everything the bank has received, per item, since the character was opened (other steps may use it up again).</summary>
     static readonly Dictionary<string, long> s_gained = new();
+    /// <summary>How many times each skill has finished one action since the character was opened (for "N times").</summary>
+    static readonly Dictionary<string, long> s_done = new();
 
     /// <summary>A waiting recipe starts again once there is enough for this many crafts, or the materials stopped growing for a while.</summary>
     const int PileSize = 10;
@@ -168,6 +174,7 @@ public static class Queue
         // A death must never turn into "walk straight back in": remember it, the runner pauses on it.
         if (game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combat) && combat is CombatEntity fighter)
             fighter.Action.PlayerDied += (_, _) => { if (ReferenceEquals(game, s_game)) s_died = true; };
+        CountActions(game);
         Changed?.Invoke();
     }
 
@@ -391,7 +398,7 @@ public static class Queue
         for (int i = 0; i < Steps.Count; i++)
         {
             Step s = Steps[i];
-            if (s.State != "paused") s.MadeBefore = 0;            // "make N more" carries on after a pause, else counts afresh
+            if (s.State != "paused") s.CountBefore = 0;           // "make N more" / "N times" carry on after a pause, else count afresh
             s.State = "";
             s.Run = i < Index ? RunState.Done : RunState.Idle;   // after a pause: carry on where it stopped
             s.Ran = false;
@@ -438,7 +445,7 @@ public static class Queue
         foreach (Step s in Steps.Where(s => s.Run is RunState.Running or RunState.Waiting))
         {
             s.State = "paused";
-            if (s.Ran) s.MadeBefore += Gained(s) - s.GainedAtStart;   // keep what "make N more" has already made
+            if (s.Ran) s.CountBefore = Counter(s);   // keep what "make N more" / "N times" has already counted
         }
         // Like the steps' own actions, an idle action that runs keeps running: the player decides from here.
         s_idleOwned = false;
@@ -515,7 +522,7 @@ public static class Queue
             if (Repeat && s_ranThisRound)
             {
                 s_ranThisRound = false;
-                foreach (Step s in Steps) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = s.MadeBefore = 0; }
+                foreach (Step s in Steps) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = s.CountBefore = 0; }
             }
             else
             {
@@ -789,6 +796,7 @@ public static class Queue
             step.Seconds = 0;
             step.OwnedAtStart = Owned(game, step);
             step.GainedAtStart = Gained(step);
+            step.DoneAtStart = DoneBy(step.Entity);
             step.CountGains = Lanes > 1;
         }
         step.Ran = true;
@@ -797,7 +805,7 @@ public static class Queue
         step.State = "running";
         s_ranThisRound = true;
         s_died = false;
-        Trace($"{Number(step)}: started{(othersAtWork ? " beside the others" : "")}{(step.Until is Until.Item or Until.ItemLeft or Until.Made ? $", bank holds {Owned(game, step):N0} {step.SubjectName}" : "")}{(step.Until == Until.Made && step.MadeBefore > 0 ? $", {step.MadeBefore:N0} made before the pause" : "")}");
+        Trace($"{Number(step)}: started{(othersAtWork ? " beside the others" : "")}{(step.Until is Until.Item or Until.ItemLeft or Until.Made ? $", bank holds {Owned(game, step):N0} {step.SubjectName}" : "")}{(step.Until is Until.Made or Until.Times && step.CountBefore > 0 ? $", {step.CountBefore:N0} counted before the pause" : "")}");
     }
 
     static void Watch(Game game, Step step, double seconds)
@@ -872,7 +880,49 @@ public static class Queue
         step.CountGains && step.Ran ? Math.Max(Owned(game, step), step.OwnedAtStart + (Gained(step) - step.GainedAtStart)) : Owned(game, step);
 
     /// <summary>"Make N more": how many of the item came into the bank since the step first started (pauses included).</summary>
-    static long Made(Step step) => step.MadeBefore + (step.Ran ? Gained(step) - step.GainedAtStart : 0);
+    static long Made(Step step) => step.CountBefore + (step.Ran ? Gained(step) - step.GainedAtStart : 0);
+
+    /// <summary>"N times": how many actions the step's skill has finished since the step first started (pauses included).</summary>
+    static long Times(Step step) => step.CountBefore + (step.Ran ? DoneBy(step.Entity) - step.DoneAtStart : 0);
+
+    /// <summary>What "make N more" or "N times" has counted so far (0 for the other goals).</summary>
+    static long Counter(Step step) => step.Until switch { Until.Made => Made(step), Until.Times => Times(step), _ => 0 };
+
+    static long DoneBy(string entityId) { lock (s_done) return s_done.GetValueOrDefault(entityId); }
+
+    static void Count(Game game, string entityId)
+    {
+        if (!ReferenceEquals(game, s_game)) return;
+        lock (s_done) s_done[entityId] = s_done.GetValueOrDefault(entityId) + 1;
+    }
+
+    /// <summary>
+    /// Listens for "one action finished", the way the game itself counts it for its own triggers: the game's event
+    /// bus says so for most skills. Where that event fires for parts of an action, the whole is counted instead:
+    /// artisan skills (smithing, crafting...) announce every step of a recipe, so a finished recipe counts; agility
+    /// announces every obstacle, so a finished lap counts; hunting and herblore mark their parts as sub-actions.
+    /// Combat has no such event: a monster killed counts. The events can come on the game's own thread while it
+    /// computes offline progress, so they only add to a counter.
+    /// </summary>
+    static void CountActions(Game game)
+    {
+        lock (s_done) s_done.Clear();
+        if (game.Entities.TryGetObjectById("MelvorBase:EventBus", out GameEntity? busEntity))
+            foreach (EventBusComponent bus in busEntity.Components.Values.OfType<EventBusComponent>())
+                bus.EventBus.ActionPerformed.Subscribe((sender, e) =>
+                {
+                    if (sender is not ActionComponent action || e.IsSubAction) return;
+                    if (action is ArtisanActionComponent or AgilityActionComponent) return;   // counted below, as a whole
+                    Count(game, action.Entity.Id);
+                });
+        foreach ((GameEntity entity, ActionComponent action) in Targets.Skills(game))
+        {
+            string id = entity.Id;
+            if (action is ArtisanActionComponent artisan) artisan.RecipeCreated += (_, _) => Count(game, id);
+            else if (action is AgilityActionComponent agility) agility.CourseCompleted += (_, _) => Count(game, id);
+            else if (action is CombatActionComponent && entity is CombatEntity combat) combat.Enemy.Killed += (_, _) => Count(game, id);
+        }
+    }
 
     static int Level(Game game, Step step) =>
         game.LeveledEntities.FirstOrDefault(s => s.DisplayName.Text == step.Subject)?.Experience.Level ?? 0;
@@ -884,6 +934,7 @@ public static class Queue
         Until.Level => Level(game, step) >= step.Amount,
         Until.Minutes => step.Seconds >= step.Amount * 60,
         Until.Made => Made(step) >= step.Amount,
+        Until.Times => Times(step) >= step.Amount,
         _ => false,
     };
 
@@ -896,6 +947,7 @@ public static class Queue
         Until.Level => $"level {Level(game, step)} / {step.Amount:0}",
         Until.Minutes => $"{Clock(step.Seconds)} / {Clock(step.Amount * 60)}",
         Until.Made => $"{Made(step):N0} / {step.Amount:N0} made",
+        Until.Times => $"{Times(step):N0} / {step.Amount:N0} times",
         _ => Clock(step.Seconds),
     };
 

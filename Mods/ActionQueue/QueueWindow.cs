@@ -16,7 +16,7 @@ public sealed class QueueWindow
     static readonly string[] UntilNames =
     {
         "it stops by itself", "I own this many of an item", "a skill reaches this level", "this many minutes have passed",
-        "only this many of an item are left", "I make this many more of an item",
+        "only this many of an item are left", "I make this many more of an item", "it has been done this many times",
     };
 
     readonly CanvasLayer _layer = new() { Layer = 118, Name = "ActionQueue", Visible = false };
@@ -934,6 +934,7 @@ public sealed class QueueWindow
     public void PressAddStep() => AddStep();
     public void PressRun() => _run.EmitSignal(BaseButton.SignalName.Pressed);
     public string StatusShown => _status.Text;
+    public bool ItemPickerShown => _itemPick.Visible;
     /// <summary>For tests: what the idle row shows ("Nothing" or "skill | action"), and its state line.</summary>
     public string IdleShown => _idleSkill.Selected <= 0 ? "Nothing"
         : $"{_idleSkill.GetItemText(_idleSkill.Selected)} | {(_idleTarget.Visible && _idleTarget.Selected >= 0 ? _idleTarget.GetItemText(_idleTarget.Selected) : "?")}";
