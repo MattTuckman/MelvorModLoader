@@ -816,6 +816,8 @@ static class Tests
             Entity = e.Id, TargetId = t.Id, Extra = t.Extra, Name = $"{e.DisplayName.Text}: {t.Name}", Until = ActionQueue.Until.Times, Amount = n,
         };
 
+        // What the bank holds now: what the runs make is taken out again at the end, so the bank does not fill up.
+        var bankBefore = s_bank.Inventory.Stacks.GroupBy(st => st.Item).ToDictionary(g => g.Key, g => g.Sum(st => st.Quantity));
         // Plenty of everything, and the choices a player makes on the Hunting and Agility pages, as in 5i.
         var lent = new List<(Item Item, int Amount)>();
         foreach (Item any in Actions.Items(game)) { int got = s_bank.Inventory.AddQuantity(any, 300); if (got > 0) lent.Add((any, got)); }
@@ -1021,6 +1023,11 @@ static class Tests
         queueMod.ToggleWindow();
         game.ActionManager.TryStopActive(force: true);
         foreach (var (lentItem, amount) in lent) s_bank.Inventory.RemoveQuantity(lentItem, Math.Min(amount, s_bank.Inventory.GetQuantity(lentItem)));
+        foreach (var g in s_bank.Inventory.Stacks.GroupBy(st => st.Item).ToList())
+        {
+            int extra = g.Sum(st => st.Quantity) - bankBefore.GetValueOrDefault(g.Key);
+            if (extra > 0) s_bank.Inventory.RemoveQuantity(g.Key, extra);
+        }
         Engine.ResetAll();
         combat.Player.Health.Set(combat.Player.Health.Max);
     }
@@ -1252,6 +1259,162 @@ static class Tests
         Check("Cheat Menu: 'Give item' tum esyalari gruplu ve aranabilir gosteriyor; auto-sell kendi listesinden seciyor",
               menu.GiveItemCount == allItems && allItems > 1000 && logsOk && autoOk && menu.GiveItemGroups.Count > 5 && (!windowed || Inside(cheatRect)),
               $"{menu.GiveItemCount}/{allItems} esya, {menu.GiveItemGroups.Count} grup; 'log' {logs.Count}; auto-sell secimi '{menu.AutoSellChoice}'; popup {cheatRect}; goruntu {shot5}");
+    }
+
+    /// <summary>
+    /// A player's request: "remove the damage taken from failing agility training; god mode does not work for it",
+    /// and keeping the obstacle's reward on a fail. Played on a real course, with the game's own events.
+    /// </summary>
+    static IEnumerator<int> AgilityCheatTests(Game game, ModContext ctx)
+    {
+        Out("=== 5q. Cheat Menu: agility ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        game.ActionManager.TryStopActive(force: true);
+        game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combatEntity);
+        var combat = (CombatEntity)combatEntity!;
+        // What the bank holds now: everything these runs bring in is taken out again at the end (the test
+        // character's bank once ran past its slots with obstacle rewards, and other tests then failed).
+        var bankBefore = s_bank.Inventory.Stacks.GroupBy(st => st.Item).ToDictionary(g => g.Key, g => g.Sum(st => st.Quantity));
+        var (agiEntity, agiAction) = ActionQueue.Targets.Skills(game).First(s => s.Action is GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent);
+        var agility = (GamesByMalcs.Melvor2.Entities.Agility.AgilityActionComponent)agiAction;
+        foreach (var c in agility.Courses.Values)
+            if (c.SelectedPath == null && c.ActivePaths.Count > 0) c.SelectPath(c.ActivePaths.Values.First());
+        // A course whose obstacles can fail (no shortcut built on all of them), the longest the character may run.
+        ActionQueue.Target? course = ActionQueue.Targets.All(agility).Where(t => ActionQueue.Targets.CanStart(agility, t, out _))
+            .OrderByDescending(t => agility.Courses.Values.First(c => c.Course.Id == t.Id).SelectedPath?.Obstacles.Count(o => !o.ShortcutCreated) ?? 0).FirstOrDefault();
+        if (course == null) { Out("  baslatilabilen parkur yok, atlandi"); yield break; }
+        var path = agility.Courses.Values.First(c => c.Course.Id == course.Id).SelectedPath!;
+        // The game picks an obstacle reward only when a lap is finished (for the next lap); a fail before that
+        // obstacle loses it unless kept. So: while no reward is waiting, obstacles are normal and laps finish;
+        // once one waits, they are made much harder (success 0.95^(extra/2)) so they fail with it pending.
+        int damaged = 0, avoided = 0, failed = 0, keptAfterFail = 0, withReward = 0;
+        bool hadReward = false;
+        agility.DamagedPlayer += (_, _) => damaged++;
+        agility.DamageAvoided += (_, _) => avoided++;
+        agility.ObstacleFailed += (_, _) => { failed++; if (hadReward) { withReward++; if (path.CurrentObstacleReward != null) keptAfterFail++; } hadReward = path.CurrentObstacleReward != null; };
+        string? error = null;
+        Action? harder = null;
+        void Hard(bool on)
+        {
+            if (on && harder == null) harder = Engine.AddOutside(new StatRef("Agility", "FlatObstacleDifficulty", "Agility", "Action", 1), 60);
+            else if (!on && harder != null) { harder(); harder = null; }
+        }
+        void Run(int seconds)
+        {
+            try
+            {
+                for (int s = 0; s < seconds; s++)
+                {
+                    for (int i = 0; i < 60; i++) { game.PropagateTick(); hadReward = path.CurrentObstacleReward != null; }
+                    Hard(path.CurrentObstacleReward != null);
+                    combat.Player.Health.Set(combat.Player.Health.Max);
+                    if (!agility.IsStarted) ActionQueue.Targets.Start(game, agility, course, out _);
+                }
+            }
+            catch (Exception e) { error = e.Message; }
+        }
+        (int Damaged, int Avoided, int Failed, int Kept, int WithReward) Take()
+        {
+            var r = (damaged, avoided, failed, keptAfterFail, withReward);
+            damaged = avoided = failed = keptAfterFail = withReward = 0;
+            return r;
+        }
+        // Every finished lap leaves a reward waiting, so there is one to lose or keep.
+        Action rewards = Engine.AddOutside(new StatRef("Agility", "FlatObstacleRewardChance", "Agility", "Action", 1), 1);
+
+        // ---- 1. settings off: a failed obstacle hurts and loses its reward (the game as it is)
+        ActionQueue.Targets.Start(game, agility, course, out _);
+        Run(240);
+        var off = Take();
+        // ---- 2. "no damage": every fail is avoided, nothing hurts, the course goes on
+        Engine.SetValue("skills.agilityNoDamage", 1);
+        Run(240);
+        var safe = Take();
+        bool running = agility.IsStarted;
+        // ---- 3. "keep the reward" too
+        Engine.SetValue("skills.agilityKeepReward", 1);
+        Run(240);
+        var keep = Take();
+        double keepStat = path.Obstacles.First().Stats.KeepObstacleRewardOnFail.Total.Value;
+        Hard(false);
+        rewards();
+        Check("agility: ayarlar kapaliyken basarisiz engel can yakiyor, odul siliniyor (karsilastirma icin)",
+              off.Failed > 0 && off.Damaged == off.Failed && off.WithReward > 0 && off.Kept == 0, $"{course.Name}: {off.Failed} basarisiz ({off.WithReward} odul beklerken), {off.Damaged} hasar, {off.Avoided} kacinilan, odulu kalan {off.Kept}");
+        Check("agility: 'no damage' acikken basarisiz engel hic can yakmiyor, parkur suruyor",
+              error == null && safe.Failed > 0 && safe.Damaged == 0 && safe.Avoided == safe.Failed && running,
+              $"{safe.Failed} basarisiz, {safe.Damaged} hasar, {safe.Avoided} kacinilan; parkur calisiyor: {running}; hata: {error ?? "yok"}");
+        Check("agility: 'keep reward' acikken basarisiz engelde odul kayboluyor degil",
+              error == null && keep.WithReward > 0 && keep.Kept == keep.WithReward && keep.Damaged == 0 && keepStat > 0,
+              $"{keep.Failed} basarisiz ({keep.WithReward} odul beklerken), odulu kalan {keep.Kept}, hasar {keep.Damaged}; oyunun degeri {keepStat}");
+
+        game.ActionManager.TryStopActive(force: true);
+        Engine.ResetAll();
+
+        // ---- 4. thieving: getting caught hurts as well as stuns; "never stunned" does not stop the damage
+        var thieving = (GamesByMalcs.Melvor2.Entities.Thieving.ThievingActionComponent)ActionQueue.Targets.Skills(game)
+            .First(s => s.Action is GamesByMalcs.Melvor2.Entities.Thieving.ThievingActionComponent).Action;
+        ActionQueue.Target? mark = ActionQueue.Targets.All(thieving).FirstOrDefault(t => ActionQueue.Targets.CanStart(thieving, t, out _));
+        if (mark == null) Out("  baslatilabilen hirsizlik hedefi yok, atlandi");
+        else
+        {
+            int hurt = 0, dodged = 0;
+            thieving.DamageTaken += (_, _) => hurt++;
+            thieving.DamageAvoided += (_, _) => dodged++;
+            // Caught every time: the target is made far more watchful for the test. No stun, so it keeps trying.
+            Action watchful = Engine.AddOutside(new StatRef("ThievingAction", "FlatPerception", "Thieving", "Action", 1), 100000);
+            Engine.SetValue("skills.noStun", 1);
+            string? thiefError = null;
+            void Steal(int seconds)
+            {
+                try
+                {
+                    for (int s = 0; s < seconds; s++)
+                    {
+                        for (int i = 0; i < 60; i++) game.PropagateTick();
+                        combat.Player.Health.Set(combat.Player.Health.Max);
+                        if (!thieving.IsStarted) ActionQueue.Targets.Start(game, thieving, mark, out _);
+                    }
+                }
+                catch (Exception e) { thiefError = e.Message; }
+            }
+            ActionQueue.Targets.Start(game, thieving, mark, out _);
+            Steal(60);
+            int hurtOff = hurt, dodgedOff = dodged;
+            hurt = dodged = 0;
+            Engine.SetValue("skills.thievingNoDamage", 1);
+            Steal(60);
+            watchful();
+            Check("hirsizlik: 'never stunned' acikken yakalanmak yine can yakiyor; 'no damage' acilinca hic yakmiyor",
+                  thiefError == null && hurtOff > 0 && dodgedOff == 0 && hurt == 0 && dodged > 0 && thieving.IsStarted,
+                  $"{mark.Name}: kapaliyken {hurtOff} hasar / {dodgedOff} kacinilan; acikken {hurt} hasar / {dodged} kacinilan; hata: {thiefError ?? "yok"}");
+        }
+
+        // Take out of the bank what these runs brought in.
+        foreach (var g in s_bank.Inventory.Stacks.GroupBy(st => st.Item).ToList())
+        {
+            int extra = g.Sum(st => st.Quantity) - bankBefore.GetValueOrDefault(g.Key);
+            if (extra > 0) s_bank.Inventory.RemoveQuantity(g.Key, extra);
+        }
+
+        // The rows on the Skills page, for a look.
+        if (DisplayServer.GetName() != "headless")
+        {
+            Engine.SetValue("skills.agilityNoDamage", 1);
+            Engine.SetValue("skills.agilityKeepReward", 1);
+            Engine.SetValue("skills.thievingNoDamage", 1);
+            CheatMenuMod cheat = CheatMenuMod.Instance!;
+            cheat.ToggleMenu();
+            yield return 5;
+            for (int i = 0; i < cheat.Menu!.PageCount; i++) if (cheat.Menu.PageTitle(i) == "Skills") cheat.Menu.ShowPage(i);
+            yield return 10;
+            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Out($"  goruntu hile-agility.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "hile-agility.png"))}");
+            cheat.ToggleMenu();
+        }
+        game.ActionManager.TryStopActive(force: true);
+        Engine.ResetAll();
+        combat.Player.Health.Set(combat.Player.Health.Max);
     }
 
     static IEnumerator<int> MultiTests(Game game, ModContext ctx)
@@ -3634,6 +3797,12 @@ static class Tests
         Check("ates yakmayi baslatma", burning && burn0.Made > 0 && burn0.Used > 0, $"{Actions.ItemName(log)}: {burn0.Made} islem, {burn0.Used} malzeme harcandi");
         Engine.SetValue("skills.preservation", 100);
         var burn1 = Burn(20000);
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "agility")
+        {
+            IEnumerator<int> agilityOnly = AgilityCheatTests(game, ctx);
+            while (agilityOnly.MoveNext()) yield return agilityOnly.Current;
+            yield break;
+        }
         Check("malzeme harcamama %100", burn1.Made > 0 && burn1.Used == 0, $"{burn1.Made} islem, {burn1.Used} malzeme harcandi");
         Engine.ResetAll();
         game.ActionManager.TryStopActive(force: true);

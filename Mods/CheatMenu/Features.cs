@@ -118,6 +118,15 @@ public static class Features
                 Max = 100, Step = 5, ToMultiplier = Percent, Stats = { new("WoodcuttingAction", "InstantCutChance", "Woodcutting", "Action", 1) } },
         new() { Id = "skills.noStun", Tab = TabSkills, En = "Thieving: never stunned", Kind = FeatureKind.Toggle,
                 Stats = { new("ThievingAction", "StunAvoidanceChance", "Thieving", "Action", 1) } },
+        // Getting caught does two things in the game: damage first, then a stun. Each has its own avoid chance.
+        new() { Id = "skills.thievingNoDamage", Tab = TabSkills, En = "Thieving: no damage when caught", Kind = FeatureKind.Toggle,
+                Stats = { new("ThievingAction", "DamageAvoidanceChance", "Thieving", "Action", 1) } },
+        // Only the chance to avoid the damage: setting "Damage Taken" to -100% would make the game roll a number
+        // between 1 and 0 for the damage.
+        new() { Id = "skills.agilityNoDamage", Tab = TabSkills, En = "Agility: no damage from a failed obstacle", Kind = FeatureKind.Toggle,
+                Stats = { new("Agility", "AvoidDamageChance", "Agility", "Action", 1) } },
+        new() { Id = "skills.agilityKeepReward", Tab = TabSkills, En = "Agility: keep the reward of a failed obstacle", Kind = FeatureKind.Toggle,
+                Stats = { new("Agility", "KeepObstacleRewardOnFail", "Agility", "Action", 1) } },
         new() { Id = "skills.astroKnowledge", Tab = TabSkills, En = "Astrology: knowledge per study", Suffix = "x",
                 Min = 1, Max = 1000, Off = 1, ToMultiplier = Times, Stats = { new("AstrologyAction", "PercentKnowledge", "Astrology", "Action", 1) } },
 
@@ -210,7 +219,10 @@ public static class Features
         ["skills.quantityFlat"] = "Adds this many extra items to every action.",
         ["skills.cheaper"] = "Recipes need fewer materials.",
         ["skills.instantCut"] = "Chance to fell a tree with a single hit.",
-        ["skills.noStun"] = "A failed pickpocket never stuns you.",
+        ["skills.noStun"] = "A failed pickpocket never stuns you (it can still hurt: see the next setting).",
+        ["skills.thievingNoDamage"] = "A failed pickpocket no longer hurts you (God mode only covers combat).",
+        ["skills.agilityNoDamage"] = "Failing an agility obstacle no longer hurts you (God mode only covers combat).",
+        ["skills.agilityKeepReward"] = "Failing an agility obstacle no longer loses the item reward it was carrying.",
         ["skills.astroKnowledge"] = "Multiplies the Knowledge each study adds to a constellation. Astrology XP is a separate setting.",
         ["combat.god"] = "You take no damage in combat.",
         ["combat.damage"] = "Multiplies all damage you deal.",
