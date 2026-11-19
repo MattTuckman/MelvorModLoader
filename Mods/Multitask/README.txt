@@ -1,4 +1,4 @@
-Multitask 0.2.1  -  a mod for Melvor Idle 2
+Multitask 0.2.2  -  a mod for Melvor Idle 2
 ===========================================
 
 Do more than one thing at a time. Nothing to set up: switch a slot on and play as usual.
@@ -57,6 +57,8 @@ GOOD TO KNOW
   The queue's steps take the room; what you were doing before makes way for them.
   Switch "Side by side" off in the queue window to have the queue do one step at a time
   beside what you were doing instead.
+  With Action Queue 0.6.0 or newer, a free slot is used for the queue's "when the queue
+  waits or ends" action. Your own actions keep their slots.
 - The game's bottom bar shows your latest action. The others are listed in the F5 window.
 - The switches and the list are remembered per character in "multitask.json".
 

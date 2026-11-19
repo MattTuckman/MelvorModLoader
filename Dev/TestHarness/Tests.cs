@@ -370,6 +370,424 @@ static class Tests
     // Multitask 0.2: an on/off switch per slot, nothing to pick. With a slot on, the action before the latest
     // one keeps running. Everything below is done the way a player does it: the game's own start calls,
     // the game's own Stop, the window's switches.
+    /// <summary>
+    /// A player's suggestion: "an action for when the Action Queue is waiting, or has nothing left to do". Every
+    /// case is played the way a player would meet it, with the Multitask slots off, on, and full.
+    /// </summary>
+    static IEnumerator<int> IdleTests(Game game, ModContext ctx)
+    {
+        Out("=== 5m. Is Sirasi: beklerken / bitince yapilacak is ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.SetSideBySide(true);
+        mt::Multitask.Slots.Bind(game);
+        mt::Multitask.MultitaskMod mtMod = mt::Multitask.MultitaskMod.Instance!;
+        if (mtMod.Window is not { Visible: true }) mtMod.ToggleWindow();
+        yield return 5;
+        mt::Multitask.SlotWindow win = mtMod.Window!;
+        mtMod.ToggleWindow();
+        void Slots(int on) { for (int i = 0; i < mt::Multitask.Slots.Count; i++) if (mt::Multitask.Slots.IsOn(i) != (i < on)) win.PressSwitch(i); }
+        Slots(0);
+        var makers = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).ToList();
+        List<ActionQueue.Maker> Open(string skill) => makers.Where(m => m.Entity.DisplayName.Text == skill && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _))
+            .GroupBy(m => m.Target.Id).Select(g => g.First()).ToList();
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void SetQty(Item i, int n) { int now = Qty(i); if (now > n) s_bank.Inventory.RemoveQuantity(i, now - n); else if (now < n) s_bank.Inventory.AddQuantity(i, n - now); }
+        void Ticks(int n) { for (int i = 0; i < n; i++) game.PropagateTick(); }
+        string Running() => game.ActionManager.ActiveActions.Count == 0 ? "hicbir sey"
+            : string.Join(" + ", game.ActionManager.ActiveActions.Select(a => $"{a.Entity.DisplayName.Text}: {ActionQueue.Targets.Current(a)?.Name ?? "?"}"));
+        int Count() => game.ActionManager.ActiveActions.Count;
+        double clock = Time.GetTicksMsec() / 1000.0;
+        void Look(double seconds = 1) { clock += seconds; mt::Multitask.Slots.Tick(game, clock); }
+        bool Start(ActionQueue.Maker m) => ActionQueue.Targets.Start(game, m.Action, m.Target, out _);
+        // One second of play: the game, then the queue, then Multitask, as the mods do it.
+        void Second() { Ticks(60); ActionQueue.Queue.Tick(game, 1); Look(1); }
+        ActionQueue.Step IdleOf(ActionQueue.Maker m) => new() { Entity = m.Entity.Id, TargetId = m.Target.Id, Extra = m.Target.Extra, Name = m.Name };
+        ActionQueue.Step Make(ActionQueue.Maker m, Item item, int goal) => new()
+        {
+            Entity = m.Entity.Id, TargetId = m.Target.Id, Extra = m.Target.Extra, Name = m.Name, Until = ActionQueue.Until.Item,
+            Amount = goal, Subject = item.Id, SubjectName = item.DisplayName.GetPluralText(1),
+        };
+        void Reset()
+        {
+            ActionQueue.Queue.Clear();
+            game.ActionManager.TryStopActive(force: true);
+            Look(); Look();
+        }
+
+        ActionQueue.Maker wood = Open("Woodcutting")[0], ore = Open("Mining")[0];
+        ActionQueue.Maker? cook = null, fish = null;
+        foreach (ActionQueue.Maker c in makers.Where(m => m.Entity.DisplayName.Text == "Cooking" && m.Costs.Count == 1 && ActionQueue.Targets.CanStart(m.Action, m.Target, out _)))
+        {
+            fish = makers.FirstOrDefault(f => f.Entity.DisplayName.Text == "Fishing" && f.Product == c.Costs[0].Item && ActionQueue.Targets.CanStart(f.Action, f.Target, out _));
+            if (fish != null) { cook = c; break; }
+        }
+        if (cook == null || fish == null) { Out("  balik + pisirme tarifi bulunamadi, denemeler atlandi"); yield break; }
+        Item rawFish = fish.Product, cooked = cook.Product;
+        int rawWas = Qty(rawFish), cookedWas = Qty(cooked);
+
+        // ---- 1. the window: choose, show, keep, take back
+        ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+        if (queueMod.Window is not { Visible: true }) queueMod.ToggleWindow();
+        yield return 5;
+        ActionQueue.QueueWindow qw = queueMod.Window!;
+        string shownBefore = qw.IdleShown;
+        bool chose = qw.ChooseIdle(wood.Entity.Id, wood.Target.Id);
+        string shownWood = qw.IdleShown;
+        string file = File.ReadAllText(Path.Combine(ActionQueue.Queue.Dir, "queue.json"));
+        bool kept = file.Contains("\"Idle\"") && file.Contains(wood.Target.Id);
+        bool none = qw.ChooseIdle("", "") && ActionQueue.Queue.Idle == null;
+        string shownNone = qw.IdleShown;
+        Start(ore); Look();
+        qw.PressUseCurrentForIdle();
+        string shownNow = qw.IdleShown;
+        bool nowIsOre = ActionQueue.Queue.Idle?.TargetId == ore.Target.Id;
+        Check("pencere: bos is secilir, gosterilir, kaydedilir, 'Nothing' ile kalkar, 'Use what I am doing now' calisir",
+              shownBefore == "Nothing" && chose && shownWood.StartsWith("Woodcutting | ") && kept && none && shownNone == "Nothing" && nowIsOre && shownNow.StartsWith("Mining | "),
+              $"once '{shownBefore}'; odun secilince '{shownWood}' (dosyada: {kept}); Nothing: '{shownNone}'; simdiki is: '{shownNow}'");
+        Reset();
+
+        // ---- 2. no Multitask slots: the queue ends, the idle action takes over
+        Slots(0);
+        ActionQueue.Queue.SetIdle(IdleOf(wood));
+        ActionQueue.Queue.Add(new ActionQueue.Step { Entity = ore.Entity.Id, TargetId = ore.Target.Id, Name = ore.Name, Until = ActionQueue.Until.Minutes, Amount = 0.05 });
+        ActionQueue.Queue.Start();
+        int loops = 0;
+        for (; loops < 60 && ActionQueue.Queue.Running; loops++) Second();
+        Second(); Second();
+        string endNote = ActionQueue.Queue.Note;
+        bool woodAfter = wood.Action.IsStarted && !ore.Action.IsStarted && Count() == 1;
+        ActionQueue.Queue.Clear();                                       // "Remove all" on a finished queue
+        Second();
+        Check("yuva yokken: sira bitince secilen is basliyor; bitmis sirada Remove all ona dokunmuyor",
+              woodAfter && endNote.Contains("Now doing your idle action") && wood.Action.IsStarted,
+              $"{loops} sn; not: '{endNote}'; Remove all sonrasi: {Running()}");
+        Reset();
+
+        // ---- 3. the player's report: mining (their own) beside crafting from the queue, one slot.
+        //         While crafting waits for materials, the idle action fills the free slot; never three at once.
+        Slots(1);
+        SetQty(rawFish, 2);
+        Start(fish); Look();
+        ActionQueue.Queue.SetIdle(IdleOf(wood));
+        int goal = Qty(cooked) + 20;
+        ActionQueue.Queue.Add(Make(cook, cooked, goal));
+        ActionQueue.Queue.Start();
+        int most = 0, fishGone = 0, woodWhileWaiting = 0, woodStarts = 0, cookAndWood = 0;
+        bool woodWas = false;
+        var states = new List<string>();
+        string waitHeadline = "", waitState = "";
+        for (loops = 0; loops < 1200 && ActionQueue.Queue.Running; loops++)
+        {
+            Second();
+            most = Math.Max(most, Count());
+            if (!fish.Action.IsStarted) fishGone++;
+            bool w = wood.Action.IsStarted;
+            if (w && !woodWas) woodStarts++;
+            woodWas = w;
+            ActionQueue.Step step = ActionQueue.Queue.Steps[0];
+            if (w && step.Run == ActionQueue.RunState.Waiting)
+            {
+                woodWhileWaiting++;
+                if (waitHeadline == "") { waitHeadline = ActionQueue.Queue.Headline; waitState = qw.IdleStateShown; }
+            }
+            if (w && cook.Action.IsStarted) cookAndWood++;
+            string state = System.Text.RegularExpressions.Regex.Replace(step.State, @"[\d.,]+", "#");
+            if (states.Count == 0 || states[^1] != state) states.Add(state);
+        }
+        Second(); Second();
+        string note3 = ActionQueue.Queue.Note;
+        Check("1 yuva: tarif malzeme beklerken bos is calisiyor, adim hazir olunca yer aciyor, oyuncunun isi hic dusmuyor",
+              !ActionQueue.Queue.Running && note3.Contains("finished") && Qty(cooked) >= goal && woodWhileWaiting > 5 && woodStarts >= 2
+              && most <= 2 && fishGone == 0 && cookAndWood == 0 && wood.Action.IsStarted && fish.Action.IsStarted && waitHeadline.Contains("meanwhile"),
+              $"{loops} sn; bekleme sirasinda odun {woodWhileWaiting} sn, {woodStarts} kez basladi; ayni anda en cok {most}; balik {fishGone} sn yoktu; pisirme+odun ayni anda {cookAndWood} sn; " +
+              $"baslik: '{waitHeadline}'; pencere: '{waitState}'; durumlar: {string.Join(" / ", states.Distinct().Take(6))}; not: '{note3}'; sonunda: {Running()}");
+        Reset();
+
+        // ---- 4. three slots, side by side: the queue fishes and cooks, the player mines. While cooking waits, the
+        //         idle action takes the third place; when cooking can start, the idle action - not the mining - steps aside.
+        Slots(2);
+        SetQty(rawFish, 0);
+        Start(ore); Look();
+        ActionQueue.Queue.SetIdle(IdleOf(wood));
+        int rawGoal = Qty(rawFish) + 40, cookGoal = Qty(cooked) + 30;
+        ActionQueue.Queue.Add(Make(fish, rawFish, rawGoal));
+        ActionQueue.Queue.Add(Make(cook, cooked, cookGoal));
+        ActionQueue.Queue.Start();
+        int oreGone = 0, fourAtOnce = 0, threeWithWood = 0, woodCookTogether = 0;
+        most = 0;
+        string shot = "";
+        for (loops = 0; loops < 1500 && ActionQueue.Queue.Running; loops++)
+        {
+            Second();
+            most = Math.Max(most, Count());
+            if (!ore.Action.IsStarted) oreGone++;
+            if (Count() > 3) fourAtOnce++;
+            if (wood.Action.IsStarted && fish.Action.IsStarted && ore.Action.IsStarted) threeWithWood++;
+            if (wood.Action.IsStarted && cook.Action.IsStarted && fish.Action.IsStarted) woodCookTogether++;
+            if (threeWithWood == 5 && shot == "" && DisplayServer.GetName() != "headless")
+            {
+                string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+                Directory.CreateDirectory(shotDir);
+                yield return 20;
+                shot = ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "sira-bos-is.png")).ToString();
+                Out($"  goruntu sira-bos-is.png: {shot}");
+            }
+        }
+        Second(); Second();
+        string note4 = ActionQueue.Queue.Note;
+        Check("3 yuva: bekleyen tarifin yerini bos is dolduruyor; tarif baslayinca oyuncunun degil bos isin yeri aliniyor",
+              !ActionQueue.Queue.Running && note4.Contains("finished") && Qty(cooked) >= cookGoal && threeWithWood > 5 && oreGone == 0 && fourAtOnce == 0 && woodCookTogether == 0
+              && wood.Action.IsStarted && ore.Action.IsStarted,
+              $"{loops} sn; odun+balik+maden birlikte {threeWithWood} sn; maden {oreGone} sn yoktu; 3'ten fazla is {fourAtOnce} sn; ayni anda en cok {most}; not: '{note4}'; sonunda: {Running()}");
+        Reset();
+
+        // ---- 5. the slots are full of the player's own actions: the idle action waits, nothing of theirs is pushed out
+        Slots(1);
+        SetQty(rawFish, 0);
+        Start(ore); Look();
+        Start(fish); Look();
+        ActionQueue.Queue.SetIdle(IdleOf(wood));
+        ActionQueue.Queue.Add(Make(cook, cooked, Qty(cooked) + 20));
+        ActionQueue.Queue.Start();
+        for (int i = 0; i < 6; i++) Second();
+        string fullState = qw.IdleStateShown;
+        bool fullOk = !wood.Action.IsStarted && ore.Action.IsStarted && fish.Action.IsStarted && ActionQueue.Queue.Steps[0].Run == ActionQueue.RunState.Waiting;
+        Check("yuvalar oyuncunun isleriyle doluyken bos is baslamiyor, oyuncunun isi dusmuyor",
+              fullOk && fullState.Contains("no free slot"), $"calisan: {Running()}; pencere: '{fullState}'; adim: '{ActionQueue.Queue.Steps[0].State}'");
+        Reset();
+
+        // ---- 6. an idle action that would eat what a waiting step needs is not started
+        Slots(1);
+        SetQty(rawFish, 3);
+        Start(fish); Look();
+        ActionQueue.Queue.SetIdle(IdleOf(cook));
+        ActionQueue.Queue.Add(Make(cook, cooked, Qty(cooked) + 20));
+        ActionQueue.Queue.Start();
+        for (int i = 0; i < 6; i++) Second();
+        string eatState = qw.IdleStateShown;
+        Check("bekleyen adimin malzemesini yiyecek bos is baslatilmiyor",
+              !cook.Action.IsStarted && eatState.Contains("use up") && SetQtyCheck(),
+              $"calisan: {Running()}; pencere: '{eatState}'; cig balik: {Qty(rawFish)}");
+        bool SetQtyCheck() => Qty(rawFish) >= 3;
+        Reset();
+
+        // ---- 7. Remove all stops the idle action the queue started; Stop on it in the game is respected
+        Slots(1);
+        SetQty(rawFish, 0);
+        Start(fish); Look();
+        ActionQueue.Queue.SetIdle(IdleOf(wood));
+        ActionQueue.Queue.Add(Make(cook, cooked, Qty(cooked) + 20));
+        ActionQueue.Queue.Start();
+        for (int i = 0; i < 4; i++) Second();
+        bool idleUp = wood.Action.IsStarted && ActionQueue.Queue.IdleRunsForQueue;
+        ActionQueue.Queue.Clear();
+        Second();
+        bool clearedIt = !wood.Action.IsStarted && fish.Action.IsStarted;
+        ActionQueue.Queue.Add(Make(cook, cooked, Qty(cooked) + 20));
+        ActionQueue.Queue.Start();
+        for (int i = 0; i < 4; i++) Second();
+        bool idleAgain = wood.Action.IsStarted;
+        wood.Action.TryStop();                                           // the player presses Stop on it
+        for (int i = 0; i < 8; i++) Second();
+        string stoppedState = qw.IdleStateShown;
+        Check("Remove all bos isi durduruyor; oyuncu bos isi durdurunca sira onu yeniden baslatmiyor",
+              idleUp && clearedIt && idleAgain && !wood.Action.IsStarted && fish.Action.IsStarted && ActionQueue.Queue.Running && stoppedState.Contains("stopped"),
+              $"once: {idleUp}; Remove all sonrasi: {clearedIt}; yeniden: {idleAgain}; Stop sonrasi: {Running()}, pencere: '{stoppedState}'");
+        Reset();
+
+        // ---- 8. the idle action is a fight and the character dies: it is not started again
+        game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combatEntity);
+        var combat = (CombatEntity)combatEntity!;
+        CombatArea area = game.Data.GetDataRegistryOutput<CombatArea>().GetAllObjects().First(a => a.Enemies.Count > 0 && a.UnlockRequirements.AreMet);
+        var fight = new ActionQueue.Step
+        {
+            Entity = combat.Id, TargetId = area.Enemies[0].Id, Extra = area.Id, Name = $"Combat: {area.Enemies[0].DisplayName.Text}",
+        };
+        combat.Player.Health.Set(combat.Player.Health.Max);
+        Slots(1);
+        SetQty(rawFish, 0);
+        Start(fish); Look();
+        ActionQueue.Queue.SetIdle(fight);
+        ActionQueue.Queue.Add(Make(cook, cooked, Qty(cooked) + 20));
+        ActionQueue.Queue.Start();
+        for (int i = 0; i < 4; i++) Second();
+        bool fighting = combat.Action.IsStarted;
+        combat.Player.Health.Set(0);
+        for (int i = 0; i < 20 && combat.Action.IsStarted; i++) Ticks(30);
+        for (int i = 0; i < 8; i++) Second();
+        string deathState = qw.IdleStateShown;
+        Check("bos is savassa ve karakter olurse savasa geri donulmuyor",
+              fighting && !combat.Action.IsStarted && deathState.Contains("died") && fish.Action.IsStarted && ActionQueue.Queue.Running,
+              $"savasiyordu: {fighting}; olumden sonra: {Running()}; pencere: '{deathState}'");
+        combat.Player.Health.Set(combat.Player.Health.Max);
+        Reset();
+
+        // ---- 9. the player's own path, through the window: mining the uncut gem by hand, the queue cuts it
+        //         "until I own N" with the form, idle time set to woodcutting with the list, Start pressed.
+        ActionQueue.Maker? cut = null, dig = null;
+        foreach (ActionQueue.Maker c in makers.Where(m => m.Entity.DisplayName.Text == "Crafting" && m.Costs.Count == 1 && ActionQueue.Targets.CanStart(m.Action, m.Target, out _)))
+        {
+            dig = makers.FirstOrDefault(f => f.Entity.DisplayName.Text == "Mining" && f.Product == c.Costs[0].Item && ActionQueue.Targets.CanStart(f.Action, f.Target, out _));
+            if (dig != null) { cut = c; break; }
+        }
+        if (cut == null || dig == null) Out("  oyuncu yolu: madenden gelen tek malzemeli crafting tarifi yok (ModTest seviyesi), atlandi");
+        else
+        {
+            Item uncut = cut.Costs[0].Item, gem = cut.Product;
+            int uncutWas = Qty(uncut), gemWas = Qty(gem);
+            SetQty(uncut, 3 * cut.Costs[0].Quantity);                    // a few in the bank, like the player had
+            Slots(1);
+            Start(dig); Look();                                          // the player mines by hand
+            ActionQueue.Queue.SetIdle(null);
+            bool chosen = qw.Choose(cut.Entity.Id, cut.Target.Id);
+            qw.ChooseUntil(ActionQueue.Until.Item);
+            int gemGoal = Qty(gem) + 15;
+            qw.SetAmount(gemGoal);
+            string counted = qw.CountedItem?.DisplayName.GetPluralText(1) ?? "?";
+            qw.PressAddStep();
+            bool idleChosen = qw.ChooseIdle(wood.Entity.Id, wood.Target.Id);
+            qw.PressRun();
+            int digGone = 0, woodWaiting = 0, mostNow = 0;
+            string midShot = "", midStatus = "";
+            for (loops = 0; loops < 1800 && ActionQueue.Queue.Running; loops++)
+            {
+                Second();
+                yield return 0;
+                mostNow = Math.Max(mostNow, Count());
+                if (!dig.Action.IsStarted) digGone++;
+                if (wood.Action.IsStarted && ActionQueue.Queue.Steps[0].Run == ActionQueue.RunState.Waiting)
+                {
+                    woodWaiting++;
+                    if (woodWaiting == 3)
+                    {
+                        midStatus = qw.StatusShown + " | " + qw.IdleStateShown;
+                        if (DisplayServer.GetName() != "headless")
+                        {
+                            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+                            yield return 20;
+                            midShot = ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "sira-bos-is-oyuncu.png")).ToString();
+                        }
+                    }
+                }
+            }
+            Second(); Second();
+            yield return 5;
+            string endStatus = qw.StatusShown;
+            Check($"oyuncunun yolu (pencereden): {dig.Name} elle + sira {cut.Name} {gemGoal - gemWas} tane + bekleyince odun",
+                  chosen && counted == gem.DisplayName.GetPluralText(1) && idleChosen && !ActionQueue.Queue.Running && Qty(gem) >= gemGoal
+                  && digGone == 0 && woodWaiting > 5 && mostNow <= 2 && endStatus.Contains("Now doing your idle action") && dig.Action.IsStarted && wood.Action.IsStarted,
+                  $"sayilan: {counted}; {loops} sn; {Qty(gem) - gemWas} {gem.DisplayName.GetPluralText(1)} yapildi; maden {digGone} sn yoktu; beklerken odun {woodWaiting} sn; en cok {mostNow} is; " +
+                  $"ortada: '{midStatus}' (goruntu: {midShot}); sonunda pencere: '{endStatus}'; calisan: {Running()}");
+            Reset();
+            SetQty(uncut, uncutWas);
+            SetQty(gem, gemWas);
+        }
+
+        // ---- the window with the idle row, for a look
+        if (DisplayServer.GetName() != "headless")
+        {
+            ActionQueue.Queue.SetIdle(IdleOf(wood));
+            ActionQueue.Queue.Add(Make(cook, cooked, Qty(cooked) + 20));
+            ActionQueue.Queue.Add(new ActionQueue.Step { Entity = ore.Entity.Id, TargetId = ore.Target.Id, Name = ore.Name, Until = ActionQueue.Until.Minutes, Amount = 5 });
+            yield return 10;
+            string shotDir = Path.Combine(Path.GetDirectoryName(System.Environment.GetEnvironmentVariable("MML_TEST_OUT")!)!, "shots");
+            Out($"  goruntu sira-bos-is-pencere.png: {ctx.Tree.Root.GetTexture().GetImage().SavePng(Path.Combine(shotDir, "sira-bos-is-pencere.png"))}");
+        }
+
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.SetIdle(null);
+        queueMod.ToggleWindow();
+        game.ActionManager.TryStopActive(force: true);
+        Slots(0);
+        Look();
+        SetQty(rawFish, rawWas);
+        SetQty(cooked, cookedWas);
+    }
+
+    /// <summary>
+    /// The player's question: "'I own N' only looks at the bank. What if I want to make 1,000, whatever the bank
+    /// holds?" The new goal "I make this many more of an item", played through the window.
+    /// </summary>
+    static IEnumerator<int> MadeTests(Game game, ModContext ctx)
+    {
+        Out("=== 5n. Is Sirasi: 'bu kadar daha yap' hedefi ===");
+        Engine.Bind(game);
+        Engine.ResetAll();
+        Engine.SetValue("bank.slots", 10000);
+        game.ActionManager.TryStopActive(force: true);
+        ActionQueue.Queue.Bind(game);
+        ActionQueue.Queue.Clear();
+        ActionQueue.Queue.SetIdle(null);
+        var makers = ActionQueue.Planner.Makers(game).Values.SelectMany(l => l).ToList();
+        ActionQueue.Maker wood = makers.First(m => m.Entity.DisplayName.Text == "Woodcutting" && m.Main && ActionQueue.Targets.CanStart(m.Action, m.Target, out _));
+        Item log = wood.Product;
+        int Qty(Item i) => s_bank.Inventory.GetQuantity(i);
+        void Second() { for (int i = 0; i < 60; i++) game.PropagateTick(); ActionQueue.Queue.Tick(game, 1); }
+        if (Qty(log) < 1000) s_bank.Inventory.AddQuantity(log, 1000 - Qty(log));   // plenty in the bank: "I own N" would be done at once
+
+        ActionQueue.ActionQueueMod queueMod = ActionQueue.ActionQueueMod.Instance!;
+        if (queueMod.Window is not { Visible: true }) queueMod.ToggleWindow();
+        yield return 5;
+        ActionQueue.QueueWindow qw = queueMod.Window!;
+        qw.ShowStepForm();
+
+        // ---- 1. make 30 more, with 1,000+ already in the bank
+        bool chosen = qw.Choose(wood.Entity.Id, wood.Target.Id);
+        qw.ChooseUntil(ActionQueue.Until.Made);
+        qw.SetAmount(30);
+        string counted = qw.CountedItem?.DisplayName.GetPluralText(1) ?? "?";
+        qw.PressAddStep();
+        ActionQueue.Step step = ActionQueue.Queue.Steps[^1];
+        int before = Qty(log);
+        qw.PressRun();
+        string midState = "";
+        int loops = 0;
+        for (; loops < 600 && ActionQueue.Queue.Running; loops++)
+        {
+            Second();
+            if (loops == 20) midState = step.State;
+        }
+        yield return 2;
+        int made = Qty(log) - before;
+        Check("'I make this many more': bankada 1000+ varken 30 tane daha yapiyor ve duruyor",
+              chosen && counted == log.DisplayName.GetPluralText(1) && step.Until == ActionQueue.Until.Made && step.Goal.Contains("30 more")
+              && made >= 30 && made <= 36 && step.State == "done" && !wood.Action.IsStarted,
+              $"sayilan: {counted}; hedef: '{step.Goal}'; bankada {before} vardi; {made} yapildi, {loops} sn; ortada: '{midState}'; sonunda: '{step.State}'");
+
+        // ---- 2. a pause in the middle: carrying on does not start counting from zero
+        ActionQueue.Queue.Clear();
+        qw.SetAmount(60);
+        qw.PressAddStep();
+        step = ActionQueue.Queue.Steps[^1];
+        before = Qty(log);
+        qw.PressRun();
+        for (loops = 0; loops < 600 && Qty(log) - before < 25; loops++) Second();
+        qw.PressRun();                                                   // Pause
+        int atPause = Qty(log) - before;
+        for (int i = 0; i < 5; i++) { for (int t = 0; t < 60; t++) game.PropagateTick(); }   // paused: the character goes on cutting, that is not the queue's
+        qw.PressRun();                                                   // Start again
+        for (loops = 0; loops < 600 && ActionQueue.Queue.Running; loops++) Second();
+        int total = Qty(log) - before;
+        Check("duraklatip devam edince sayim kaldigi yerden suruyor (60 isteyince ~60, 85 degil)",
+              atPause >= 25 && total >= 60 && total <= 66 && step.State == "done",
+              $"duraklatinca {atPause}; toplam {total}; sonunda: '{step.State}'");
+
+        // ---- 3. share codes keep the new goal
+        string? code = ActionQueue.Queue.ExportCode(null);
+        bool imported = ActionQueue.Share.TryImport(code, out _, out List<ActionQueue.Step> back, out _, out string problem);
+        Check("paylasim kodu yeni hedefi koruyor", imported && back.Count == 1 && back[0].Until == ActionQueue.Until.Made && back[0].Amount == 60 && back[0].Subject == log.Id,
+              $"kod: {code?.Length} harf; geri: {(back.Count > 0 ? back[0].Goal : problem)}");
+
+        ActionQueue.Queue.Clear();
+        game.ActionManager.TryStopActive(force: true);
+        queueMod.ToggleWindow();
+    }
+
     static IEnumerator<int> MultiTests(Game game, ModContext ctx)
     {
         Out("=== 5l. Multitask (son islerin birlikte calismasi) ===");
@@ -687,6 +1105,62 @@ static class Tests
             Look();
             qw.ShowStepForm();
             queueMod.ToggleWindow();
+            game.ActionManager.TryStopActive(force: true);
+            Look();
+            SetQty(rawFish, rawWas);
+        }
+
+        // ---- 11c. the player's report: "I was mining uncut emeralds and the queue crafted emeralds until 1000.
+        //           Crafting ran out for a moment and the queue called it done, though more came in a second later."
+        //           The supply is the player's own action, not a queue step: the step must wait and go on.
+        if (cook != null && fish != null)
+        {
+            Item rawFish = fish.Product, cooked = cook.Product;
+            int rawWas = Qty(rawFish), cookedWas = Qty(cooked);
+            ActionQueue.Queue.Clear();
+            SetQty(rawFish, 2);                                            // only a couple in the bank
+            Start(fish); Look();                                           // the player fishes; Multitask keeps it going
+            int goal = cookedWas + 15;
+            ActionQueue.Queue.Add(new ActionQueue.Step
+            {
+                Entity = cook.Entity.Id, TargetId = cook.Target.Id, Name = cook.Name, Until = ActionQueue.Until.Item,
+                Amount = goal, Subject = cooked.Id, SubjectName = cooked.DisplayName.GetPluralText(1),
+            });
+            ActionQueue.Queue.Start();
+            var states = new List<string>();
+            int loops = 0;
+            for (; loops < 900 && ActionQueue.Queue.Running; loops++)
+            {
+                Ticks(60);
+                ActionQueue.Queue.Tick(game, 1);
+                Look(1);
+                string state = System.Text.RegularExpressions.Regex.Replace(ActionQueue.Queue.Steps[0].State, @"[\d.,]+", "#");
+                if (states.Count == 0 || states[^1] != state) states.Add(state);
+            }
+            int cookedGot = Qty(cooked) - cookedWas;
+            string endState = ActionQueue.Queue.Steps[0].State;
+            bool finished = !ActionQueue.Queue.Running && ActionQueue.Queue.Note.Contains("finished");
+            Check("oyuncu yanda malzeme toplarken: malzeme bitince adim bitmiyor, bekleyip hedefe kadar suruyor",
+                  finished && Qty(cooked) >= goal && endState == "done" && states.Any(s => s.StartsWith("waiting")) && fish.Action.IsStarted,
+                  $"{fish.Name} yanda + {cook.Name} {goal - cookedWas} tane: {cookedGot} pisti, {loops} sn; durumlar: {string.Join(" / ", states.Distinct().Take(6))}; sonunda: '{endState}', not: '{ActionQueue.Queue.Note}'; calisan: {Running()}");
+
+            // Fishing stopped by the player: nothing is coming any more, so the step ends as before instead of waiting forever.
+            ActionQueue.Queue.Clear();
+            SetQty(rawFish, 2);
+            fish.Action.TryStop(); Look(); Look();
+            ActionQueue.Queue.Add(new ActionQueue.Step
+            {
+                Entity = cook.Entity.Id, TargetId = cook.Target.Id, Name = cook.Name, Until = ActionQueue.Until.Item,
+                Amount = Qty(cooked) + 15, Subject = cooked.Id, SubjectName = cooked.DisplayName.GetPluralText(1),
+            });
+            ActionQueue.Queue.Start();
+            loops = 0;
+            for (; loops < 300 && ActionQueue.Queue.Running; loops++) { Ticks(60); ActionQueue.Queue.Tick(game, 1); Look(1); }
+            string aloneState = ActionQueue.Queue.Steps[0].State;
+            Check("yanda kimse toplamiyorsa adim eskisi gibi bitiyor, sonsuza kadar beklemiyor",
+                  !ActionQueue.Queue.Running && aloneState.StartsWith("done (it stopped"),
+                  $"{loops} sn sonra: '{aloneState}', not: '{ActionQueue.Queue.Note}'");
+            ActionQueue.Queue.Clear();
             game.ActionManager.TryStopActive(force: true);
             Look();
             SetQty(rawFish, rawWas);
@@ -2644,6 +3118,18 @@ static class Tests
             return (q - s_bank.Inventory.GetQuantity(log), burned);
         }
         var burn0 = Burn(20000);
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "made")
+        {
+            IEnumerator<int> madeOnly = MadeTests(game, ctx);
+            while (madeOnly.MoveNext()) yield return madeOnly.Current;
+            yield break;
+        }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "idle")
+        {
+            IEnumerator<int> idleOnly = IdleTests(game, ctx);
+            while (idleOnly.MoveNext()) yield return idleOnly.Current;
+            yield break;
+        }
         Check("ates yakmayi baslatma", burning && burn0.Made > 0 && burn0.Used > 0, $"{Actions.ItemName(log)}: {burn0.Made} islem, {burn0.Used} malzeme harcandi");
         Engine.SetValue("skills.preservation", 100);
         var burn1 = Burn(20000);

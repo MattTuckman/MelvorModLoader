@@ -13,7 +13,7 @@ using GamesByMalcs.Melvor2.Entities.Combat;
 namespace ActionQueue;
 
 /// <summary>When a step is over.</summary>
-public enum Until { Stops, Item, Level, Minutes, ItemLeft }   // new kinds go at the end: saved queues store the number
+public enum Until { Stops, Item, Level, Minutes, ItemLeft, Made }   // new kinds go at the end: saved queues store the number
 
 /// <summary>Idle: not started yet. Waiting: its turn has come but it cannot run right now. Done: over (also when skipped).</summary>
 public enum RunState { Idle, Running, Waiting, Done }
@@ -36,6 +36,8 @@ public sealed class Step
     public RunState Run;
     internal double Seconds, RetryAt, GrewAt;
     internal long Pile, GainedAtStart;
+    /// <summary>"Make N more": what came in before a pause, so carrying on does not start counting from zero.</summary>
+    internal long MadeBefore;
     internal int OwnedAtStart;
     internal bool Ran, CountGains;
     internal string Following = "";   // a slayer step: the task monster it is fighting at the moment
@@ -43,6 +45,7 @@ public sealed class Step
     public string Goal => Until switch
     {
         Until.Item => $"until {Amount:N0} {SubjectName} in the bank",
+        Until.Made => $"until {Amount:N0} more {SubjectName} are made",
         Until.ItemLeft => Amount <= 0 ? $"until no {SubjectName} is left in the bank" : $"until only {Amount:N0} {SubjectName} are left in the bank",
         Until.Level => $"until {SubjectName} level {Amount:0}",
         Until.Minutes => $"for {Amount:0.#} minute(s)",
@@ -77,6 +80,8 @@ public static class Queue
         public string Name { get; set; } = "";
         public Dictionary<string, Preset> Presets { get; set; } = new();
         public bool SideBySide { get; set; } = true;
+        /// <summary>What to do while the queue waits and once it is done (null: nothing).</summary>
+        public Step? Idle { get; set; }
     }
 
     /// <summary>Where the queue that was on screen goes when another one is loaded over unsaved changes.</summary>
@@ -114,6 +119,19 @@ public static class Queue
     public static string Note { get; private set; } = "";
     public static event Action? Changed;
 
+    /// <summary>
+    /// The "while idle" action: done while every step the queue has left is waiting (for materials, for its skill
+    /// to be free...) and after the queue has finished. Only Entity, TargetId, Extra and Name are used. It only
+    /// ever takes a free slot: the player's own actions are never pushed out for it.
+    /// </summary>
+    public static Step? Idle { get; private set; }
+    /// <summary>What the "while idle" action is up to, for the window ("" when there is nothing to say).</summary>
+    public static string IdleState { get; private set; } = "";
+    /// <summary>True while the idle action runs because the queue started it (so the queue may stop it again).</summary>
+    static bool s_idleOwned, s_idleBlocked, s_idleRanOut;
+    static double s_idleRetryAt, s_idleGrewAt;
+    static long s_idlePile;
+
     // ---------------------------------------------------------------- loading and saving
 
     static Dictionary<string, Saved> Read()
@@ -134,6 +152,9 @@ public static class Queue
         s_presets = new Dictionary<string, Preset>(saved?.Presets ?? new(), StringComparer.OrdinalIgnoreCase);
         Name = saved?.Name is { } savedName && s_presets.ContainsKey(savedName) ? savedName : "";
         SideBySide = saved?.SideBySide ?? true;
+        Idle = saved?.Idle is { Entity: not "", TargetId: not "" } idle ? idle : null;
+        IdleState = "";
+        s_idleOwned = s_idleBlocked = s_idleRanOut = false;
         lock (s_gained) s_gained.Clear();
         if (Bank(game) is { } bank)
             bank.Inventory.ItemQuantityChanged += (_, e) =>
@@ -157,7 +178,7 @@ public static class Queue
         {
             // Only this character's entry is replaced in what is on disk right now.
             Dictionary<string, Saved> all = Read();
-            all[s_character] = new Saved { Steps = Steps, Repeat = Repeat, Name = Name, Presets = new Dictionary<string, Preset>(s_presets), SideBySide = SideBySide };
+            all[s_character] = new Saved { Steps = Steps, Repeat = Repeat, Name = Name, Presets = new Dictionary<string, Preset>(s_presets), SideBySide = SideBySide, Idle = Idle };
             File.WriteAllText(FilePath, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception e) { Log("The queue could not be saved: " + e.Message); }
@@ -181,7 +202,17 @@ public static class Queue
         if (action != null && Targets.IsDoing(action, new Target(step.TargetId, step.Name, step.Extra))) action.TryStop(force: true);
     }
 
-    static void Publish() => Targets.PublishDriving(Running ? string.Join("|", Steps.Where(s => s.Run == RunState.Running).Select(s => s.Entity).Distinct()) : "");
+    /// <summary>
+    /// Tells Multitask which skills the queue is driving: its running steps, and the idle action while the queue
+    /// runs it. Multitask leaves those alone (it never starts them again and never counts them as the player's).
+    /// </summary>
+    static void Publish()
+    {
+        if (!Running) { Targets.PublishDriving(""); return; }
+        IEnumerable<string> driving = Steps.Where(s => s.Run == RunState.Running).Select(s => s.Entity);
+        if (s_idleOwned && Idle != null) driving = driving.Append(Idle.Entity);
+        Targets.PublishDriving(string.Join("|", driving.Distinct()));
+    }
 
     static void SetIndex()
     {
@@ -223,6 +254,25 @@ public static class Queue
     public static void SetRepeat(bool repeat) { Repeat = repeat; Save(); Changed?.Invoke(); }
 
     public static void SetSideBySide(bool on) { SideBySide = on; Save(); Changed?.Invoke(); }
+
+    /// <summary>Chooses the "while idle" action (null: nothing). One the queue had started is stopped when it changes.</summary>
+    public static void SetIdle(Step? idle)
+    {
+        if (idle != null && (idle.Entity == "" || idle.TargetId == "")) idle = null;
+        bool same = idle != null && Idle != null && idle.Entity == Idle.Entity && idle.TargetId == Idle.TargetId && idle.Extra == Idle.Extra;
+        if (!same)
+        {
+            StopIdle();
+            Idle = idle == null ? null : new Step { Entity = idle.Entity, TargetId = idle.TargetId, Extra = idle.Extra, Name = idle.Name };
+            IdleState = "";
+            s_idleBlocked = s_idleRanOut = false;
+            s_idleRetryAt = 0;
+            Trace(Idle == null ? "while idle: nothing" : $"while idle: {Idle.Name}");
+        }
+        Save();
+        Publish();
+        Changed?.Invoke();
+    }
 
     // ---------------------------------------------------------------- saved queues
 
@@ -341,6 +391,7 @@ public static class Queue
         for (int i = 0; i < Steps.Count; i++)
         {
             Step s = Steps[i];
+            if (s.State != "paused") s.MadeBefore = 0;            // "make N more" carries on after a pause, else counts afresh
             s.State = "";
             s.Run = i < Index ? RunState.Done : RunState.Idle;   // after a pause: carry on where it stopped
             s.Ran = false;
@@ -350,6 +401,10 @@ public static class Queue
         Running = true;
         s_ranThisRound = false;
         Note = "";
+        // An idle action left running from the last time belongs to the player now: the queue does not take it over.
+        s_idleOwned = s_idleBlocked = s_idleRanOut = false;
+        s_idleRetryAt = 0;
+        IdleState = "";
         Trace($"started at step {Index + 1} of {Steps.Count}, up to {Lanes} at once: " + string.Join(" | ", Steps.Select(s => $"{s.Name} {s.Goal}")));
         Changed?.Invoke();
     }
@@ -380,7 +435,14 @@ public static class Queue
         SetIndex();
         Trace($"paused at step {Index + 1}: {why}");
         Running = false;
-        foreach (Step s in Steps.Where(s => s.Run is RunState.Running or RunState.Waiting)) s.State = "paused";
+        foreach (Step s in Steps.Where(s => s.Run is RunState.Running or RunState.Waiting))
+        {
+            s.State = "paused";
+            if (s.Ran) s.MadeBefore += Gained(s) - s.GainedAtStart;   // keep what "make N more" has already made
+        }
+        // Like the steps' own actions, an idle action that runs keeps running: the player decides from here.
+        s_idleOwned = false;
+        IdleState = "";
         Note = why;
         Publish();
         Changed?.Invoke();
@@ -389,6 +451,8 @@ public static class Queue
     static void Finish(string why)
     {
         if (Running) Trace($"ended: {why}");
+        StopIdle();   // emptied or cut short: the idle action the queue started goes with it (a real finish lets go of it first)
+        IdleState = "";
         Running = false;
         Index = 0;
         Note = why;
@@ -410,6 +474,17 @@ public static class Queue
         if (!Running || !ReferenceEquals(game, s_game)) return;
         if (Steps.Count == 0) { Finish("The queue is empty."); Changed?.Invoke(); return; }
         s_clock += seconds;
+
+        // 0. The idle action was a fight and the character died in it: never walk straight back in. (A combat step
+        //    cannot run at the same time - one skill, one thing - so the death was the idle action's.)
+        if (s_died && s_idleOwned && Idle?.Entity == "MelvorBase:Combat" && !Steps.Any(s => s.Run == RunState.Running && s.Entity == Idle.Entity))
+        {
+            s_died = false;
+            s_idleOwned = false;
+            s_idleBlocked = true;
+            IdleState = "stopped: your character died (it starts again when you start the queue)";
+            Trace("while idle: the character died, the fight is not started again");
+        }
 
         // 1. The steps that are at work.
         foreach (Step step in Steps.Where(s => s.Run == RunState.Running).ToList())
@@ -440,9 +515,22 @@ public static class Queue
             if (Repeat && s_ranThisRound)
             {
                 s_ranThisRound = false;
-                foreach (Step s in Steps) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = 0; }
+                foreach (Step s in Steps) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = s.MadeBefore = 0; }
             }
-            else Finish(s_ranThisRound ? "The queue has finished." : "Nothing in the queue could be done, so it stopped.");
+            else
+            {
+                s_idleOwned = false;   // a real finish: the idle action keeps going, as the player's own from now on
+                Finish(s_ranThisRound ? "The queue has finished." : "Nothing in the queue could be done, so it stopped.");
+                try { IdleAfterEnd(game); }
+                catch (Exception e) { Log("The idle action could not be started: " + e.Message); }
+            }
+        }
+
+        // 4. Every step that is left waits: the idle action takes a free slot meanwhile (or makes room again).
+        if (Running)
+        {
+            try { KeepIdle(game); }
+            catch (Exception e) { Log("The idle action failed: " + e.Message); IdleState = "failed (see the log)"; }
         }
         if (Running) SetIndex();
         Publish();
@@ -461,6 +549,191 @@ public static class Queue
 
     /// <summary>True while a step before this one is not over yet: it may still make what this one needs.</summary>
     static bool EarlierAtWork(Step step) => Steps.TakeWhile(s => s != step).Any(s => s.Run != RunState.Done);
+
+    /// <summary>
+    /// True while more of what this step uses may still come in: an earlier step is not over, or something
+    /// running beside it (the player's own mining, an action Multitask keeps going) makes one of its materials.
+    /// "Until it stops" takes the stop at its word when the supply is not the queue's own: the player may mine forever.
+    /// </summary>
+    static bool MoreComing(Game game, Step step, ActionComponent action, Target target) =>
+        EarlierAtWork(step) || (step.Until != Until.Stops && Supplied(game, action, target));
+
+    /// <summary>
+    /// True while some other running action (the player's own, one kept by Multitask, another step, the idle
+    /// action) makes an item this recipe uses: mining uncut emeralds beside crafting emeralds.
+    /// </summary>
+    static bool Supplied(Game game, ActionComponent action, Target target)
+    {
+        HashSet<string> needs = Targets.Ingredients(action, target);
+        if (needs.Count == 0) return false;
+        // What runs beside it, and on what. Every product counts, not just the main one: a fishing spot gives several fish.
+        var beside = new Dictionary<string, string>();
+        foreach (ActionComponent other in game.ActionManager.ActiveActions.ToList())
+            if (!ReferenceEquals(other, action) && Targets.Current(other) is Target doing) beside[other.Entity.Id] = doing.Id;
+        if (beside.Count == 0) return false;
+        foreach ((Item item, List<Maker> makers) in Planner.Makers(game))
+            if (needs.Contains(item.Id) && makers.Any(m => beside.TryGetValue(m.Entity.Id, out string? on) && on == m.Target.Id)) return true;
+        return false;
+    }
+
+    // ---------------------------------------------------------------- the "while idle" action
+
+    static Target IdleTarget(Step idle) => new(idle.TargetId, idle.Name, idle.Extra);
+
+    static void StopAction(ActionComponent action) { if (!action.TryStop()) action.TryStop(force: true); }
+
+    /// <summary>Stops the idle action if the queue started it and it still runs.</summary>
+    static void StopIdle()
+    {
+        if (!s_idleOwned) return;
+        s_idleOwned = false;
+        if (s_game == null || Idle == null) return;
+        ActionComponent? action = Targets.Find(s_game, Idle.Entity);
+        if (action != null && Targets.IsDoing(action, IdleTarget(Idle))) StopAction(action);
+    }
+
+    /// <summary>
+    /// How many more actions fit right now: the slots Multitask gives (1 without it), less the queue's running
+    /// steps, the idle action the queue runs, and the player's own actions - running or waiting to be started
+    /// again by Multitask. Below 1 there is no room.
+    /// </summary>
+    static int FreeSlots(Game game)
+    {
+        var queue = Running ? Steps.Where(s => s.Run == RunState.Running).Select(s => s.Entity).ToHashSet() : new HashSet<string>();
+        string idle = s_idleOwned && Idle != null ? Idle.Entity : "";
+        IEnumerable<string> player = Targets.PlayerKept() ?? game.ActionManager.ActiveActions.Select(a => a.Entity.Id).ToHashSet();
+        int used = queue.Count + (idle != "" ? 1 : 0) + player.Count(e => !queue.Contains(e) && e != idle);
+        return Targets.MultitaskCapacity() - used;
+    }
+
+    /// <summary>Why the idle action may not run right now while the queue runs, or "" when it may.</summary>
+    static string IdleBlocker(Game game, ActionComponent action, Target target, bool doing)
+    {
+        if (s_idleBlocked) return IdleState;
+        int running = Steps.Count(s => s.Run == RunState.Running);
+        if (!Steps.Any(s => s.Run is RunState.Waiting or RunState.Idle) || running >= Lanes) return "";   // the queue is at work
+        if (Steps.Any(s => s.Run == RunState.Running && s.Entity == action.Entity.Id)) return "not now: a step is using this skill";
+        if (action.IsStarted && !doing) return "not now: this skill is doing something else";
+        HashSet<string> uses = Targets.Ingredients(action, target);
+        if (uses.Count > 0)
+            foreach (Step step in Steps.Where(s => s.Run != RunState.Done))
+                if (Targets.Find(game, step.Entity) is { } stepAction
+                    && Targets.Ingredients(stepAction, new Target(step.TargetId, step.Name, step.Extra)).Overlaps(uses))
+                    return "not now: it would use up what a step of the queue needs";
+        int free = FreeSlots(game) + (s_idleOwned && doing ? 1 : 0);
+        if (free <= 0) return "not now: no free slot (switch on a Multitask slot for it)";
+        return "ok";
+    }
+
+    /// <summary>While the queue runs: start the idle action when every step left is waiting, stop it when a step needs the place.</summary>
+    static void KeepIdle(Game game)
+    {
+        if (Idle == null) { IdleState = ""; return; }
+        ActionComponent? action = Targets.Find(game, Idle.Entity);
+        if (action == null) { IdleState = "this skill is not in the game"; return; }
+        Target target = IdleTarget(Idle);
+        bool doing = Targets.IsDoing(action, target);
+        if (s_idleOwned && !doing)
+        {
+            s_idleOwned = false;
+            if (Targets.Batches(game, action, target) == 0)
+            {
+                // Out of materials: it starts again once there is a little pile, like a waiting step.
+                s_idleRanOut = true;
+                s_idlePile = 0;
+                s_idleGrewAt = s_clock;
+                Trace($"while idle: {Idle.Name} ran out of materials");
+            }
+            else
+            {
+                // Not out of anything: the player stopped it or started something by hand, or the bank is full.
+                // Starting it again would fight them.
+                s_idleBlocked = true;
+                IdleState = "stopped (by you, or the bank is full); it comes back when you start the queue again";
+                Trace($"while idle: {Idle.Name} was stopped, it is not started again in this run");
+            }
+        }
+        string why = IdleBlocker(game, action, target, doing);
+        if (why != "ok")
+        {
+            if (s_idleOwned && doing)
+            {
+                StopAction(action);
+                s_idleOwned = false;
+                Trace($"while idle: stopped {Idle.Name} ({(why == "" ? "the queue is at work again" : why)})");
+            }
+            if (!s_idleBlocked) IdleState = why;
+            return;
+        }
+        if (doing) { IdleState = s_idleOwned ? "running now" : "running now (started by you)"; return; }
+        TryStartIdle(game, action, target);
+    }
+
+    static void TryStartIdle(Game game, ActionComponent action, Target target)
+    {
+        if (s_clock < s_idleRetryAt) return;
+        s_idleRetryAt = s_clock + RetrySeconds;
+        if (!Targets.CanStart(action, target, out string problem)) { IdleState = "cannot start: " + problem; return; }
+        long batches = Targets.Batches(game, action, target);
+        if (batches == 0)
+        {
+            if (!s_idleRanOut) { s_idleRanOut = true; s_idlePile = 0; s_idleGrewAt = s_clock; }
+            IdleState = "waiting: its materials have run out";
+            return;
+        }
+        if (s_idleRanOut && batches < PileSize)
+        {
+            if (batches > s_idlePile) s_idleGrewAt = s_clock;
+            s_idlePile = batches;
+            if (s_clock - s_idleGrewAt < SettleSeconds) { IdleState = $"waiting: collecting materials ({batches}/{PileSize})"; return; }
+        }
+        bool others = game.ActionManager.ActiveActions.Count > 0;
+        if (!(others ? Targets.StartBeside(game, action, target, out problem) : Targets.Start(game, action, target, out problem)))
+        {
+            IdleState = "cannot start: " + problem;
+            return;
+        }
+        s_idleOwned = true;
+        s_idleRanOut = false;
+        s_idlePile = 0;
+        IdleState = "running now";
+        Trace($"while idle: started {Idle!.Name}{(others ? " beside what runs" : "")}");
+    }
+
+    /// <summary>A step is about to start: the idle action makes room when it uses the same skill or the last free slot.</summary>
+    static void MakeRoomFor(Game game, Step step, bool beside)
+    {
+        if (!s_idleOwned || Idle == null) return;
+        if (beside && Idle.Entity != step.Entity && FreeSlots(game) > 0) return;   // there is room for both
+        s_idleOwned = false;
+        ActionComponent? action = Targets.Find(game, Idle.Entity);
+        if (action != null && Targets.IsDoing(action, IdleTarget(Idle))) StopAction(action);
+        IdleState = "made room for a step";
+        Trace($"while idle: stopped {Idle.Name} to make room for {Number(step)}");
+    }
+
+    /// <summary>The queue has finished: start the idle action (it is the player's own from then on).</summary>
+    static void IdleAfterEnd(Game game)
+    {
+        if (Idle == null) return;
+        ActionComponent? action = Targets.Find(game, Idle.Entity);
+        if (action == null) return;
+        Target target = IdleTarget(Idle);
+        string Tell(string text) { Note = $"{Note} {text}"; Trace("after the end: " + text); return text; }
+        if (Targets.IsDoing(action, target)) { Tell($"{Idle.Name} goes on (your idle action)."); return; }
+        if (s_idleBlocked) return;
+        if (action.IsStarted) { Tell($"{Idle.Name} was not started: that skill is doing something else."); return; }
+        if (FreeSlots(game) <= 0) { Tell($"{Idle.Name} was not started: there is no free slot for it."); return; }
+        if (!Targets.CanStart(action, target, out string problem)) { Tell($"{Idle.Name} was not started: {problem}."); return; }
+        if (Targets.Batches(game, action, target) == 0) { Tell($"{Idle.Name} was not started: its materials have run out."); return; }
+        bool others = game.ActionManager.ActiveActions.Count > 0;
+        if (others ? Targets.StartBeside(game, action, target, out problem) : Targets.Start(game, action, target, out problem))
+            Tell($"Now doing your idle action: {Idle.Name}.");
+        else Tell($"{Idle.Name} was not started: {problem}.");
+    }
+
+    static string WaitingText(Step step) =>
+        EarlierAtWork(step) ? "waiting: for materials from an earlier step" : "waiting: for materials (still being gathered)";
 
     static void Wait(Step step, string why)
     {
@@ -488,22 +761,23 @@ public static class Queue
         step.RetryAt = s_clock + RetrySeconds;
 
         var target = new Target(step.TargetId, step.Name, step.Extra);
-        bool earlier = EarlierAtWork(step);
+        bool earlier = MoreComing(game, step, action, target);
         string problem;
         if (earlier)
         {
-            // An earlier step is still at work and may yet provide what this one lacks: wait instead of giving up.
+            // An earlier step, or something running beside, may yet provide what this one lacks: wait instead of giving up.
             if (!Targets.CanStart(action, target, out problem)) { Wait(step, "waiting: " + problem); return; }
             long batches = Targets.Batches(game, action, target);
             if (batches > step.Pile) step.GrewAt = s_clock;
             step.Pile = batches;
-            if (batches == 0) { Wait(step, "waiting: for materials from an earlier step"); return; }
+            if (batches == 0) { Wait(step, WaitingText(step)); return; }
             // Starting for every single fish would have the game report "action stopped" each time: work in piles.
             if (batches < PileSize && s_clock - step.GrewAt < SettleSeconds) { Wait(step, $"waiting: collecting materials ({batches}/{PileSize})"); return; }
         }
 
         bool othersAtWork = Steps.Any(s => s != step && s.Run == RunState.Running);
-        bool started = othersAtWork ? Targets.StartBeside(game, action, target, out problem) : Targets.Start(game, action, target, out problem);
+        MakeRoomFor(game, step, othersAtWork);
+        bool started = othersAtWork ?Targets.StartBeside(game, action, target, out problem) : Targets.Start(game, action, target, out problem);
         if (!started)
         {
             if (earlier) Wait(step, "waiting: " + problem);
@@ -523,7 +797,7 @@ public static class Queue
         step.State = "running";
         s_ranThisRound = true;
         s_died = false;
-        Trace($"{Number(step)}: started{(othersAtWork ? " beside the others" : "")}{(step.Until is Until.Item or Until.ItemLeft ? $", bank holds {Owned(game, step):N0} {step.SubjectName}" : "")}");
+        Trace($"{Number(step)}: started{(othersAtWork ? " beside the others" : "")}{(step.Until is Until.Item or Until.ItemLeft or Until.Made ? $", bank holds {Owned(game, step):N0} {step.SubjectName}" : "")}{(step.Until == Until.Made && step.MadeBefore > 0 ? $", {step.MadeBefore:N0} made before the pause" : "")}");
     }
 
     static void Watch(Game game, Step step, double seconds)
@@ -538,17 +812,19 @@ public static class Queue
             // Did the player start something else? Actions kept running by Multitask, and the queue's own
             // other steps, do not count.
             ActionComponent? main = Targets.Main(game);
-            if (main != null && !Steps.Any(s => s.Run == RunState.Running && s.Entity == main.Entity.Id))
+            bool idleOfOurs = main != null && s_idleOwned && Idle != null && main.Entity.Id == Idle.Entity && Targets.IsDoing(main, IdleTarget(Idle));
+            if (main != null && !idleOfOurs && !Steps.Any(s => s.Run == RunState.Running && s.Entity == main.Entity.Id))
             {
                 Pause("You started something else, so the queue is paused.");
                 return;
             }
-            // It stopped by itself. Out of materials while an earlier step is still making them: wait for more.
-            if (EarlierAtWork(step) && Targets.Batches(game, action, wanted) == 0)
+            // It stopped by itself. Out of materials while an earlier step, or something running beside it, is
+            // still making them: wait for more instead of calling the step done.
+            if (Targets.Batches(game, action, wanted) == 0 && MoreComing(game, step, action, wanted))
             {
                 step.Pile = 0;
                 step.GrewAt = s_clock;
-                Wait(step, "waiting: for materials from an earlier step");
+                Wait(step, WaitingText(step));
                 return;
             }
             End(step, $"done (it stopped by itself)");
@@ -595,6 +871,9 @@ public static class Queue
     static long Counted(Game game, Step step) =>
         step.CountGains && step.Ran ? Math.Max(Owned(game, step), step.OwnedAtStart + (Gained(step) - step.GainedAtStart)) : Owned(game, step);
 
+    /// <summary>"Make N more": how many of the item came into the bank since the step first started (pauses included).</summary>
+    static long Made(Step step) => step.MadeBefore + (step.Ran ? Gained(step) - step.GainedAtStart : 0);
+
     static int Level(Game game, Step step) =>
         game.LeveledEntities.FirstOrDefault(s => s.DisplayName.Text == step.Subject)?.Experience.Level ?? 0;
 
@@ -604,6 +883,7 @@ public static class Queue
         Until.ItemLeft => Owned(game, step) <= step.Amount,   // counts down: food being eaten, materials being used
         Until.Level => Level(game, step) >= step.Amount,
         Until.Minutes => step.Seconds >= step.Amount * 60,
+        Until.Made => Made(step) >= step.Amount,
         _ => false,
     };
 
@@ -615,6 +895,7 @@ public static class Queue
         Until.ItemLeft => $"{Owned(game, step):N0} left, stops at {step.Amount:N0}",
         Until.Level => $"level {Level(game, step)} / {step.Amount:0}",
         Until.Minutes => $"{Clock(step.Seconds)} / {Clock(step.Amount * 60)}",
+        Until.Made => $"{Made(step):N0} / {step.Amount:N0} made",
         _ => Clock(step.Seconds),
     };
 
@@ -625,9 +906,13 @@ public static class Queue
         {
             if (!Running) return "";
             var atWork = Steps.Where(s => s.Run == RunState.Running).ToList();
-            if (atWork.Count == 0) return Index < Steps.Count ? $"Queue {Index + 1}/{Steps.Count}: {Steps[Index].Name}  -  {Steps[Index].State}" : "";
-            if (atWork.Count == 1) return $"Queue {Steps.IndexOf(atWork[0]) + 1}/{Steps.Count}: {atWork[0].Name}  -  {atWork[0].State}";
-            return "Queue: " + string.Join("   +   ", atWork.Select(s => $"{s.Name} - {s.State.Replace("running  ", "")}"));
+            string meanwhile = s_idleOwned && Idle != null ? $"   (meanwhile: {Idle.Name})" : "";
+            if (atWork.Count == 0) return Index < Steps.Count ? $"Queue {Index + 1}/{Steps.Count}: {Steps[Index].Name}  -  {Steps[Index].State}{meanwhile}" : "";
+            if (atWork.Count == 1) return $"Queue {Steps.IndexOf(atWork[0]) + 1}/{Steps.Count}: {atWork[0].Name}  -  {atWork[0].State}{meanwhile}";
+            return "Queue: " + string.Join("   +   ", atWork.Select(s => $"{s.Name} - {s.State.Replace("running  ", "")}")) + meanwhile;
         }
     }
+
+    /// <summary>For tests: true while the idle action runs because the queue started it.</summary>
+    public static bool IdleRunsForQueue => s_idleOwned;
 }

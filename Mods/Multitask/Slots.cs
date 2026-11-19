@@ -167,6 +167,7 @@ public static class Slots
         s_character = "";
         PublishCapacity(1);
         Publish(new List<string>());
+        Targets.PublishPlayerKept(Array.Empty<string>());
     }
 
     // ---------------------------------------------------------------- the switches
@@ -265,6 +266,7 @@ public static class Slots
             s_recent.RemoveAll(k => !IsRunning(k));
             Trim(game, stopExtras: false);
             Publish(new List<string>());
+            Targets.PublishPlayerKept(s_recent.Where(k => !k.ByQueue).Select(k => k.Entity));
             return;
         }
 
@@ -289,6 +291,8 @@ public static class Slots
 
         var held = s_recent.Skip(1).Where(IsRunning).Select(k => k.Entity).ToList();
         Publish(held);
+        // The Action Queue only starts its "while idle" action in a slot nobody else holds, running or waiting.
+        Targets.PublishPlayerKept(s_recent.Where(k => !k.ByQueue).Select(k => k.Entity));
         Order(game);
     }
 

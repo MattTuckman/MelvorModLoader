@@ -231,10 +231,10 @@ public static class Planner
         var byId = makers.Keys.ToDictionary(i => i.Id);
         foreach (Step step in queued)
         {
-            if (step.Until != Until.Item || !byId.TryGetValue(step.Subject, out Item? item)) continue;
+            if (step.Until is not (Until.Item or Until.Made) || !byId.TryGetValue(step.Subject, out Item? item)) continue;
             Maker? maker = makers[item].FirstOrDefault(m => m.Entity.Id == step.Entity && m.Target.Id == step.TargetId);
             if (maker == null) continue;
-            long before = Now(item), goal = (long)Math.Ceiling(step.Amount);
+            long before = Now(item), goal = (long)Math.Ceiling(step.Amount) + (step.Until == Until.Made ? before : 0);
             if (goal <= before) continue;
             long actions = Actions(goal - before, maker);
             foreach ((Item cost, int quantity) in maker.Costs) stock[cost] = Math.Max(0, Now(cost) - actions * quantity);

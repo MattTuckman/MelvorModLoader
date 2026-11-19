@@ -16,7 +16,7 @@ public sealed class QueueWindow
     static readonly string[] UntilNames =
     {
         "it stops by itself", "I own this many of an item", "a skill reaches this level", "this many minutes have passed",
-        "only this many of an item are left",
+        "only this many of an item are left", "I make this many more of an item",
     };
 
     readonly CanvasLayer _layer = new() { Layer = 118, Name = "ActionQueue", Visible = false };
@@ -33,6 +33,12 @@ public sealed class QueueWindow
     readonly Button _run = new() { CustomMinimumSize = new Vector2(150, 0) };
     readonly Button _repeat = new() { ToggleMode = true, CustomMinimumSize = new Vector2(205, 0) };
     readonly Button _side = new() { ToggleMode = true, CustomMinimumSize = new Vector2(175, 0), Visible = false };
+
+    // "When the queue waits or ends, do": an action for the idle time.
+    readonly OptionButton _idleSkill = new() { CustomMinimumSize = new Vector2(170, 0) };
+    readonly OptionButton _idleTarget = new() { CustomMinimumSize = new Vector2(220, 0), FitToLongestItem = false, ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+    readonly Label _idleState = Style.Label("", Style.Muted, 12);
+    List<Target> _idleTargets = new();
 
     // The card on top has two faces: the form for one step, and the planner.
     readonly Button _stepMode = new() { Text = "Add one step", ToggleMode = true };
@@ -216,6 +222,27 @@ public sealed class QueueWindow
         _table.SetColumnCustomMinimumWidth(2, 290);
         body.AddChild(_table);
 
+        // -- the idle action
+        var idleRow = new HBoxContainer();
+        idleRow.AddThemeConstantOverride("separation", 10);
+        Label idleLabel = Style.Label("When the queue waits or ends, do", Style.Muted);
+        idleLabel.MouseFilter = Control.MouseFilterEnum.Stop;
+        idleLabel.TooltipText = "Your character never stands still: this runs while every step that is left is waiting\n"
+            + "(for materials, for its skill to be free...) and goes on after the queue has finished.\n"
+            + "It only takes a free slot, never one of your own actions, and stops when a step needs the place.";
+        idleRow.AddChild(idleLabel);
+        _idleSkill.TooltipText = idleLabel.TooltipText;
+        _idleSkill.ItemSelected += i => { if (!_syncing) { if (i <= 0) Queue.SetIdle(null); else { FillIdleTargets(null); PickIdle(); } } };
+        _idleTarget.ItemSelected += _ => { if (!_syncing) PickIdle(); };
+        idleRow.AddChild(_idleSkill);
+        idleRow.AddChild(_idleTarget);
+        Button idleNow = MakeButton("Use what I am doing now", UseCurrentForIdle);
+        idleNow.TooltipText = "Uses the skill and the action your character is performing right now.";
+        idleRow.AddChild(idleNow);
+        body.AddChild(idleRow);
+        _idleState.Visible = false;
+        body.AddChild(_idleState);
+
         var buttons = new HBoxContainer();
         buttons.AddThemeConstantOverride("separation", 10);
         buttons.AddChild(Style.Label("Selected step:", Style.Muted));
@@ -388,6 +415,8 @@ public sealed class QueueWindow
                 .OrderBy(i => i.DisplayName.GetPluralText(1), StringComparer.OrdinalIgnoreCase).ToList();
             _levelSkills = game.LeveledEntities.Select(s => s.DisplayName.Text).ToList();
             Fill(_skillPick, _skills.Select(s => s.Entity.DisplayName.Text));
+            Fill(_idleSkill, _skills.Select(s => s.Entity.DisplayName.Text).Prepend("Nothing"));
+            _idleTargets = new List<Target>();
             Fill(_levelPick, _levelSkills);
             FilterItems("");
             FillTargets(null);
@@ -820,11 +849,101 @@ public sealed class QueueWindow
         Say($"Filled in: {_skills[skill].Entity.DisplayName.Text}: {target.Name}");
     }
 
+    // ---------------------------------------------------------------- the idle action
+
+    void FillIdleTargets(Step? select)
+    {
+        int skill = _idleSkill.Selected - 1;
+        if (skill < 0 || skill >= _skills.Count) { _idleTargets = new List<Target>(); _idleTarget.Clear(); return; }
+        _idleTargets = Targets.All(_skills[skill].Action);
+        int at = select == null ? 0 : Math.Max(0, _idleTargets.FindIndex(t => t.Id == select.TargetId && t.Extra == select.Extra));
+        Fill(_idleTarget, _idleTargets.Select(t => t.Name), at);
+    }
+
+    void PickIdle()
+    {
+        int skill = _idleSkill.Selected - 1;
+        if (skill < 0 || skill >= _skills.Count) { Queue.SetIdle(null); return; }
+        if (_idleTarget.Selected < 0 || _idleTarget.Selected >= _idleTargets.Count) return;
+        GameEntity entity = _skills[skill].Entity;
+        Target target = _idleTargets[_idleTarget.Selected];
+        Queue.SetIdle(new Step { Entity = entity.Id, TargetId = target.Id, Extra = target.Extra, Name = $"{entity.DisplayName.Text}: {target.Name}" });
+        Say($"When the queue waits or ends, your character does: {entity.DisplayName.Text}: {target.Name}.");
+    }
+
+    void UseCurrentForIdle()
+    {
+        if (_game == null) return;
+        ActionComponent? active = Targets.Main(_game);
+        Target? target = active == null ? null : Targets.Current(active);
+        int skill = active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
+        if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
+        _syncing = true;
+        _idleSkill.Select(skill + 1);
+        FillIdleTargets(new Step { TargetId = target.Id, Extra = target.Extra });
+        _syncing = false;
+        PickIdle();
+    }
+
+    /// <summary>Shows the chosen idle action in the two lists (they are only refilled when it changed).</summary>
+    void PaintIdle()
+    {
+        Step? idle = Queue.Idle;
+        _syncing = true;
+        int skill = idle == null ? -1 : _skills.FindIndex(s => s.Entity.Id == idle.Entity);
+        if (idle == null || skill < 0)
+        {
+            if (_idleSkill.ItemCount > 0) _idleSkill.Select(0);
+            _idleTarget.Visible = false;
+        }
+        else
+        {
+            bool shown = _idleSkill.Selected == skill + 1 && _idleTarget.Selected >= 0 && _idleTarget.Selected < _idleTargets.Count
+                && _idleTargets[_idleTarget.Selected].Id == idle.TargetId && _idleTargets[_idleTarget.Selected].Extra == idle.Extra;
+            if (!shown)
+            {
+                _idleSkill.Select(skill + 1);
+                FillIdleTargets(idle);
+            }
+            _idleTarget.Visible = true;
+        }
+        _syncing = false;
+        string state = idle == null ? "" : Queue.IdleState;
+        _idleState.Visible = state != "";
+        _idleState.Text = state == "" ? "" : $"Idle action: {state}";
+        _idleState.AddThemeColorOverride("font_color", state.StartsWith("running") ? Style.Good : state.StartsWith("stopped") || state.StartsWith("cannot") ? Style.Bad : Style.Muted);
+    }
+
+    /// <summary>For tests: choose the idle action the way the two lists do ("" chooses Nothing).</summary>
+    public bool ChooseIdle(string entityId, string targetId)
+    {
+        if (entityId == "") { _idleSkill.Select(0); _idleSkill.EmitSignal(OptionButton.SignalName.ItemSelected, 0); return Queue.Idle == null; }
+        int skill = _skills.FindIndex(s => s.Entity.Id == entityId);
+        if (skill < 0) return false;
+        _idleSkill.Select(skill + 1);
+        _idleSkill.EmitSignal(OptionButton.SignalName.ItemSelected, skill + 1);
+        int at = _idleTargets.FindIndex(t => t.Id == targetId);
+        if (at < 0) return false;
+        _idleTarget.Select(at);
+        _idleTarget.EmitSignal(OptionButton.SignalName.ItemSelected, at);
+        return Queue.Idle?.TargetId == targetId;
+    }
+
+    public void PressUseCurrentForIdle() => UseCurrentForIdle();
+    /// <summary>For tests: the "Add step" button and the Start / Pause button, as a click does them.</summary>
+    public void PressAddStep() => AddStep();
+    public void PressRun() => _run.EmitSignal(BaseButton.SignalName.Pressed);
+    public string StatusShown => _status.Text;
+    /// <summary>For tests: what the idle row shows ("Nothing" or "skill | action"), and its state line.</summary>
+    public string IdleShown => _idleSkill.Selected <= 0 ? "Nothing"
+        : $"{_idleSkill.GetItemText(_idleSkill.Selected)} | {(_idleTarget.Visible && _idleTarget.Selected >= 0 ? _idleTarget.GetItemText(_idleTarget.Selected) : "?")}";
+    public string IdleStateShown => _idleState.Visible ? _idleState.Text : "";
+
     void UntilChanged()
     {
         var kind = (Until)_untilPick.Selected;
         _amount.Visible = kind != Until.Stops;
-        _itemSearch.Visible = _itemPick.Visible = kind is Until.Item or Until.ItemLeft;
+        _itemSearch.Visible = _itemPick.Visible = kind is Until.Item or Until.ItemLeft or Until.Made;
         _amount.MinValue = kind == Until.ItemLeft ? 0 : 1;
         if (kind == Until.ItemLeft && _lastKind != Until.ItemLeft)
         {
@@ -837,7 +956,7 @@ public sealed class QueueWindow
         {
             _amountLeft = _amount.Value;
             _amount.Value = Math.Max(1, _amountOther);
-            if (kind == Until.Item) SuggestItem();
+            if (kind is Until.Item or Until.Made) SuggestItem();
         }
         _lastKind = kind;
         _levelPick.Visible = kind == Until.Level;
@@ -865,7 +984,7 @@ public sealed class QueueWindow
             Name = $"{entity.DisplayName.Text}: {target.Name}",
             Until = (Until)_untilPick.Selected, Amount = _amount.Value,
         };
-        if (step.Until is Until.Item or Until.ItemLeft)
+        if (step.Until is Until.Item or Until.ItemLeft or Until.Made)
         {
             if (_itemPick.Selected < 0 || _itemPick.Selected >= _shownItems.Count) { Say("Pick the item to count first."); return; }
             Item item = _shownItems[_itemPick.Selected];
@@ -938,6 +1057,7 @@ public sealed class QueueWindow
         _side.ButtonPressed = Queue.SideBySide;
         _syncing = false;
         _side.Text = Queue.SideBySide ? $"Side by side: {room} at once" : "Side by side: OFF";
+        PaintIdle();
         if (Queue.Note != "") Say(Queue.Note);
         else if (Queue.Running) Say(Queue.Headline);
         PaintQuick();

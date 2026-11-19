@@ -256,6 +256,29 @@ public static class Targets
         catch { return 1; }
     }
 
+    /// <summary>
+    /// The Multitask mod writes the skills of the player's own actions it is keeping under this name: running, or
+    /// waiting to be started again ("id|id"). The queue's own steps are not in it. An older Multitask does not write it.
+    /// </summary>
+    public const string PlayerKeptMeta = "MultitaskPlayerKept";
+
+    /// <summary>The skills of the player's own actions Multitask keeps a slot for, or null when Multitask does not say.</summary>
+    public static HashSet<string>? PlayerKept()
+    {
+        try
+        {
+            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
+            if (!root.HasMeta(PlayerKeptMeta)) return null;
+            return new HashSet<string>(root.GetMeta(PlayerKeptMeta).AsString().Split('|', StringSplitOptions.RemoveEmptyEntries));
+        }
+        catch { return null; }
+    }
+
+    public static void PublishPlayerKept(IEnumerable<string> entityIds)
+    {
+        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(PlayerKeptMeta, string.Join("|", entityIds)); } catch { }
+    }
+
     static HashSet<string> Held()
     {
         var held = new HashSet<string>();
@@ -313,6 +336,27 @@ public static class Targets
     {
         TActive? recipe = c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == id).Value;
         return recipe != null && c.CanCreateRecipe(recipe);
+    }
+
+    /// <summary>The ids of the items a recipe uses up; empty for gathering, thieving, combat...</summary>
+    public static HashSet<string> Ingredients(ActionComponent action, Target target) => action switch
+    {
+        ArtisanActionComponent c => Ingredients(c, target.Id),
+        CookingActionComponent c => Ingredients(c, target.Id),
+        FiremakingActionComponent c => Ingredients(c, target.Id),
+        HerbloreActionComponent c => Ingredients(c, target.Id),
+        _ => new HashSet<string>(),
+    };
+
+    static HashSet<string> Ingredients<TRecipe, TActive>(CraftingActionComponent<TRecipe, TActive> c, string id)
+        where TRecipe : class, ICraftingRecipe, INamespacedDataClass<TRecipe> where TActive : class, IActiveCraftingRecipe
+    {
+        TActive? recipe = c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == id).Value;
+        var needs = new HashSet<string>();
+        if (recipe != null)
+            foreach (var cost in recipe.Stats.ItemCost.Values)
+                if (cost.Value.Quantity > 0) needs.Add(cost.Value.Item.Id);
+        return needs;
     }
 
     /// <summary>Whether the game would let this target be started now (materials aside). Nothing is started.</summary>

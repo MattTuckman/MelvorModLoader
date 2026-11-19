@@ -1,4 +1,4 @@
-Action Queue 0.5.0  -  a mod for Melvor Idle 2
+Action Queue 0.6.0  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -29,6 +29,7 @@ HOW TO USE
 Open a character and press F6.
   1. Pick a skill and what to do (or press "Use what I am doing now").
   2. Pick when the step ends: when it stops by itself, when you own a number of an item,
+     when you have made a number more of an item (whatever the bank already holds),
      when a skill reaches a level, after a number of minutes, or when only a number of an
      item are left (for example: fight until only 5 of your food are left).
      For that goal the food you are eating is filled in (or, with none chosen, the food
@@ -67,6 +68,24 @@ one slot on = two steps, both on = three.
     it comes does not make the gathering step run twice as long.
   - Two steps for the same skill still run one after the other.
   - The button "Side by side" at the bottom of the window switches this off again.
+  - A step also waits when something you run yourself is making what it needs: mine the
+    uncut gems by hand and the queue's crafting step waits for more instead of ending.
+
+
+WHEN THE QUEUE WAITS OR ENDS
+----------------------------
+At the bottom of the window: "When the queue waits or ends, do" [skill] [action].
+Pick something there (or press "Use what I am doing now") and your character never stands
+still:
+  - While every step that is left is waiting (for materials, for its skill to be free),
+    this action runs in the free slot. When a step can go on, it makes room again.
+  - When the queue has finished, this action starts and simply keeps going.
+  - It only ever takes a free slot. Your own actions are never stopped for it. Without the
+    Multitask mod it only runs after the queue has finished.
+  - It is not started when it would use up what a waiting step needs.
+  - Press Stop on it in the game and the queue leaves it alone until you start the queue
+    again. If it is a fight and your character dies, it does not walk back in.
+  - "Nothing" switches it off. The choice is kept per character.
 
 
 SAVED QUEUES AND SHARE CODES
