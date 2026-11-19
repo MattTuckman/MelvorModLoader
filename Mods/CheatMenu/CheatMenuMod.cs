@@ -24,6 +24,8 @@ public class CheatMenuMod : IMod
         Instance = this;
         _ctx = ctx;
         Settings.Dir = ctx.Directory;
+        Lang.Dir = ctx.Directory;
+        PickListText.T = Lang.T;
         Engine.Log = ctx.Log;
         Crops.Log = ctx.Log;
         ctx.Frame += Tick;
@@ -65,7 +67,33 @@ public class CheatMenuMod : IMod
             return;
         }
         Engine.Bind(game);
-        _menu ??= new Menu(_ctx.Tree);
+        // "Auto" and the game's language was changed since the window was built: build it again in the new one.
+        if (_menu != null && _menu.BuiltIn != Lang.Active) { _menu.Dispose(); _menu = null; }
+        _menu ??= NewMenu();
         _menu.Show(game);
+    }
+
+    Menu NewMenu()
+    {
+        var menu = new Menu(_ctx.Tree);
+        menu.LanguageChosen += SetLanguage;
+        return menu;
+    }
+
+    /// <summary>Another language: the window is built again in it, on the same page.</summary>
+    public void SetLanguage(string code)
+    {
+        Lang.Set(code);
+        if (_menu == null) return;
+        bool open = _menu.Visible;
+        int page = _menu.CurrentPage;
+        _menu.Dispose();
+        _menu = NewMenu();
+        if (open && GameAccess.CurrentGame is { IsSaveLoaded: true } game)
+        {
+            _menu.Show(game);
+            _menu.ShowPage(page);
+        }
+        _ctx.Log($"Language: {code} (shown in {Lang.Active}).");
     }
 }

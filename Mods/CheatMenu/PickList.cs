@@ -24,6 +24,13 @@ internal sealed record PickEntry<T>(
 /// opens with only the branch of the current choice unfolded. It is <c>internal</c> on purpose: the file is linked
 /// into several mods, and a public type would exist twice for anything that references two of them.
 /// </summary>
+/// <summary>The few words the list writes itself; a mod with a language option puts its own lookup here.</summary>
+internal static class PickListText
+{
+    public static Func<string, string> T = s => s;
+    public static string F(string format, params object[] args) => string.Format(T(format), args);
+}
+
 internal sealed class PickList<T>
 {
     const int FoldAbove = 40, MinWidth = 380, MaxWidth = 560, MaxHeight = 440, Margin = 8;
@@ -74,7 +81,7 @@ internal sealed class PickList<T>
         if (theme != null) _popup.Theme = theme;
         var root = new VBoxContainer();
         root.AddThemeConstantOverride("separation", 6);
-        _search = new LineEdit { PlaceholderText = "Type to search...", ClearButtonEnabled = true };
+        _search = new LineEdit { PlaceholderText = PickListText.T("Type to search..."), ClearButtonEnabled = true };
         _search.TextChanged += text => ApplyFilter(text);
         _search.GuiInput += OnSearchKey;
         _tree = new Tree
@@ -159,9 +166,9 @@ internal sealed class PickList<T>
         }
         else
         {
-            _button.Text = _missingText != "" ? _missingText + "  (not available now)" : _placeholder;
+            _button.Text = _missingText != "" ? _missingText + PickListText.T("  (not available now)") : _placeholder;
             _button.Icon = null;
-            _button.TooltipText = _missingText != "" ? "This choice is not offered by the game right now." : "";
+            _button.TooltipText = _missingText != "" ? PickListText.T("This choice is not offered by the game right now.") : "";
             _button.AddThemeColorOverride("font_color", Style.Muted);
         }
     }
@@ -207,7 +214,7 @@ internal sealed class PickList<T>
         }
         _foldedBeforeSearch = null;
         if (_filter != "") ApplyFilter(_filter, keepFolds: true);
-        else _count.Text = $"{_entries.Count} to choose from";
+        else _count.Text = PickListText.F("{0} to choose from", _entries.Count);
     }
 
     TreeItem Header(TreeItem parent, Dictionary<string, TreeItem> groups, string path, string text, Texture2D? icon, int depth)
@@ -291,7 +298,7 @@ internal sealed class PickList<T>
     {
         foreach (TreeItem row in _leaves.Values) row.Visible = true;
         foreach (TreeItem h in Headers(_tree.GetRoot())) h.Visible = true;
-        _count.Text = $"{_entries.Count} to choose from";
+        _count.Text = PickListText.F("{0} to choose from", _entries.Count);
     }
 
     static IEnumerable<TreeItem> Headers(TreeItem? item)
@@ -330,7 +337,7 @@ internal sealed class PickList<T>
             h.Visible = Leaves(h).Any(l => l.Visible);
             if (h.Visible) h.Collapsed = false;
         }
-        _count.Text = shown == 0 ? "No matches" : $"{shown} of {_entries.Count}";
+        _count.Text = shown == 0 ? PickListText.T("No matches") : PickListText.F("{0} of {1}", shown, _entries.Count);
         // The first match is ready for Enter.
         TreeItem? first = Pickable().FirstOrDefault();
         if (first != null) { first.Select(0); _tree.ScrollToItem(first); } else _tree.DeselectAll();

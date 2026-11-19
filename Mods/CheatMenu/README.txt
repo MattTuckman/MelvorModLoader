@@ -1,4 +1,4 @@
-Cheat Menu 0.5.2  -  a mod for Melvor Idle 2
+Cheat Menu 0.6.0  -  a mod for Melvor Idle 2
 ============================================
 
 One window with more than 60 settings and tools: bank slots, XP, game speed, skill bonuses,
@@ -27,6 +27,13 @@ HOW TO USE
 Open a character and press F8. Pick a section on the left and change what you like.
 A setting takes effect the moment you change it (a slider: when you let go of it).
 "Reset" on a row puts that one setting back; "Reset all settings" needs two clicks.
+
+LANGUAGE: the list at the top of the window: English, 简体中文 (Simplified Chinese), 繁體中文 (Traditional Chinese), Español, Français, العربية (Arabic) and हिन्दी (Hindi).
+Arabic is written from right to left, so the whole window is mirrored.
+"Auto" follows the game's own language when the menu has it, English otherwise.
+The choice is kept for all characters. Names that come from the game itself (items,
+currencies, skills in the level list) are shown in the game's own language.
+The Traditional Chinese text was first made by a player of the community. Thank you!
 
 
 GOOD TO KNOW

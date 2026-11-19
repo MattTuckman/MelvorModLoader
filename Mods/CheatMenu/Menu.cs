@@ -5,6 +5,7 @@ using GamesByMalcs.Melvor2;
 using GamesByMalcs.Melvor2.Data.Currencies;
 using GamesByMalcs.Melvor2.Data.Items;
 using Godot;
+using static CheatMenu.Lang;
 
 namespace CheatMenu;
 
@@ -44,6 +45,10 @@ public sealed class Menu
     /// <summary>Searchable, grouped item lists: one to give an item, one to put an item on the auto-sell list.</summary>
     PickList<Item> _giveItem = null!, _autoSellAdd = null!;
     static readonly Theme s_theme = Style.Build();
+    /// <summary>The theme of this window: the shared one, with Taiwan's fonts first when it is in Traditional Chinese.</summary>
+    readonly Theme _theme = ThemeFor(s_theme);
+    /// <summary>The language this window was built in (it is built again when that changes).</summary>
+    public string BuiltIn { get; } = Active;
 
     // Loot filter page
     List<Item> _droppable = new(), _lootShown = new();
@@ -76,7 +81,9 @@ public sealed class Menu
         center.SetAnchorsPreset(Control.LayoutPreset.FullRect);
         _layer.AddChild(center);
 
-        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1120, 700), Theme = s_theme };
+        var panel = new PanelContainer { CustomMinimumSize = new Vector2(1120, 700), Theme = _theme };
+        // Arabic is written from right to left: the whole window is mirrored (sections on the right, sliders reversed).
+        if (RightToLeft) panel.LayoutDirection = Control.LayoutDirectionEnum.Rtl;
         StyleBoxFlat frame = Style.Box(Style.Window, 8, Style.AccentDim, 1);
         frame.ShadowColor = new Color(0, 0, 0, 0.55f);
         frame.ShadowSize = 14;
@@ -97,11 +104,12 @@ public sealed class Menu
         head.AddThemeStyleboxOverride("panel", headBox);
         var header = new HBoxContainer();
         header.AddThemeConstantOverride("separation", 12);
-        header.AddChild(Style.Label("CHEAT MENU", Style.Accent, 20));
+        header.AddChild(Style.Label(T("CHEAT MENU"), Style.Accent, 20));
         _character.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         _character.VerticalAlignment = VerticalAlignment.Center;
         _character.SizeFlagsVertical = Control.SizeFlags.Fill;
         header.AddChild(_character);
+        header.AddChild(LanguagePick());
         header.AddChild(ResetAllButton());
         header.AddChild(MakeButton("Close  (F8)", Hide));
         head.AddChild(header);
@@ -152,7 +160,7 @@ public sealed class Menu
         _status.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         _status.ClipText = true;
         footer.AddChild(_status);
-        footer.AddChild(Style.Label("Changes apply at once and are remembered per character", Style.Muted, 12));
+        footer.AddChild(Style.Label(T("Changes apply at once and are remembered per character"), Style.Muted, 12));
         foot.AddChild(footer);
         root.AddChild(foot);
 
@@ -256,7 +264,7 @@ public sealed class Menu
         _pages.AddChild(host);
 
         int index = _sections.Count;
-        var button = new Button { Text = title, ToggleMode = true, ButtonGroup = _navGroup, Alignment = HorizontalAlignment.Left };
+        var button = new Button { Text = T(title), ToggleMode = true, ButtonGroup = _navGroup, Alignment = HorizontalAlignment.Left };
         StyleBoxFlat chosen = Style.Box(Style.Card, 5, Style.Accent, 0, 12, 8);
         chosen.BorderWidthLeft = 3;
         button.AddThemeStyleboxOverride("normal", Style.Box(Style.Sidebar, 5, null, 0, 15, 8));
@@ -286,15 +294,58 @@ public sealed class Menu
 
     static Button MakeButton(string text, Action onPressed)
     {
-        var b = new Button { Text = text };
+        var b = new Button { Text = T(text) };
         b.Pressed += onPressed;
         return b;
+    }
+
+    /// <summary>The language of the window. A change builds the window again in that language.</summary>
+    /// <summary>
+    /// The language list, with the word "Language" in front so it reads as a language choice. In another language
+    /// the English word follows in brackets, so a player who cannot read the window still finds the list. "Auto"
+    /// says which language it gives right now.
+    /// </summary>
+    Control LanguagePick()
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 8);
+        string word = T("Language");
+        Label label = Style.Label(Active == English ? word : $"{word} (\u2068Language\u2069)", Style.Muted, 15);
+        label.VerticalAlignment = VerticalAlignment.Center;
+        label.SizeFlagsVertical = Control.SizeFlags.Fill;
+        row.AddChild(label);
+        var pick = new OptionButton
+        {
+            TooltipText = "Language / 语言 / 語言 / Idioma / Langue / اللغة / भाषा\nAuto: the game's own language when the menu has it, else English",
+            FitToLongestItem = true,
+        };
+        foreach ((string code, string name) in Choices)
+            pick.AddItem(code == Auto ? $"{T("Auto")} (\u2068{Current.Name}\u2069)" : name);
+        pick.Select(Math.Max(0, Array.FindIndex(Choices, c => c.Code == Choice)));
+        pick.ItemSelected += i => { if (Choices[i].Code != Choice) LanguageChosen?.Invoke(Choices[i].Code); };
+        row.AddChild(pick);
+        return row;
+    }
+
+    /// <summary>Raised when the player picks another language (the mod then builds a new window).</summary>
+    public event Action<string>? LanguageChosen;
+
+    /// <summary>The page on show (to open the new window on the same page).</summary>
+    public int CurrentPage => Math.Max(0, _sections.FindIndex(s => s.Page.Visible));
+
+    /// <summary>Takes the window out of the game for good.</summary>
+    public void Dispose()
+    {
+        Engine.Changed -= Repaint;
+        _giveItem.Close();
+        _autoSellAdd.Close();
+        _layer.QueueFree();
     }
 
     /// <summary>Asks for a second click, so one stray click cannot wipe every setting.</summary>
     Button ResetAllButton()
     {
-        const string idle = "Reset all settings";
+        string idle = T("Reset all settings");
         var button = new Button { Text = idle };
         bool armed = false;
         button.Pressed += () =>
@@ -302,15 +353,15 @@ public sealed class Menu
             if (!armed)
             {
                 armed = true;
-                button.Text = "Click again to confirm";
-                _tree.CreateTimer(3).Timeout += () => { armed = false; button.Text = idle; };
+                button.Text = T("Click again to confirm");
+                _tree.CreateTimer(3).Timeout += () => { armed = false; if (GodotObject.IsInstanceValid(button)) button.Text = idle; };
                 return;
             }
             armed = false;
             button.Text = idle;
             Engine.ResetAll();
             Refresh();
-            Say("All settings are back to normal.");
+            Say(T("All settings are back to normal."));
         };
         return button;
     }
@@ -330,14 +381,14 @@ public sealed class Menu
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
-        row.AddChild(new Label { Text = name, CustomMinimumSize = new Vector2(ToolNameWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        row.AddChild(new Label { Text = T(name), CustomMinimumSize = new Vector2(ToolNameWidth, 0), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         foreach (Control c in controls) row.AddChild(c);
         return Card(row);
     }
 
     static Label Heading(string text)
     {
-        Label label = Style.Label(text.ToUpperInvariant(), Style.Muted, 12);
+        Label label = Style.Label(T(text).ToUpperInvariant(), Style.Muted, 12);
         label.CustomMinimumSize = new Vector2(0, 24);
         label.VerticalAlignment = VerticalAlignment.Bottom;
         return label;
@@ -354,15 +405,15 @@ public sealed class Menu
     }
 
     static string Shown(Feature f, double value) =>
-        value == f.Off ? "back to normal"
-        : f.Kind == FeatureKind.Toggle ? "ON"
+        value == f.Off ? T("back to normal")
+        : f.Kind == FeatureKind.Toggle ? T("ON")
         : value.ToString("0.##") + f.Suffix.Trim();
 
     /// <summary>Hands a value to the game right away and says so in the status line.</summary>
     void Commit(Feature f, double value)
     {
         Engine.SetValue(f.Id, value);
-        Say($"{f.En}: {Shown(f, Engine.GetValue(f.Id))}");
+        Say($"{Name(f)}: {Shown(f, Engine.GetValue(f.Id))}");
     }
 
     // ---------------------------------------------------------------- one setting per row
@@ -375,10 +426,11 @@ public sealed class Menu
 
         var names = new VBoxContainer { CustomMinimumSize = new Vector2(NameWidth, 0), SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         names.AddThemeConstantOverride("separation", 0);
-        Label name = Style.Label(f.En);
+        Label name = Style.Label(Name(f));
         names.AddChild(name);
         if (Features.Hints.TryGetValue(f.Id, out string? hint))
         {
+            hint = T(hint);
             Label small = Style.Label(hint, Style.Muted, 12);
             small.ClipText = true;
             small.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
@@ -399,7 +451,7 @@ public sealed class Menu
         if (f.Kind == FeatureKind.Toggle)
         {
             // A plain ON/OFF switch: the game's own check box art is far larger than a text row.
-            var toggle = new Button { ToggleMode = true, Text = "OFF", CustomMinimumSize = new Vector2(ValueWidth, 0) };
+            var toggle = new Button { ToggleMode = true, Text = T("OFF"), CustomMinimumSize = new Vector2(ValueWidth, 0) };
             StyleBoxFlat on = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
             toggle.AddThemeStyleboxOverride("pressed", on);
             toggle.AddThemeStyleboxOverride("hover_pressed", on);
@@ -407,10 +459,10 @@ public sealed class Menu
             toggle.AddThemeColorOverride("font_hover_pressed_color", Style.Good);
             toggle.Toggled += pressed =>
             {
-                toggle.Text = pressed ? "ON" : "OFF";
+                toggle.Text = pressed ? T("ON") : T("OFF");
                 if (!_syncing) Commit(f, pressed ? 1 : 0);
             };
-            _refreshers.Add(() => { toggle.ButtonPressed = Engine.GetValue(f.Id) >= 0.5; toggle.Text = toggle.ButtonPressed ? "ON" : "OFF"; });
+            _refreshers.Add(() => { toggle.ButtonPressed = Engine.GetValue(f.Id) >= 0.5; toggle.Text = toggle.ButtonPressed ? T("ON") : T("OFF"); });
             row.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
             row.AddChild(toggle);
             row.AddChild(new Control { CustomMinimumSize = new Vector2(ResetWidth, 0) });
@@ -424,7 +476,7 @@ public sealed class Menu
             ExpEdit = f.Min >= 1 && f.Max >= 100   // wide "x1..x1000" ranges: fine control at the low end
         };
         SpinBox spin = MakeSpin(f.Min, f.Max, f.Step, f.Off, f.Suffix);
-        var reset = new Button { Text = "Reset", CustomMinimumSize = new Vector2(ResetWidth, 0), TooltipText = "Back to the game's normal value" };
+        var reset = new Button { Text = T("Reset"), CustomMinimumSize = new Vector2(ResetWidth, 0), TooltipText = T("Back to the game's normal value") };
         reset.AddThemeFontSizeOverride("font_size", 12);
 
         void Put(double v)
@@ -475,7 +527,7 @@ public sealed class Menu
 
     void BuildPerSkill(VBoxContainer page)
     {
-        Label intro = Style.Label("Each skill's own XP multiplier and action speed. These stack with the settings on the XP and Speed pages.", Style.Muted, 12);
+        Label intro = Style.Label(T("Each skill's own XP multiplier and action speed. These stack with the settings on the XP and Speed pages."), Style.Muted, 12);
         page.AddChild(intro);
 
         page.AddChild(BulkRow());
@@ -490,15 +542,15 @@ public sealed class Menu
             var grid = new GridContainer { Columns = 3, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
             grid.AddThemeConstantOverride("h_separation", 10);
             grid.AddThemeConstantOverride("v_separation", 3);
-            Label skillHead = Style.Label("SKILL", Style.Muted, 12);
+            Label skillHead = Style.Label(T("SKILL"), Style.Muted, 12);
             skillHead.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
             grid.AddChild(skillHead);
-            grid.AddChild(Style.Label("XP", Style.Muted, 12));
-            grid.AddChild(Style.Label("SPEED", Style.Muted, 12));
+            grid.AddChild(Style.Label(T("XP"), Style.Muted, 12));
+            grid.AddChild(Style.Label(T("SPEED"), Style.Muted, 12));
 
             foreach (string skill in part)
             {
-                Label name = Style.Label(skill);
+                Label name = Style.Label(Lang.Skill(skill));
                 name.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
                 grid.AddChild(name);
                 var mine = new List<Feature>();
@@ -522,9 +574,9 @@ public sealed class Menu
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 10);
-        Label title = Style.Label("All skills at once");
+        Label title = Style.Label(T("All skills at once"));
         title.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
-        title.TooltipText = "Writes one value into every skill of the table below. XP and speed are set separately.";
+        title.TooltipText = T("Writes one value into every skill of the table below. XP and speed are set separately.");
         title.MouseFilter = Control.MouseFilterEnum.Pass;
         row.AddChild(title);
 
@@ -532,13 +584,13 @@ public sealed class Menu
         {
             List<string> ids = Features.All.Where(f => f.Column == column).Select(f => f.Id).ToList();
             SpinBox spin = MakeSpin(1, max, 1, 2, "x", 104);
-            row.AddChild(Style.Label(name, Style.Muted));
+            row.AddChild(Style.Label(T(name), Style.Muted));
             row.AddChild(spin);
             row.AddChild(MakeButton("Apply to all", () =>
             {
                 Engine.SetValues(ids, spin.Value);
                 Refresh();
-                Say(spin.Value == 1 ? $"{name}: back to normal for all {ids.Count} skills" : $"{name}: {spin.Value:0.##}x for all {ids.Count} skills");
+                Say(spin.Value == 1 ? F("{0}: back to normal for all {1} skills", T(name), ids.Count) : F("{0}: {1}x for all {2} skills", T(name), spin.Value.ToString("0.##"), ids.Count));
             }));
         }
         Add("XP", "xp", 1000);
@@ -554,21 +606,21 @@ public sealed class Menu
 
     void BuildLoot(VBoxContainer page)
     {
-        Label intro = Style.Label(
+        Label intro = Style.Label(T(
             "Choose what happens to items that monsters and dungeons drop. Only the dropped amount is sold or destroyed; " +
-            "what is already in your bank is never touched. Double-click an item to step through Keep, Sell and Destroy.", Style.Muted, 12);
+            "what is already in your bank is never touched. Double-click an item to step through Keep, Sell and Destroy."), Style.Muted, 12);
         intro.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         intro.CustomMinimumSize = new Vector2(400, 0);
         page.AddChild(intro);
 
         var filters = new HBoxContainer();
         filters.AddThemeConstantOverride("separation", 10);
-        _lootSearch = new LineEdit { PlaceholderText = "Search drops...", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+        _lootSearch = new LineEdit { PlaceholderText = T("Search drops..."), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
         _lootSearch.TextChanged += _ => RefreshLoot();
         _lootShow = new OptionButton { CustomMinimumSize = new Vector2(230, 0) };
-        _lootShow.AddItem("All drops");
-        _lootShow.AddItem("Drops of the current monster");
-        _lootShow.AddItem("Only items with a rule");
+        _lootShow.AddItem(T("All drops"));
+        _lootShow.AddItem(T("Drops of the current monster"));
+        _lootShow.AddItem(T("Only items with a rule"));
         _lootShow.ItemSelected += _ => RefreshLoot();
         filters.AddChild(_lootSearch);
         filters.AddChild(_lootShow);
@@ -579,8 +631,8 @@ public sealed class Menu
             Columns = 2, HideRoot = true, SelectMode = Tree.SelectModeEnum.Multi, ColumnTitlesVisible = true,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 200)
         };
-        _lootTree.SetColumnTitle(0, "Item");
-        _lootTree.SetColumnTitle(1, "When dropped");
+        _lootTree.SetColumnTitle(0, T("Item"));
+        _lootTree.SetColumnTitle(1, T("When dropped"));
         _lootTree.SetColumnTitleAlignment(0, HorizontalAlignment.Left);
         _lootTree.SetColumnTitleAlignment(1, HorizontalAlignment.Left);
         _lootTree.SetColumnExpand(0, true);
@@ -597,7 +649,7 @@ public sealed class Menu
 
         var actions = new HBoxContainer();
         actions.AddThemeConstantOverride("separation", 10);
-        actions.AddChild(Style.Label("Selected items:", Style.Muted));
+        actions.AddChild(Style.Label(T("Selected items:"), Style.Muted));
         actions.AddChild(MakeButton("Keep", () => SetLootRule(SelectedLoot(), LootRule.Keep)));
         actions.AddChild(MakeButton("Sell when dropped", () => SetLootRule(SelectedLoot(), LootRule.Sell)));
         actions.AddChild(MakeButton("Destroy when dropped", () => SetLootRule(SelectedLoot(), LootRule.Destroy)));
@@ -607,7 +659,7 @@ public sealed class Menu
             LootFilter.Clear();
             RefreshLoot();
             Repaint();
-            Say("Loot filter: every drop is kept again.");
+            Say(T("Loot filter: every drop is kept again."));
         }));
         page.AddChild(actions);
 
@@ -625,12 +677,12 @@ public sealed class Menu
 
     void SetLootRule(IReadOnlyCollection<Item> items, LootRule rule)
     {
-        if (items.Count == 0) { Say("Select one or more items in the list first."); return; }
+        if (items.Count == 0) { Say(T("Select one or more items in the list first.")); return; }
         LootFilter.Set(items, rule);
         RefreshLoot(items);
         Repaint();
-        string what = items.Count == 1 ? Actions.ItemName(items.First()) : $"{items.Count} items";
-        Say($"Loot filter: {what} -> {RuleNames[(int)rule]}");
+        string what = items.Count == 1 ? Actions.ItemName(items.First()) : F("{0} items", items.Count);
+        Say(F("Loot filter: {0} -> {1}", what, T(RuleNames[(int)rule])));
     }
 
     void RefreshLoot() => RefreshLoot(null);
@@ -644,7 +696,7 @@ public sealed class Menu
         {
             var (enemy, drops) = LootFilter.CurrentEnemy(_game);
             list = list.Where(drops.Contains);
-            note = enemy == "" ? "No monster is selected in combat.  " : $"Showing the drops of {enemy}.  ";
+            note = (enemy == "" ? T("No monster is selected in combat.") : F("Showing the drops of {0}.", enemy)) + "  ";
         }
         else if (_lootShow.Selected == 2) list = list.Where(i => LootFilter.Get(i) != LootRule.Keep);
         string text = _lootSearch.Text.Trim();
@@ -662,7 +714,7 @@ public sealed class Menu
             row.SetIcon(0, item.Icon);
             row.SetIconMaxWidth(0, 22);
             row.SetMetadata(0, i);
-            row.SetText(1, RuleNames[rule]);
+            row.SetText(1, T(RuleNames[rule]));
             row.SetCustomColor(1, RuleColors[rule]);
             row.SetSelectable(1, false);
             if (keepSelected != null && keepSelected.Contains(item)) row.Select(0);
@@ -674,27 +726,27 @@ public sealed class Menu
     string _lootNote = "";
 
     void UpdateLootStats() =>
-        _lootStats.Text = $"{_lootNote}{_lootShown.Count} of {_droppable.Count} items shown  |  {LootFilter.Count} rule(s)  |  " +
-                          $"since this character was opened: {LootFilter.Sold:N0} sold, {LootFilter.Destroyed:N0} destroyed";
+        _lootStats.Text = _lootNote + F("{0} of {1} items shown  |  {2} rule(s)  |  since this character was opened: {3:N0} sold, {4:N0} destroyed",
+                                        _lootShown.Count, _droppable.Count, LootFilter.Count, LootFilter.Sold, LootFilter.Destroyed);
 
     // ---------------------------------------------------------------- Materials
 
     void BuildMaterials(VBoxContainer page)
     {
-        Label intro = Style.Label(
+        Label intro = Style.Label(T(
             "Pick the materials you no longer want to need. A material set to \"Not needed\" is taken out of every recipe and item upgrade " +
-            "that asks for it: bars without coal, potions without vials. Double-click a material to switch it.", Style.Muted, 12);
+            "that asks for it: bars without coal, potions without vials. Double-click a material to switch it."), Style.Muted, 12);
         intro.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         intro.CustomMinimumSize = new Vector2(400, 0);
         page.AddChild(intro);
 
         var filters = new HBoxContainer();
         filters.AddThemeConstantOverride("separation", 10);
-        _matSearch = new LineEdit { PlaceholderText = "Search materials...", SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
+        _matSearch = new LineEdit { PlaceholderText = T("Search materials..."), SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, ClearButtonEnabled = true };
         _matSearch.TextChanged += _ => RefreshMaterials();
         _matShow = new OptionButton { CustomMinimumSize = new Vector2(230, 0) };
-        _matShow.AddItem("All materials, most used first");
-        _matShow.AddItem("Only the ones not needed");
+        _matShow.AddItem(T("All materials, most used first"));
+        _matShow.AddItem(T("Only the ones not needed"));
         _matShow.ItemSelected += _ => RefreshMaterials();
         filters.AddChild(_matSearch);
         filters.AddChild(_matShow);
@@ -705,9 +757,9 @@ public sealed class Menu
             Columns = 3, HideRoot = true, SelectMode = Tree.SelectModeEnum.Multi, ColumnTitlesVisible = true,
             SizeFlagsVertical = Control.SizeFlags.ExpandFill, CustomMinimumSize = new Vector2(0, 200)
         };
-        _matTree.SetColumnTitle(0, "Material");
-        _matTree.SetColumnTitle(1, "Asked for by");
-        _matTree.SetColumnTitle(2, "In recipes");
+        _matTree.SetColumnTitle(0, T("Material"));
+        _matTree.SetColumnTitle(1, T("Asked for by"));
+        _matTree.SetColumnTitle(2, T("In recipes"));
         for (int column = 0; column < 3; column++) _matTree.SetColumnTitleAlignment(column, HorizontalAlignment.Left);
         _matTree.SetColumnExpand(0, true);
         _matTree.SetColumnExpand(1, false);
@@ -725,7 +777,7 @@ public sealed class Menu
 
         var actions = new HBoxContainer();
         actions.AddThemeConstantOverride("separation", 10);
-        actions.AddChild(Style.Label("Selected materials:", Style.Muted));
+        actions.AddChild(Style.Label(T("Selected materials:"), Style.Muted));
         actions.AddChild(MakeButton("Not needed", () => SetMaterials(SelectedMaterials(), true)));
         actions.AddChild(MakeButton("Needed again", () => SetMaterials(SelectedMaterials(), false)));
         actions.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
@@ -734,7 +786,7 @@ public sealed class Menu
             Unneeded.Clear();
             RefreshMaterials();
             Repaint();
-            Say("Materials: every recipe asks for all of its materials again.");
+            Say(T("Materials: every recipe asks for all of its materials again."));
         }));
         page.AddChild(actions);
 
@@ -764,12 +816,12 @@ public sealed class Menu
 
     void SetMaterials(IReadOnlyCollection<Item> items, bool removed)
     {
-        if (items.Count == 0) { Say("Select one or more materials in the list first."); return; }
+        if (items.Count == 0) { Say(T("Select one or more materials in the list first.")); return; }
         Unneeded.Set(items, removed);
         RefreshMaterials(items);
         Repaint();
-        string what = items.Count == 1 ? Actions.ItemName(items.First()) : $"{items.Count} materials";
-        Say(removed ? $"Materials: {what} -> no longer needed in any recipe." : $"Materials: {what} -> needed again.");
+        string what = items.Count == 1 ? Actions.ItemName(items.First()) : F("{0} materials", items.Count);
+        Say(removed ? F("Materials: {0} -> no longer needed in any recipe.", what) : F("Materials: {0} -> needed again.", what));
     }
 
     void RefreshMaterials() => RefreshMaterials(null);
@@ -794,15 +846,15 @@ public sealed class Menu
             row.SetIcon(0, item.Icon);
             row.SetIconMaxWidth(0, 22);
             row.SetMetadata(0, i);
-            row.SetText(1, uses == 1 ? "1 recipe" : $"{uses} recipes");
+            row.SetText(1, uses == 1 ? T("1 recipe") : F("{0} recipes", uses));
             row.SetCustomColor(1, Style.Muted);
             row.SetSelectable(1, false);
-            row.SetText(2, removed ? "Not needed" : "Needed");
+            row.SetText(2, removed ? T("Not needed") : T("Needed"));
             row.SetCustomColor(2, removed ? Style.Good : Style.Muted);
             row.SetSelectable(2, false);
             if (keepSelected != null && keepSelected.Contains(item)) row.Select(0);
         }
-        _matStats.Text = $"{_matShown.Count} of {Unneeded.Materials.Count} materials shown  |  {Unneeded.Count} not needed";
+        _matStats.Text = F("{0} of {1} materials shown  |  {2} not needed", _matShown.Count, Unneeded.Materials.Count, Unneeded.Count);
     }
 
     // ---------------------------------------------------------------- Tools
@@ -820,30 +872,30 @@ public sealed class Menu
             Say($"+{currencyAmount.Value:N0} {c.DisplayName.Text}");
         })));
 
-        _giveItem = new PickList<Item>("Choose an item", s_theme);
+        _giveItem = new PickList<Item>(T("Choose an item"), _theme);
         _giveItem.Control.CustomMinimumSize = new Vector2(330, 0);
-        _giveItem.Control.TooltipText = "Click and type to search. Items are grouped by the bank's own kinds.";
+        _giveItem.Control.TooltipText = T("Click and type to search. Items are grouped by the bank's own kinds.");
         SpinBox itemAmount = MakeSpin(1, int.MaxValue, 1, 100);
         page.AddChild(ToolRow("Give item", _giveItem.Control, itemAmount, MakeButton("Add", () =>
         {
-            if (_game == null || _giveItem.Selected is not { } chosen) { Say("Choose an item first."); return; }
+            if (_game == null || _giveItem.Selected is not { } chosen) { Say(T("Choose an item first.")); return; }
             Actions.AddItem(_game, chosen.Value, (int)itemAmount.Value);
             Say($"+{itemAmount.Value:N0} {Actions.ItemName(chosen.Value)}");
         })));
 
         // Auto-sell list: its own item list, so it does not depend on the row above.
-        _autoSellAdd = new PickList<Item>("Choose an item to sell", s_theme);
+        _autoSellAdd = new PickList<Item>(T("Choose an item to sell"), _theme);
         _autoSellAdd.Control.CustomMinimumSize = new Vector2(260, 0);
-        _autoSellPick = new OptionButton { CustomMinimumSize = new Vector2(200, 0), FitToLongestItem = false, ClipText = true, TooltipText = "The items being sold now." };
+        _autoSellPick = new OptionButton { CustomMinimumSize = new Vector2(200, 0), FitToLongestItem = false, ClipText = true, TooltipText = T("The items being sold now.") };
         PanelContainer autoSell = ToolRow("Auto-sell from bank",
             _autoSellAdd.Control,
             MakeButton("Add", () =>
             {
-                if (_autoSellAdd.Selected is not { } chosen) { Say("Choose the item to sell first."); return; }
+                if (_autoSellAdd.Selected is not { } chosen) { Say(T("Choose the item to sell first.")); return; }
                 AutoSell.Add(chosen.Value);
                 RefreshAutoSell();
                 Repaint();
-                Say($"Auto-sell: {Actions.ItemName(chosen.Value)} added.");
+                Say(F("Auto-sell: {0} added.", Actions.ItemName(chosen.Value)));
             }),
             _autoSellPick,
             MakeButton("Remove", () =>
@@ -853,7 +905,7 @@ public sealed class Menu
                 RefreshAutoSell();
                 Repaint();
             }));
-        autoSell.TooltipText = "Items on this list are sold from the bank about once a second, wherever they came from.";
+        autoSell.TooltipText = T("Items on this list are sold from the bank about once a second, wherever they came from.");
         page.AddChild(autoSell);
 
         page.AddChild(Heading("Levels"));
@@ -864,20 +916,20 @@ public sealed class Menu
             if (_game == null || _skillPick.Selected < 0) return;
             var skill = Actions.Skills(_game)[_skillPick.Selected];
             Actions.SetLevel(skill, (int)level.Value);
-            Say($"{skill.DisplayName.Text}: level {skill.Experience.Level}");
+            Say(F("{0}: level {1}", skill.DisplayName.Text, skill.Experience.Level));
         })));
         page.AddChild(ToolRow("All skills",
             MakeButton("Set all to the level above", () =>
             {
                 if (_game == null) return;
                 Actions.SetAllLevels(_game, (int)level.Value);
-                Say("All skills set.");
+                Say(T("All skills set."));
             }),
             MakeButton("Max all", () =>
             {
                 if (_game == null) return;
                 Actions.MaxAllLevels(_game);
-                Say("All skills are at their maximum level.");
+                Say(T("All skills are at their maximum level."));
             })));
 
         page.AddChild(Heading("Time and quests"));
@@ -892,7 +944,7 @@ public sealed class Menu
         {
             if (_game == null) return;
             Actions.CompleteAllQuests(_game);
-            Say("All quests completed.");
+            Say(T("All quests completed."));
         })));
     }
 

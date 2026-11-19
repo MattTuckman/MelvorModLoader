@@ -19,17 +19,18 @@ internal static class ItemPicks
     public static List<PickEntry<Item>> For(Game game, IEnumerable<Item> items)
     {
         BankEntity? bank = game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? b) ? b as BankEntity : null;
-        var list = new List<(string Group, PickEntry<Item> Entry)>();
+        // (Words go through PickListText: this file is also linked into mods without the Cheat Menu's languages.)
+        var list = new List<(string Group, bool Other, PickEntry<Item> Entry)>();
         foreach (Item item in items)
         {
             ItemBankTag? main = item.BankTags.FirstOrDefault(t => t.IsProduct) ?? item.BankTags.FirstOrDefault();
-            string group = main?.BankTag.DisplayName.Text ?? "Other";
+            string group = main?.BankTag.DisplayName.Text ?? PickListText.T("Other");
             int owned = bank?.Inventory.GetQuantity(item) ?? 0;
             string name = item.DisplayName.GetPluralText(1);
-            list.Add((group, new PickEntry<Item>(item.Id, name, item, group, "", item.Icon, main?.BankTag.Icon,
-                owned > 0 ? $"{owned:N0} in bank" : "", Keywords: string.Join(" ", item.BankTags.Select(t => t.BankTag.DisplayName.Text)))));
+            list.Add((group, main == null, new PickEntry<Item>(item.Id, name, item, group, "", item.Icon, main?.BankTag.Icon,
+                owned > 0 ? PickListText.F("{0:N0} in bank", owned) : "", Keywords: string.Join(" ", item.BankTags.Select(t => t.BankTag.DisplayName.Text)))));
         }
-        return list.OrderBy(x => x.Group == "Other" ? 1 : 0).ThenBy(x => x.Group, StringComparer.OrdinalIgnoreCase)
+        return list.OrderBy(x => x.Other ? 1 : 0).ThenBy(x => x.Group, StringComparer.OrdinalIgnoreCase)
             .ThenBy(x => x.Entry.Text, StringComparer.OrdinalIgnoreCase).Select(x => x.Entry).ToList();
     }
 }

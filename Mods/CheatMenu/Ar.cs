@@ -1,0 +1,215 @@
+using System.Collections.Generic;
+
+namespace CheatMenu;
+
+/// <summary>
+/// Arabic (ar), Modern Standard Arabic. Written right to left: the window is mirrored when it is chosen, and arrows
+/// point left. Names the code inserts (items, skills from the game, often in English) are wrapped in Unicode
+/// isolates (⁨ ... ⁩) so a left-to-right name does not reorder the Arabic around it. Counts are written as
+/// "label: number", which stays correct for every number (Arabic plurals change with 1, 2, 3-10 and 11+).
+/// The key is the English text exactly as the code uses it.
+/// </summary>
+static class Ar
+{
+    public static readonly Dictionary<string, string> Skills = new()
+    {
+        ["Woodcutting"] = "الاحتطاب", ["Mining"] = "التعدين", ["Fishing"] = "صيد السمك", ["Firemaking"] = "إشعال النار",
+        ["Cooking"] = "الطبخ", ["Smithing"] = "الحدادة", ["Crafting"] = "الحِرف", ["Runecrafting"] = "صناعة الرونات",
+        ["Fletching"] = "صناعة السهام", ["Beastcrafting"] = "حرفة الوحوش", ["Herblore"] = "علم الأعشاب",
+        ["Thieving"] = "السرقة", ["Agility"] = "الرشاقة", ["Astrology"] = "التنجيم", ["Hunting"] = "القنص",
+        ["Farming"] = "الزراعة", ["Ranching"] = "تربية المواشي", ["Attack"] = "الهجوم", ["Strength"] = "القوة",
+        ["Defence"] = "الدفاع", ["Hitpoints"] = "نقاط الحياة", ["Ranged"] = "القتال عن بُعد", ["Magic"] = "السحر",
+        ["Prayer"] = "الصلاة", ["Slayer"] = "صائد الوحوش",
+    };
+
+    public static readonly Dictionary<string, string> Text = new()
+    {
+        // ---- settings
+        ["Extra bank slots"] = "خانات إضافية في المخزن",
+        ["Sell price"] = "سعر البيع",
+        ["Bone burying reward"] = "مكافأة دفن العظام",
+        ["XP multiplier"] = "مضاعف الخبرة",
+        ["Game speed"] = "سرعة اللعبة",
+        ["Skill action speed"] = "سرعة أفعال المهارات",
+        ["Monster respawn speed"] = "سرعة عودة ظهور الوحوش",
+        ["Extra offline time limit"] = "مدة إضافية للتقدم دون اتصال",
+        ["Double product chance"] = "فرصة مضاعفة الناتج",
+        ["Keep materials chance"] = "فرصة الاحتفاظ بالمواد",
+        ["Product quantity"] = "كمية الناتج",
+        ["Extra products per action"] = "نواتج إضافية لكل فعل",
+        ["Material cost reduction"] = "تخفيض تكلفة المواد",
+        ["Woodcutting: instant cut chance"] = "الاحتطاب: فرصة القطع الفوري",
+        ["Thieving: never stunned"] = "السرقة: مناعة ضد الإذهال",
+        ["Thieving: no damage when caught"] = "السرقة: بلا ضرر عند الإمساك بك",
+        ["Agility: no damage from a failed obstacle"] = "الرشاقة: بلا ضرر عند الفشل في عقبة",
+        ["Agility: keep the reward of a failed obstacle"] = "الرشاقة: الاحتفاظ بالمكافأة عند الفشل",
+        ["Astrology: knowledge per study"] = "التنجيم: المعرفة لكل دراسة",
+        ["God mode"] = "وضع الحصانة",
+        ["Damage dealt"] = "الضرر المُلحَق",
+        ["Attack speed"] = "سرعة الهجوم",
+        ["Accuracy"] = "الدقة",
+        ["Maximum hitpoints"] = "أقصى نقاط حياة",
+        ["No death penalty"] = "بلا عقوبة موت",
+        ["Double loot chance"] = "فرصة مضاعفة الغنائم",
+        ["Keep supplies chance"] = "فرصة الاحتفاظ بالمؤن",
+        ["Slayer coin reward"] = "مكافأة عملات صائد الوحوش",
+        ["Cheap slayer task rerolls"] = "تغيير مهمة صائد الوحوش بعملة واحدة",
+
+        // ---- the line under each setting
+        ["Adds bank slots on top of the ones you own."] = "يضيف خانات إلى المخزن فوق ما تملكه.",
+        ["Multiplies what you get for selling items."] = "يضاعف ما تحصل عليه من بيع الأغراض.",
+        ["Multiplies what you get for burying bones."] = "يضاعف ما تحصل عليه من دفن العظام.",
+        ["Multiplies all XP you gain, in every skill."] = "يضاعف كل الخبرة التي تكسبها في كل المهارات.",
+        ["Runs the whole game faster: skills, combat and timers."] = "يسرّع اللعبة كلها: المهارات والقتال والمؤقتات.",
+        ["Shortens every skill action. Combat is not affected. Multiplies with a skill's own speed on the Per skill page (x2 here and x4 there is x8); together they stop at x20."]
+            = "يقلّل مدة أفعال المهارات دون التأثير في القتال. يُضرب في سرعة كل مهارة في صفحة «لكل مهارة» (×2 هنا و×4 هناك تساوي ×8)، بحد أقصى مشترك قدره ×20.",
+        ["Monsters appear sooner after a kill."] = "تظهر الوحوش أسرع بعد قتلها.",
+        ["Raises the limit of offline progress you can collect."] = "يرفع حد التقدم دون اتصال الذي يمكنك جمعه.",
+        ["Chance that a skill action gives double products."] = "فرصة أن يعطي فعل المهارة ضعف المنتجات.",
+        ["Chance that an action does not use up its materials."] = "فرصة ألا يستهلك الفعل مواده.",
+        ["Multiplies how many items an action produces."] = "يضاعف عدد الأغراض التي ينتجها الفعل.",
+        ["Adds this many extra items to every action."] = "يضيف هذا العدد من الأغراض الإضافية إلى كل فعل.",
+        ["Recipes need fewer materials."] = "تحتاج الوصفات إلى مواد أقل.",
+        ["Chance to fell a tree with a single hit."] = "فرصة إسقاط شجرة بضربة واحدة.",
+        ["A failed pickpocket never stuns you (it can still hurt: see the next setting)."] = "فشل النشل لا يسبب لك الإذهال، لكنك قد تتضرر؛ انظر الإعداد التالي.",
+        ["A failed pickpocket no longer hurts you (God mode only covers combat)."] = "فشل النشل لم يعد يؤذيك (وضع الحصانة يشمل القتال فقط).",
+        ["Failing an agility obstacle no longer hurts you (God mode only covers combat)."] = "الفشل في عقبة رشاقة لم يعد يؤذيك (وضع الحصانة يشمل القتال فقط).",
+        ["Failing an agility obstacle no longer loses the item reward it was carrying."] = "الفشل في عقبة رشاقة لم يعد يُفقدك مكافأتها من الأغراض.",
+        ["Multiplies the Knowledge each study adds to a constellation. Astrology XP is a separate setting."] = "يضاعف المعرفة التي تضيفها كل دراسة إلى الكوكبة. خبرة التنجيم لها إعداد مستقل.",
+        ["You take no damage in combat."] = "لا تتلقى أي ضرر في القتال.",
+        ["Multiplies all damage you deal."] = "يضاعف كل الضرر الذي تُلحقه.",
+        ["You attack this many times faster."] = "تهاجم أسرع بهذا العدد من المرات.",
+        ["Multiplies your accuracy rating."] = "يضاعف تقييم دقتك.",
+        ["Multiplies your maximum hitpoints."] = "يضاعف أقصى نقاط حياتك.",
+        ["Dying no longer costs you an item."] = "الموت لم يعد يكلّفك غرضًا.",
+        ["Chance that a kill drops double items, coins and bones."] = "فرصة أن يُسقط الوحش المقتول ضعف الأغراض والعملات والعظام.",
+        ["Chance not to use up food, ammo, runes or prayer points."] = "فرصة عدم استهلاك الطعام أو الذخيرة أو الرونات أو نقاط الصلاة.",
+        ["Multiplies the slayer coins earned per task kill."] = "يضاعف عملات صائد الوحوش المكتسبة عن كل وحش يُقتل في المهمة.",
+        ["Changing your slayer task costs 1 coin (the game's minimum)."] = "تغيير مهمة صائد الوحوش يكلّف عملة واحدة (الحد الأدنى في اللعبة).",
+
+        // ---- the window
+        ["CHEAT MENU"] = "قائمة الغش",
+        ["Close  (F8)"] = "إغلاق  (F8)",
+        ["Auto"] = "تلقائي",
+        ["Language"] = "اللغة",
+        ["Bank"] = "المخزن",
+        ["XP"] = "الخبرة",
+        ["Speed"] = "السرعة",
+        ["Skills"] = "المهارات",
+        ["Combat"] = "القتال",
+        ["Per skill"] = "لكل مهارة",
+        ["Loot filter"] = "تصفية الغنائم",
+        ["Materials"] = "المواد",
+        ["Tools"] = "الأدوات",
+        ["Changes apply at once and are remembered per character"] = "تُطبَّق التغييرات فورًا وتُحفَظ لكل شخصية",
+        ["Reset all settings"] = "إعادة ضبط كل الإعدادات",
+        ["Click again to confirm"] = "انقر مرة أخرى للتأكيد",
+        ["All settings are back to normal."] = "عادت كل الإعدادات إلى وضعها الطبيعي.",
+        ["Reset"] = "إرجاع",
+        ["Back to the game's normal value"] = "العودة إلى القيمة الطبيعية في اللعبة",
+        ["back to normal"] = "القيمة الطبيعية",
+        ["ON"] = "تشغيل",
+        ["OFF"] = "إيقاف",
+
+        // ---- per skill
+        ["Each skill's own XP multiplier and action speed. These stack with the settings on the XP and Speed pages."] = "مضاعف الخبرة وسرعة الأفعال لكل مهارة، ويعملان مع إعدادات صفحتي الخبرة والسرعة.",
+        ["SKILL"] = "المهارة",
+        ["SPEED"] = "السرعة",
+        ["All skills at once"] = "كل المهارات دفعة واحدة",
+        ["Writes one value into every skill of the table below. XP and speed are set separately."] = "يكتب قيمة واحدة في كل مهارات الجدول أدناه. تُضبط الخبرة والسرعة كلٌّ على حدة.",
+        ["Apply to all"] = "تطبيق على الكل",
+        ["{0}: back to normal for all {1} skills"] = "{0}: القيمة الطبيعية لكل المهارات ({1})",
+        ["{0}: {1}x for all {2} skills"] = "{0}: ⁨{1}x⁩ لكل المهارات ({2})",
+        ["{0} XP"] = "خبرة {0}",
+        ["{0} speed"] = "سرعة {0}",
+
+        // ---- loot filter
+        ["Choose what happens to items that monsters and dungeons drop. Only the dropped amount is sold or destroyed; what is already in your bank is never touched. Double-click an item to step through Keep, Sell and Destroy."]
+            = "اختر ما يحدث للأغراض التي تُسقطها الوحوش والزنزانات. تُباع أو تُتلف الكمية التي سقطت فقط؛ وما في مخزنك لا يُمس أبدًا. انقر نقرًا مزدوجًا على غرض للتنقل بين احتفاظ وبيع وإتلاف.",
+        ["Search drops..."] = "ابحث في الغنائم...",
+        ["All drops"] = "كل الغنائم",
+        ["Drops of the current monster"] = "غنائم الوحش الحالي",
+        ["Only items with a rule"] = "الأغراض التي لها قاعدة فقط",
+        ["Item"] = "الغرض",
+        ["When dropped"] = "عند السقوط",
+        ["Selected items:"] = "الأغراض المحددة:",
+        ["Keep"] = "احتفاظ",
+        ["Sell"] = "بيع",
+        ["Destroy"] = "إتلاف",
+        ["Sell when dropped"] = "بيع عند السقوط",
+        ["Destroy when dropped"] = "إتلاف عند السقوط",
+        ["Remove all rules"] = "إزالة كل القواعد",
+        ["Loot filter: every drop is kept again."] = "تصفية الغنائم: يُحتفظ بكل الغنائم من جديد.",
+        ["Select one or more items in the list first."] = "حدّد غرضًا واحدًا أو أكثر في القائمة أولًا.",
+        ["{0} items"] = "عدد الأغراض: {0}",
+        ["Loot filter: {0} -> {1}"] = "تصفية الغنائم: ⁨{0}⁩ ← {1}",
+        ["No monster is selected in combat."] = "لم يُحدَّد أي وحش في القتال.",
+        ["Showing the drops of {0}."] = "عرض غنائم ⁨{0}⁩.",
+        ["{0} of {1} items shown  |  {2} rule(s)  |  since this character was opened: {3:N0} sold, {4:N0} destroyed"]
+            = "الأغراض: {0}/{1}  |  القواعد: {2}  |  منذ فتح الشخصية: المبيع: {3:N0}، المتلف: {4:N0}",
+
+        // ---- materials
+        ["Pick the materials you no longer want to need. A material set to \"Not needed\" is taken out of every recipe and item upgrade that asks for it: bars without coal, potions without vials. Double-click a material to switch it."]
+            = "اختر المواد التي تريد الاستغناء عنها. تُحذف المادة المحددة «غير مطلوبة» من متطلبات جميع الوصفات وترقيات الأغراض: سبائك دون فحم، وجرعات دون قوارير. انقر مرتين على المادة لتغيير حالتها.",
+        ["Search materials..."] = "ابحث في المواد...",
+        ["All materials, most used first"] = "المواد حسب عدد الوصفات",
+        ["Only the ones not needed"] = "غير المطلوبة فقط",
+        ["Material"] = "المادة",
+        ["Asked for by"] = "الوصفات",   // the column shows how many recipes ask for it
+        ["In recipes"] = "الحالة",       // the column shows Needed / Not needed
+        ["Selected materials:"] = "المواد المحددة:",
+        ["Not needed"] = "غير مطلوبة",
+        ["Needed again"] = "مطلوبة من جديد",
+        ["Everything needed again"] = "كل المواد مطلوبة من جديد",
+        ["Materials: every recipe asks for all of its materials again."] = "المواد: كل وصفة تطلب كل موادها من جديد.",
+        ["Select one or more materials in the list first."] = "حدّد مادة واحدة أو أكثر في القائمة أولًا.",
+        ["{0} materials"] = "عدد المواد: {0}",
+        ["Materials: {0} -> no longer needed in any recipe."] = "المواد: ⁨{0}⁩ ← لم تعد مطلوبة في أي وصفة.",
+        ["Materials: {0} -> needed again."] = "المواد: ⁨{0}⁩ ← مطلوبة من جديد.",
+        ["1 recipe"] = "وصفة واحدة",
+        ["{0} recipes"] = "الوصفات: {0}",
+        ["Needed"] = "مطلوبة",
+        ["{0} of {1} materials shown  |  {2} not needed"] = "المواد: {0}/{1}  |  غير المطلوبة: {2}",
+
+        // ---- tools
+        ["Money and items"] = "المال والأغراض",
+        ["Give currency"] = "منح عملة",
+        ["Add"] = "إضافة",
+        ["Choose an item"] = "اختر غرضًا",
+        ["Click and type to search. Items are grouped by the bank's own kinds."] = "انقر واكتب للبحث. الأغراض مجمّعة حسب أصناف المخزن.",
+        ["Give item"] = "منح غرض",
+        ["Choose an item first."] = "اختر غرضًا أولًا.",
+        ["Choose an item to sell"] = "اختر غرضًا للبيع",
+        ["The items being sold now."] = "الأغراض التي تُباع الآن.",
+        ["Auto-sell from bank"] = "بيع تلقائي من المخزن",
+        ["Choose the item to sell first."] = "اختر الغرض الذي تريد بيعه أولًا.",
+        ["Auto-sell: {0} added."] = "البيع التلقائي: تمت إضافة ⁨{0}⁩.",
+        ["Remove"] = "إزالة",
+        ["Items on this list are sold from the bank about once a second, wherever they came from."] = "تُباع أغراض هذه القائمة من المخزن مرة كل ثانية تقريبًا، أيًّا كان مصدرها.",
+        ["Levels"] = "المستويات",
+        ["Set skill level"] = "تعيين مستوى مهارة",
+        ["Set"] = "تعيين",
+        ["{0}: level {1}"] = "⁨{0}⁩: المستوى {1}",
+        ["All skills"] = "كل المهارات",
+        ["Set all to the level above"] = "تعيين الكل إلى المستوى أعلاه",
+        ["All skills set."] = "عُيّنت كل المهارات.",
+        ["Max all"] = "الكل إلى الحد الأقصى",
+        ["All skills are at their maximum level."] = "كل المهارات في أعلى مستوياتها.",
+        ["Time and quests"] = "الوقت والمهام",
+        ["Skip time (as if the game was closed)"] = "تخطي الوقت (كأن اللعبة كانت مغلقة)",
+        ["Run"] = "تنفيذ",
+        ["Quests"] = "المهام",
+        ["Complete all quests"] = "إكمال كل المهام",
+        ["All quests completed."] = "اكتملت كل المهام.",
+
+        // ---- the searchable lists
+        ["Type to search..."] = "اكتب للبحث...",
+        ["{0} to choose from"] = "الخيارات المتاحة: {0}",
+        ["No matches"] = "لا نتائج",
+        ["{0} of {1}"] = "{0} من {1}",
+        ["  (not available now)"] = "  (غير متاح الآن)",
+        ["This choice is not offered by the game right now."] = "اللعبة لا تقدّم هذا الخيار الآن.",
+        ["Other"] = "أخرى",
+        ["{0:N0} in bank"] = "في المخزن: {0:N0}",
+    };
+}

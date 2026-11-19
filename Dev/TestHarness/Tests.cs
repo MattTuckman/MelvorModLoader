@@ -3489,6 +3489,12 @@ static class Tests
             while (probe.MoveNext()) yield return probe.Current;
             yield break;
         }
+        if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "lang")
+        {
+            IEnumerator<int> langOnly = LangTests(game, ctx);
+            while (langOnly.MoveNext()) yield return langOnly.Current;
+            yield break;
+        }
         if (System.Environment.GetEnvironmentVariable("MML_ONLY") == "materials")
         {
             IEnumerator<int> materialsOnly = MaterialTests(game, ctx);
