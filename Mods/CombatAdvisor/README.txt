@@ -1,4 +1,4 @@
-COMBAT ADVISOR 0.1.0  -  for Melvor Idle 2 (requires Melvor Mod Loader)
+COMBAT ADVISOR 0.1.1  -  for Melvor Idle 2 (requires Melvor Mod Loader)
 =======================================================================
 
 Before you fight: is it safe to leave running, how fast you kill each monster, and
@@ -50,6 +50,17 @@ GOOD TO KNOW
 - Dungeons are not forecast yet (their wave cards get no line).
 - Checked against the game's own fights: kills, XP, damage taken, food and ammunition
   per kill match real fights within a few percent.
+
+IF A CARD SAYS "could not work this one out"
+The advisor met something it cannot work out for that monster with your setup. The
+other cards go on as normal. Please send MelvorModLoader.log from the game folder
+(it names the monster and the reason) so it can be fixed.
+
+CHANGES
+0.1.1  An error on one monster no longer stops the advisor: before, the lines could
+       freeze with the last numbers (for example the slimes) on every card the game
+       reused for other areas. Such a monster now says so on its own card.
+0.1.0  First version.
 
 INSTALL
 Unzip into the game folder (where Melvor2.exe is). The mod ends up in

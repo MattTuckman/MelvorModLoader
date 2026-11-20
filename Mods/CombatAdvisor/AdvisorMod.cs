@@ -46,7 +46,26 @@ public class AdvisorMod : IMod
         ctx.Log("Ready. Open the combat area menu: each monster card shows the advisor's line.");
     }
 
+    readonly HashSet<string> _reported = new();
+
+    /// <summary>
+    /// Every frame, never throwing: the loader switches off a frame handler that throws, and the lines would then stay
+    /// as they were on cards the game reuses for other areas (a player saw slime numbers on every monster). An error
+    /// is written to the log once, with where it happened.
+    /// </summary>
     void Tick()
+    {
+        try { Frame(); }
+        catch (Exception e) { Report("the area menu", e); }
+    }
+
+    void Report(string where, Exception e)
+    {
+        string key = where + "|" + e.GetType().Name + "|" + e.Message;
+        if (_reported.Count < 50 && _reported.Add(key)) _ctx.Log($"Could not work out {where} (the advisor goes on): {e}");
+    }
+
+    void Frame()
     {
         if (_ctx.Tree.Paused) return;
         Game? game = GameAccess.CurrentGame;
@@ -60,8 +79,12 @@ public class AdvisorMod : IMod
         Forecast.Update();
         if (_window is { Visible: true })
         {
-            if (Input.IsActionJustPressed("ui_cancel")) _window.Close();
-            else _window.Tick();
+            try
+            {
+                if (Input.IsActionJustPressed("ui_cancel")) _window.Close();
+                else _window.Tick();
+            }
+            catch (Exception e) { Report("the advisor window", e); }
         }
         _frame++;
         if (_menu == null || !GodotObject.IsInstanceValid(_menu))
@@ -89,8 +112,17 @@ public class AdvisorMod : IMod
         foreach (Strip strip in _strips.Values)
         {
             if (strip.Filled || strip.Area == null || strip.Enemy == null || !GodotObject.IsInstanceValid(strip.Root) || !strip.Root.IsVisibleInTree()) continue;
-            Outlook o = Forecast.For(game, _setup, strip.Area, strip.Enemy);
-            if (o.Ready) strip.Show(o, _setup);          // (one played out blow by blow fills in a moment later)
+            try
+            {
+                Outlook o = Forecast.For(game, _setup, strip.Area, strip.Enemy);
+                if (o.Ready) strip.Show(o, _setup);      // (one played out blow by blow fills in a moment later)
+            }
+            catch (Exception e)
+            {
+                // this monster only: its line says so, every other line goes on
+                strip.Fail("Combat Advisor could not work this one out.");
+                Report($"{strip.Enemy.DisplayName.Text} in {strip.Area.DisplayName.Text}", e);
+            }
             if (Time.GetTicksMsec() - start > 8) break;
         }
     }
@@ -98,23 +130,31 @@ public class AdvisorMod : IMod
     /// <summary>The cards of the area on show: each gets its strip, bound to the monster the card shows now.</summary>
     void FindCards(Node root)
     {
-        foreach (EnemyOptionsPanel card in All<EnemyOptionsPanel>(root))
+        foreach (EnemyOptionsPanel card in All<EnemyOptionsPanel>(root).ToList())
         {
-            if (!card.IsVisibleInTree()) continue;
+            try { FindCard(card); }
+            catch (Exception e) { Report("a monster card", e); }
+        }
+    }
+
+    void FindCard(EnemyOptionsPanel card)
+    {
+        {
+            if (!card.IsVisibleInTree()) return;
             var enemy = s_enemy?.GetValue(card) as Enemy;
             var area = s_area?.GetValue(card) as CombatArea;
             bool dungeon = s_dungeon?.GetValue(card) != null;
             if (!_strips.TryGetValue(card, out Strip? strip) || !GodotObject.IsInstanceValid(strip.Root))
             {
-                if (enemy == null || area == null || dungeon) continue;
+                if (enemy == null || area == null || dungeon) return;
                 strip = new Strip();
                 strip.Opened += (a, e) => _window?.Open(GameAccess.CurrentGame!, a, e);
-                if (!Attach(card, strip.Root)) { strip.Root.QueueFree(); continue; }
+                if (!Attach(card, strip.Root)) { strip.Root.QueueFree(); return; }
                 _strips[card] = strip;
             }
             // a dungeon's waves get no strip (the advisor works out single monsters)
             strip.Root.Visible = enemy != null && area != null && !dungeon;
-            if (!strip.Root.Visible) continue;
+            if (!strip.Root.Visible) return;
             strip.Bind(_signature + "@" + area!.Id + "/" + enemy!.Id, area, enemy);
         }
     }

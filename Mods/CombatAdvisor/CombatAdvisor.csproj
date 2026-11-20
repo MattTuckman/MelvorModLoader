@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>CombatAdvisor</AssemblyName>
     <RootNamespace>CombatAdvisor</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Product>Melvor Idle 2 Combat Advisor</Product>
     <AssemblyTitle>Combat Advisor</AssemblyTitle>
     <Description>Before you fight: how fast you kill each monster, the XP and food per hour, and whether one of its hits can take you down, worked out from your own gear, stance, food and bonuses (requires Melvor Mod Loader).</Description>

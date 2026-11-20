@@ -15,12 +15,15 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (file requirement, min 0.1.3)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\CombatAdvisor-0.1.0.zip   (name: Combat Advisor, version 0.1.0)
+MAIN FILE:  dist\CombatAdvisor-0.1.1.zip   (name: Combat Advisor, version 0.1.1)  -  0.1.0 dosyasini Archived yap
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\ozel-2-pencere.png (main image), ozel-1-kartlar.png, ozel-3-blackfang.png, ozel-5-olumcul.png, ozel-4-onizleme.png, ozel-2b-ayrintilar.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.1.1
+- Fixed: an error on one monster could stop the advisor, so every card kept the last numbers it showed (for example the slimes from the Slime Forest) in other areas. The advisor now never stops; a monster it cannot work out says so on its own card.
+- If a card says "could not work this one out", MelvorModLoader.log in the game folder names the monster and the reason: please send it.
 0.1.0
 - First version
 
@@ -35,7 +38,7 @@ The answer is on every monster card, worked out from [b]your[/b] character.[/cen
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Combat Advisor [b]0.1.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0 (works from 0.1.3). Open a character and open the game's combat area menu: every monster card gets a line at the bottom. Press [b]Advisor[/b] on a card for the full picture.
+This is Combat Advisor [b]0.1.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0 (works from 0.1.3). Open a character and open the game's combat area menu: every monster card gets a line at the bottom. Press [b]Advisor[/b] on a card for the full picture.
 
 [size=5][b]On every monster card[/b][/size]
 [code]SAFE   533 kills/h   3.0k Strength XP/h   4.3 food/h            [Advisor][/code]
@@ -79,7 +82,7 @@ The fights are worked out on a private copy of your bonuses. Your stance, gear a
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]CombatAdvisor-0.1.0.zip[/b] there. The mod ends up in [b]mods\CombatAdvisor[/b].
+[*]Extract [b]CombatAdvisor-0.1.1.zip[/b] there. The mod ends up in [b]mods\CombatAdvisor[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

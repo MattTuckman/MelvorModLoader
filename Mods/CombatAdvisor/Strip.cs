@@ -151,6 +151,17 @@ public sealed class Strip
         _row.AddChild(Look.Caption("Combat Advisor: working it out..."));
     }
 
+    /// <summary>Something went wrong for this monster: say so (never last monster's numbers).</summary>
+    public void Fail(string text)
+    {
+        Clear();
+        Filled = true;
+        Label why = Look.Caption(text);
+        why.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        _row.AddChild(why);
+        Root.TooltipText = text;
+    }
+
     public void Show(Outlook o, Setup? setup = null)
     {
         Clear();
