@@ -8,33 +8,30 @@ using MelvorModLoader;
 namespace ExampleMod;
 
 /// <summary>
-/// A complete, small mod: F10 shows a panel with the open character's skill levels and bank use.
-/// It touches every part of the loader's API once, so it is a good file to copy and start from.
+/// A complete, small mod: F10 (or the top bar's Mods menu) shows a panel with the open character's skill levels and
+/// bank use. It touches every part of the loader's API once, so it is a good file to copy and start from.
 /// </summary>
 public class ExampleMod : IMod          // the loader creates one instance of every public class that implements IMod
 {
     ModContext _ctx = null!;
+    ModWindow _window = null!;
     CanvasLayer? _layer;
     Label? _title;
     GridContainer? _grid;
-    bool _wasDown;
     int _frame;
 
     // Called once, when the game starts (the main menu is not even visible yet). Keep it quick.
     public void OnLoad(ModContext ctx)
     {
         _ctx = ctx;
+        // Listed in the loader's Mods menu; F10 opens it too, and the player can change or switch off that key.
+        _window = ctx.AddWindow("Example: skill levels", Toggle, Key.F10);
         ctx.Frame += OnFrame;                                      // run OnFrame once per rendered frame
-        ctx.Log("Ready. Press F10 while a character is open.");    // goes to MelvorModLoader.log in the game folder
+        ctx.Log($"Ready. Press {_window.KeyLabel} while a character is open.");   // goes to MelvorModLoader.log in the game folder
     }
 
     void OnFrame()
     {
-        // A hotkey: react to the moment the key goes down, not to every frame it is held.
-        bool down = Input.IsKeyPressed(Key.F10);
-        if (down && !_wasDown) Toggle();
-        _wasDown = down;
-
         // Refresh the panel about once a second while it is visible.
         if (_layer is { Visible: true } && ++_frame % 60 == 0) Refresh();
     }
@@ -47,7 +44,7 @@ public class ExampleMod : IMod          // the loader creates one instance of ev
         Game? game = GameAccess.CurrentGame;
         if (game is not { IsSaveLoaded: true })
         {
-            _ctx.Log("F10: open a character first.");
+            _ctx.Log("Open a character first.");
             return;
         }
         if (_layer == null) BuildPanel();
@@ -90,7 +87,8 @@ public class ExampleMod : IMod          // the loader creates one instance of ev
         string bankLine = "";
         if (game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? entity) && entity is BankEntity bank)
             bankLine = $"   |   Bank: {bank.Inventory.Stacks.Count(s => s.Quantity > 0)} of {bank.Inventory.MaxStacks} slots used";
-        _title!.Text = $"{game.CharacterName}{bankLine}   |   F10 closes";
+        string key = _window.KeyLabel == "" ? "" : $"   |   {_window.KeyLabel} closes";
+        _title!.Text = $"{game.CharacterName}{bankLine}{key}";
 
         // Every skill is an entity with a level. The game's classes are used directly, with full type checking.
         foreach (Node old in _grid.GetChildren()) old.QueueFree();

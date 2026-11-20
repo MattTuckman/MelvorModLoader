@@ -7,8 +7,10 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using GamesByMalcs.Melvor2;
+using GamesByMalcs.Melvor2.Components.Actions;
 using GamesByMalcs.Melvor2.Components.CombatEffects;
 using GamesByMalcs.Melvor2.Data;
+using GamesByMalcs.Melvor2.Entities;
 using GamesByMalcs.Melvor2.Localization;
 using GamesByMalcs.Melvor2.Modifiers;
 using Godot;
@@ -159,7 +161,7 @@ public static class Engine
         value = f.Kind == FeatureKind.Toggle ? (value >= 0.5 ? 1 : 0) : Math.Clamp(value, f.Min, f.Max);
         if (value == f.Off) s_values.Remove(id); else s_values[id] = value;
         Apply(f);
-        if (id == AllSkillsSpeed || ShortensTime(f)) { Rebalance(); RetimeCrops(); }
+        if (id == AllSkillsSpeed || ShortensTime(f) || Features.IsNormalPace(id)) { Rebalance(); RetimeCrops(); }
         Settings.Save(Character, s_values);
         Changed?.Invoke();
     }
@@ -221,6 +223,9 @@ public static class Engine
     const string AllSkillsGroup = "GlobalPercentActionInterval";
 
     static bool IsSkillSpeed(Feature f) => f.Id.StartsWith("skill.") && f.Id.EndsWith(".speed");
+
+    /// <summary>True when the skill is kept at its normal pace (see <see cref="Features.NormalPace"/>).</summary>
+    public static bool KeepsNormalPace(string? skill) => Features.NormalPaceOf(skill) is { } id && IsActive(id);
 
     /// <summary>A setting that shortens a time (its stats count downwards).</summary>
     static bool ShortensTime(Feature f) => f.Stats.Count > 0 && f.Stats.All(s => s.Unit < 0 && s.Name.Contains("Interval"));
@@ -289,12 +294,15 @@ public static class Engine
             }
         }
         double all = IsSkillSpeed(f) ? Math.Max(1, GetValue(AllSkillsSpeed)) : 1;
+        // A skill kept at its normal pace gets back what "all skills" took off, and only its own speed counts:
+        // all x5 (-80%) and own x2 (-50%) is -80% + 30% = -50%; without an own speed -80% + 80% = 0.
+        bool normal = IsSkillSpeed(f) && KeepsNormalPace(f.Skill);
         s_ours = true;
         try
         {
             foreach (Part part in applied.Parts)
             {
-                double want = part.ReachedByAll ? multiplier / all : multiplier;
+                double want = !part.ReachedByAll ? multiplier : normal ? 1 / all - (1 - multiplier) : multiplier / all;
                 double others = part.Others + part.Multiplier;               // this part counts as -1 x its strength
                 double strength = Math.Min(want, others + (1 - LeastTimeLeft));
                 if (Math.Abs(strength) < 1e-9)
@@ -535,7 +543,9 @@ static class Store
 static class GameSpeed
 {
     static GameDriver? s_driver;
-    static double s_debt;
+    static double s_debt, s_ranchDebt;
+
+    public const string RanchingSpeed = "skill.Ranching.speed";
 
     public static SceneTree? Tree { get; set; }
 
@@ -544,22 +554,73 @@ static class GameSpeed
         Game? game = Engine.Game;
         if (game is not { IsSaveLoaded: true }) return;
         double speed = Engine.GetValue("speed.game");
-        if (speed <= 1) { s_debt = 0; return; }
+        double ranch = Engine.GetValue(RanchingSpeed);
+        if (speed <= 1) s_debt = 0;
+        if (ranch <= 1) s_ranchDebt = 0;
+        if (speed <= 1 && ranch <= 1) return;
 
         // While the game computes offline progress it ticks itself on another thread and pauses the scene tree.
         // Ticking it from here at the same time would have two threads inside the game at once.
-        if (Tree is { Paused: true }) { s_debt = 0; return; }
+        if (Tree is { Paused: true }) { s_debt = 0; s_ranchDebt = 0; return; }
 
         if (s_driver == null || !GodotObject.IsInstanceValid(s_driver))
             s_driver = GameAccess.FindNode<GameDriver>();
         // The game pauses its own ticking during offline catch-up and loading; stay in step with it.
         if (s_driver == null || !s_driver.IsPhysicsProcessing()) return;
 
-        s_debt += speed - 1;
-        while (s_debt >= 1)
+        if (speed > 1)
         {
-            game.PropagateTick();
-            s_debt -= 1;
+            s_debt += speed - 1;
+            if (s_debt >= 1)
+            {
+                List<PassiveComponent> resting = SitOut(game);
+                try
+                {
+                    while (s_debt >= 1)
+                    {
+                        game.PropagateTick();
+                        s_debt -= 1;
+                    }
+                }
+                finally
+                {
+                    foreach (PassiveComponent part in resting) part.DisableTicking = false;
+                }
+            }
         }
+
+        // Ranching's own speed. The game starts the animals' product time at a fixed hour and never reads the
+        // "product interval" bonus, so a bonus cannot speed Ranching up: it gets extra ticks of its own instead,
+        // on top of the ones it had this frame (one, or one per game speed step when Game speed reaches it).
+        if (ranch > 1 && game.Entities.TryGetObjectById("MelvorBase:Ranching", out GameEntity? ranching) && ranching != null)
+        {
+            double had = speed > 1 && !Engine.KeepsNormalPace("Ranching") ? speed : 1;
+            s_ranchDebt += (ranch - 1) * had;
+            foreach (PassiveComponent part in ranching.Components.Values.OfType<PassiveComponent>())
+                if (!part.DisableTicking)
+                    for (double d = s_ranchDebt; d >= 1; d--) part.Tick();
+            s_ranchDebt -= Math.Floor(s_ranchDebt);
+        }
+    }
+
+    /// <summary>
+    /// The passive parts (crops, grain mill, animals) of the skills kept at their normal pace, switched off for
+    /// the extra ticks with the game's own switch. Parts the game has switched off itself are left alone, so they
+    /// are not switched on again afterwards.
+    /// </summary>
+    static List<PassiveComponent> SitOut(Game game)
+    {
+        var resting = new List<PassiveComponent>();
+        foreach ((string setting, _, string entityId) in Features.NormalPace)
+        {
+            if (!Engine.IsActive(setting) || !game.Entities.TryGetObjectById(entityId, out GameEntity? entity) || entity == null) continue;
+            foreach (PassiveComponent part in entity.Components.Values.OfType<PassiveComponent>())
+                if (!part.DisableTicking)
+                {
+                    part.DisableTicking = true;
+                    resting.Add(part);
+                }
+        }
+        return resting;
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using CheatMenu;
@@ -15,6 +16,10 @@ public sealed class SlotWindow
     readonly List<Label> _lines = new();
     readonly Label _summary = Style.Label("", Style.Text);
     bool _syncing;
+    Button _close = null!;
+
+    static string CloseText => MultitaskMod.Instance?.Key.With("Close") ?? "Close";
+    public string CloseLabel => _close.Text;
 
     public bool Visible => _layer.Visible;
     public Control Panel { get; }
@@ -56,9 +61,9 @@ public sealed class SlotWindow
         hint.SizeFlagsVertical = Control.SizeFlags.Fill;
         hint.ClipText = true;
         header.AddChild(hint);
-        var close = new Button { Text = "Close  (F5)" };
-        close.Pressed += Hide;
-        header.AddChild(close);
+        _close = new Button { Text = CloseText };
+        _close.Pressed += Hide;
+        header.AddChild(_close);
         head.AddChild(header);
         root.AddChild(head);
 
@@ -114,9 +119,13 @@ public sealed class SlotWindow
 
         Label note = Style.Label(
             "Nothing to pick here. Play as usual: when you start a new action, the one before it keeps going next to it.\n" +
-            "One slot on: your last two actions run together. Both on: your last three.\n" +
+            "One slot on: your last two actions run together. Both on: your last three. When there is no room, an action whose materials ran out makes room first.\n" +
             "To drop an action, press its own Stop button in the game. A skill can only do one thing: choose another rock or recipe and it just switches.\n" +
-            "An action waits when its materials run out and goes on when there are some again. A fight is dropped if your character dies.",
+            "An action waits when its materials run out and goes on when there are some again. A fight is dropped if your character dies." +
+            // Players looked for "lanes" here; they live in the Action Queue window, when that mod is installed.
+            (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == "ActionQueue")
+                ? "\nWant steps in a set order (cut, then burn; fish, then cook)? Open Action Queue (F6, or the Mods button) and give steps Lane 1, Lane 2...: every lane runs its own steps in order, side by side."
+                : ""),
             Style.Muted, 12);
         note.AutowrapMode = TextServer.AutowrapMode.WordSmart;
         body.AddChild(note);
@@ -139,6 +148,7 @@ public sealed class SlotWindow
 
     public void Show(Game game)
     {
+        _close.Text = CloseText;
         Repaint();
         _layer.Visible = true;
     }

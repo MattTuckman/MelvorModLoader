@@ -27,6 +27,16 @@ public sealed class ModContext
     public void Log(string message) => MelvorModLoader.Log.Write($"[{Name}] {message}");
 
     /// <summary>
+    /// Lists a window of this mod in the loader's Mods menu (top-bar "Mods" button, F1) and opens or closes it with
+    /// <paramref name="toggle"/> when its key is pressed. The player can change or switch off the key there; the
+    /// choice is kept in mods\hotkeys.json. Leave <paramref name="defaultKey"/> at Key.None for a window without a
+    /// key of its own (it still opens from the menu): the F keys are crowded. Show <see cref="ModWindow.KeyLabel"/>
+    /// rather than a fixed key name. Added in loader 0.2.0.
+    /// </summary>
+    public ModWindow AddWindow(string title, Action toggle, Key defaultKey = Key.None) =>
+        Hotkeys.Add(Name, title, toggle, new KeyChord(defaultKey));
+
+    /// <summary>
     /// Raised once per rendered frame. A handler that throws is removed.
     /// Not raised while the game is computing offline progress (see <see cref="GameAccess.IsComputingOffline"/>).
     /// </summary>

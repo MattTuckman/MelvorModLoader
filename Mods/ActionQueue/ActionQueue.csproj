@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>ActionQueue</AssemblyName>
     <RootNamespace>ActionQueue</RootNamespace>
-    <Version>0.7.0</Version>
+    <Version>0.8.0</Version>
     <Product>Melvor Idle 2 Action Queue</Product>
     <AssemblyTitle>Action Queue</AssemblyTitle>
     <Description>Chains actions in Melvor Idle 2: do one thing until a goal is reached, then start the next (requires Melvor Mod Loader). Opens with F6.</Description>
@@ -21,6 +21,7 @@
     <Compile Include="..\CheatMenu\Style.cs" Link="Style.cs" />
     <Compile Include="..\CheatMenu\PickList.cs" Link="PickList.cs" />
     <Compile Include="..\CheatMenu\ItemPicks.cs" Link="ItemPicks.cs" />
+    <Compile Include="..\Shared\WindowKey.cs" Link="WindowKey.cs" />
     <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>

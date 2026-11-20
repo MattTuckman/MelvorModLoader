@@ -26,11 +26,13 @@ public class BulkSellMod : IMod
     BankInventoryComponentView? _bankView;
     Button? _junkButton, _buryButton, _openButton;
     Button? _armed;          // the button that has been clicked once and waits for the confirming click
-    bool _wasDown;
     int _frame, _armToken;
     ulong _resultUntil;      // a result text stays on its button until this moment
 
     public Window? Window => _window;
+    internal WindowKey Key { get; private set; } = null!;
+    /// <summary>For tests: the key shown for the window ("F7", or "" when switched off).</summary>
+    public string KeyLabel => Key.Label;
     /// <summary>The buttons placed in the bank (null until the bank page has been opened once).</summary>
     public Control? BankButtons { get; private set; }
     public Button? JunkButton => _junkButton;
@@ -45,8 +47,9 @@ public class BulkSellMod : IMod
         Junk.Log = ctx.Log;
         // The bank page is built when it is first opened; remember it as soon as it enters the scene.
         ctx.Tree.NodeAdded += node => { if (node is BankInventoryComponentView view) _bankView = view; };
+        Key = new WindowKey(ctx, "Bulk Sell", ToggleWindow, Godot.Key.F7);
         ctx.Frame += Tick;
-        ctx.Log("Ready. Open the bank and press \"Bulk sell\", or press F7.");
+        ctx.Log($"Ready. Open the bank and press \"Bulk sell\", or press {Key.Spoken}.");
     }
 
     void Tick()
@@ -64,9 +67,7 @@ public class BulkSellMod : IMod
             UpdateButtons();
         }
 
-        bool down = Input.IsKeyPressed(Key.F7);
-        if (down && !_wasDown) ToggleWindow();
-        _wasDown = down;
+        Key.Poll();
     }
 
     public void ToggleWindow()
@@ -75,7 +76,7 @@ public class BulkSellMod : IMod
         Game? game = GameAccess.CurrentGame;
         if (game is not { IsSaveLoaded: true })
         {
-            _ctx.Log("F7: open a character first (the window does not work on the main menu).");
+            _ctx.Log("Bulk Sell: open a character first (the window does not work on the main menu).");
             return;
         }
         _window ??= new Window(_ctx.Tree);
@@ -88,13 +89,13 @@ public class BulkSellMod : IMod
         SearchBar? search = GameAccess.FindNode<SearchBar>(view);
         if (search?.GetParent() is not BoxContainer row)
         {
-            _ctx.Log("The bank's search box was not found where expected (the game may have been updated). Use F7 instead.");
+            _ctx.Log($"The bank's search box was not found where expected (the game may have been updated). Use {Key.Spoken} instead.");
             _bankView = null;
             return;
         }
         var box = new HBoxContainer { Name = ButtonsName, SizeFlagsVertical = Control.SizeFlags.ShrinkCenter };
         box.AddThemeConstantOverride("separation", 6);
-        var open = new Button { Text = "Bulk sell", TooltipText = "Pick many items and sell them in one go (F7)" };
+        var open = new Button { Text = "Bulk sell", TooltipText = Key.With("Pick many items and sell them in one go") };
         open.Pressed += ToggleWindow;
         _junkButton = new Button { Text = "Sell junk" };
         _junkButton.Pressed += JunkPressed;

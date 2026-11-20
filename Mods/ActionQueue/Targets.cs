@@ -7,6 +7,7 @@ using GamesByMalcs.Melvor2.Components.ArtisanAction;
 using GamesByMalcs.Melvor2.Components.CombatAreas;
 using GamesByMalcs.Melvor2.Components.CraftingAction;
 using GamesByMalcs.Melvor2.Components.SlayerTasks;
+using GamesByMalcs.Melvor2.Conditions;
 using GamesByMalcs.Melvor2.Data;
 using GamesByMalcs.Melvor2.Data.Items;
 using GamesByMalcs.Melvor2.Entities;
@@ -227,34 +228,67 @@ public static class Targets
     /// <summary>The Action Queue writes the skill of the step it is running under this name ("" when it runs nothing).</summary>
     public const string DrivingMeta = "ActionQueueDriving";
 
-    public static void PublishDriving(string entityId)
+    // ---- the notes on the scene root, also from the game's own thread
+    // While the game computes offline progress (on a thread of its own) the queue may still run, but the scene tree
+    // must not be touched from there: a note read there comes from what was last seen on the main thread, and a
+    // note written there waits until the main thread is back.
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string?> s_metaSeen = new();
+    static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> s_metaPending = new();
+
+    public static bool OnMainThread
     {
-        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(DrivingMeta, entityId); } catch { }
+        get { try { return Godot.OS.GetThreadCallerId() == Godot.OS.GetMainThreadId(); } catch { return false; } }
     }
 
-    /// <summary>The skill the Action Queue is running a step on right now, or "".</summary>
-    public static string QueueDriving()
+    /// <summary>A note on the scene root ("" when there is none); off the main thread, the last one seen.</summary>
+    static string? ReadMeta(string name)
     {
+        if (!OnMainThread) return s_metaPending.TryGetValue(name, out string? waiting) ? waiting : s_metaSeen.GetValueOrDefault(name);
+        FlushMeta();
         try
         {
             Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
-            return root.HasMeta(DrivingMeta) ? root.GetMeta(DrivingMeta).AsString() : "";
+            string? value = root.HasMeta(name) ? root.GetMeta(name).AsString() : null;
+            s_metaSeen[name] = value;
+            return value;
         }
-        catch { return ""; }
+        catch { return s_metaSeen.GetValueOrDefault(name); }
     }
+
+    static void WriteMeta(string name, string value)
+    {
+        s_metaSeen[name] = value;
+        if (!OnMainThread) { s_metaPending[name] = value; return; }
+        s_metaPending.TryRemove(name, out _);
+        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(name, value); } catch { }
+    }
+
+    /// <summary>On the main thread: writes what waited, then reads every note afresh, for the game's own thread to use.</summary>
+    public static void PrimeMeta()
+    {
+        if (!OnMainThread) return;
+        FlushMeta();
+        foreach (string name in new[] { HeldMeta, DrivingMeta, CapacityMeta, PlayerKeptMeta }) ReadMeta(name);
+    }
+
+    /// <summary>Writes the notes made on the game's own thread (call on the main thread).</summary>
+    public static void FlushMeta()
+    {
+        if (s_metaPending.IsEmpty || !OnMainThread) return;
+        foreach (string name in s_metaPending.Keys.ToList())
+            if (s_metaPending.TryRemove(name, out string? value))
+                try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(name, value); } catch { }
+    }
+
+    public static void PublishDriving(string entityId) => WriteMeta(DrivingMeta, entityId);
+
+    /// <summary>The skill the Action Queue is running a step on right now, or "".</summary>
+    public static string QueueDriving() => ReadMeta(DrivingMeta) ?? "";
 
     /// <summary>The Multitask mod writes how many actions may run at once (1 = the plain game) under this name.</summary>
     public const string CapacityMeta = "MultitaskCapacity";
 
-    public static int MultitaskCapacity()
-    {
-        try
-        {
-            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
-            return root.HasMeta(CapacityMeta) ? Math.Clamp(root.GetMeta(CapacityMeta).AsInt32(), 1, 8) : 1;
-        }
-        catch { return 1; }
-    }
+    public static int MultitaskCapacity() => int.TryParse(ReadMeta(CapacityMeta), out int n) ? Math.Clamp(n, 1, 8) : 1;
 
     /// <summary>
     /// The Multitask mod writes the skills of the player's own actions it is keeping under this name: running, or
@@ -263,34 +297,12 @@ public static class Targets
     public const string PlayerKeptMeta = "MultitaskPlayerKept";
 
     /// <summary>The skills of the player's own actions Multitask keeps a slot for, or null when Multitask does not say.</summary>
-    public static HashSet<string>? PlayerKept()
-    {
-        try
-        {
-            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
-            if (!root.HasMeta(PlayerKeptMeta)) return null;
-            return new HashSet<string>(root.GetMeta(PlayerKeptMeta).AsString().Split('|', StringSplitOptions.RemoveEmptyEntries));
-        }
-        catch { return null; }
-    }
+    public static HashSet<string>? PlayerKept() =>
+        ReadMeta(PlayerKeptMeta) is { } kept ? new HashSet<string>(kept.Split('|', StringSplitOptions.RemoveEmptyEntries)) : null;
 
-    public static void PublishPlayerKept(IEnumerable<string> entityIds)
-    {
-        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(PlayerKeptMeta, string.Join("|", entityIds)); } catch { }
-    }
+    public static void PublishPlayerKept(IEnumerable<string> entityIds) => WriteMeta(PlayerKeptMeta, string.Join("|", entityIds));
 
-    static HashSet<string> Held()
-    {
-        var held = new HashSet<string>();
-        try
-        {
-            Godot.Node root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
-            if (root.HasMeta(HeldMeta))
-                foreach (string id in root.GetMeta(HeldMeta).AsString().Split('|', StringSplitOptions.RemoveEmptyEntries)) held.Add(id);
-        }
-        catch { }
-        return held;
-    }
+    static HashSet<string> Held() => new((ReadMeta(HeldMeta) ?? "").Split('|', StringSplitOptions.RemoveEmptyEntries));
 
     /// <summary>The action the player (or the queue) is doing: the running action that no Multitask slot is holding.</summary>
     public static ActionComponent? Main(Game game)
@@ -373,7 +385,7 @@ public static class Targets
         {
             ActiveHuntingAnimal? animal = hunting.Locations.Values.SelectMany(l => l.Animals).FirstOrDefault(a => a.Animal.Id == target.Id);
             if (animal == null) return false;
-            problem = !animal.Animal.Requirements.AreMet ? locked
+            problem = !animal.Animal.Requirements.AreMet ? Missing(animal.Animal.Requirements)
                 : !hunting.CanTrackAnimal(animal) ? "choose a trap for it on the Hunting page first (and keep that trap in the bank)" : "";
             return problem == "";
         }
@@ -392,40 +404,85 @@ public static class Targets
         {
             ActiveAgilityCourse? course = agility.Courses.FirstOrDefault(c => c.Key.Id == target.Id).Value;
             if (course == null) return false;
-            problem = !course.Course.Requirements.AreMet ? locked
+            problem = !course.Course.Requirements.AreMet ? Missing(course.Course.Requirements)
                 : course.SelectedPath == null ? "choose a path for it on the Agility page first" : "";
             return problem == "";
         }
 
-        bool? ok = action switch
+        if (action is ThievingActionComponent thieving)
         {
-            WoodcuttingActionComponent c => c.Trees.Keys.FirstOrDefault(r => r.Id == target.Id)?.Requirements.AreMet,
-            MiningActionComponent c => c.Rocks.Keys.FirstOrDefault(r => r.Id == target.Id)?.Requirements.AreMet,
-            FishingActionComponent c => c.Locations.Values.SelectMany(l => l.Recipes).FirstOrDefault(r => r.Recipe.Id == target.Id)?.Recipe.Requirements.AreMet,
-            ArtisanActionComponent c => RecipeAllowed(c, target.Id),
-            CookingActionComponent c => RecipeAllowed(c, target.Id),
-            FiremakingActionComponent c => RecipeAllowed(c, target.Id),
-            HerbloreActionComponent c => RecipeAllowed(c, target.Id),
-            ThievingActionComponent c => c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == target.Id).Value is { } recipe ? c.CanThieveRecipe(recipe) : null,
-            AstrologyActionComponent c => c.ActiveConstellations.Keys.FirstOrDefault(r => r.Id == target.Id)?.Requirements.AreMet,
-            CombatActionComponent { Entity: CombatEntity combat } => CombatAllowed(combat, target),
+            var recipe = thieving.ActiveRecipes.FirstOrDefault(r => r.Key.Id == target.Id).Value;
+            if (recipe == null) return false;
+            problem = thieving.CanThieveRecipe(recipe) ? "" : locked;
+            return problem == "";
+        }
+
+        // Everything else is one requirement list of the game's own (combat: the area's, then the monster's).
+        ConditionGroup? needs = action switch
+        {
+            WoodcuttingActionComponent c => c.Trees.Keys.FirstOrDefault(r => r.Id == target.Id)?.Requirements,
+            MiningActionComponent c => c.Rocks.Keys.FirstOrDefault(r => r.Id == target.Id)?.Requirements,
+            FishingActionComponent c => c.Locations.Values.SelectMany(l => l.Recipes).FirstOrDefault(r => r.Recipe.Id == target.Id)?.Recipe.Requirements,
+            ArtisanActionComponent c => RecipeNeeds(c, target.Id),
+            CookingActionComponent c => RecipeNeeds(c, target.Id),
+            FiremakingActionComponent c => RecipeNeeds(c, target.Id),
+            HerbloreActionComponent c => RecipeNeeds(c, target.Id),
+            AstrologyActionComponent c => c.ActiveConstellations.Keys.FirstOrDefault(r => r.Id == target.Id)?.Requirements,
+            CombatActionComponent { Entity: CombatEntity combat } => CombatNeeds(combat, target),
             _ => null,
         };
-        if (ok == null) return false;
-        problem = ok.Value ? "" : locked;
-        return ok.Value;
+        if (needs == null) return false;
+        problem = needs.AreMet ? "" : Missing(needs);
+        return needs.AreMet;
     }
 
-    static bool? RecipeAllowed<TRecipe, TActive>(CraftingActionComponent<TRecipe, TActive> c, string id)
+    static ConditionGroup? RecipeNeeds<TRecipe, TActive>(CraftingActionComponent<TRecipe, TActive> c, string id)
         where TRecipe : class, ICraftingRecipe, INamespacedDataClass<TRecipe> where TActive : class, IActiveCraftingRecipe =>
-        c.ActiveRecipes.Keys.FirstOrDefault(r => r.Id == id)?.Requirements.AreMet;
+        c.ActiveRecipes.Keys.FirstOrDefault(r => r.Id == id)?.Requirements;
 
-    static bool? CombatAllowed(CombatEntity combat, Target target)
+    static ConditionGroup? CombatNeeds(CombatEntity combat, Target target)
     {
         BaseCombatArea? area = CombatArea(combat, target);
         if (area == null) return null;
-        if (!area.UnlockRequirements.AreMet) return false;
-        return area is not CombatArea normal || normal.Enemies.FirstOrDefault(e => e.Id == target.Id)?.Requirements.AreMet != false;
+        if (!area.UnlockRequirements.AreMet || area is not CombatArea normal) return area.UnlockRequirements;
+        return normal.Enemies.FirstOrDefault(e => e.Id == target.Id)?.Requirements ?? area.UnlockRequirements;
+    }
+
+    /// <summary>What is still missing from a requirement list, in the game's own words ("needs Fletching Level 45").
+    /// Conditions marked IsOr belong with the one before them, as in the game's ConditionGroup; a met group is left out.</summary>
+    public static string Missing(ConditionGroup needs)
+    {
+        const string locked = "its requirements are not met yet";
+        var parts = new List<string>();
+        try
+        {
+            var all = needs.Conditions;
+            for (int i = 0; i < all.Count; i++)
+            {
+                int end = i;
+                while (end + 1 < all.Count && all[end + 1].IsOr) end++;
+                var group = all.Skip(i).Take(end - i + 1).ToList();
+                i = end;
+                if (group.Any(c => c.IsMet)) continue;
+                var words = group.Select(Words).Where(w => w != "").Distinct().ToList();
+                if (words.Count > 0 && !parts.Contains(string.Join(" or ", words))) parts.Add(string.Join(" or ", words));
+            }
+        }
+        catch (Exception) { return locked; }
+        return parts.Count == 0 ? locked : "needs " + string.Join(", ", parts);
+    }
+
+    /// <summary>A condition's description without the game's markup ([b], [color], icons).</summary>
+    static string Words(Condition condition)
+    {
+        try
+        {
+            string text = condition.GetDescription(false, false);
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\[img[^\]]*\].*?\[/img\]", "");
+            text = System.Text.RegularExpressions.Regex.Replace(text, @"\[/?[a-z]+(=[^\]]*)?[^\]]*\]", "");
+            return System.Text.RegularExpressions.Regex.Replace(text, @"\s+", " ").Trim();
+        }
+        catch (Exception) { return ""; }
     }
 
     static BaseCombatArea? CombatArea(CombatEntity combat, Target target) =>

@@ -1,4 +1,4 @@
-Melvor Mod Loader 0.1.3  -  for Melvor Idle 2 (tested on game version 0.11.6-alpha.1)
+Melvor Mod Loader 0.2.0  -  for Melvor Idle 2 (tested on game version 0.11.6-alpha.1)
 ====================================================================================
 
 Loads C# mods into Melvor Idle 2 without changing any of the game's own files.
@@ -25,6 +25,18 @@ INSTALLING MODS
 Each mod is a zip that you extract into the game folder the same way.
 It ends up in its own folder under "mods":
    mods\CheatMenu\CheatMenu.dll
+
+
+THE MODS MENU AND KEYS
+----------------------
+With a character open, the "Mods" button in the game's top bar (or F1) lists
+every mod window. Click a name to open it. Click its key to give it another one
+(press the new key; Ctrl, Shift or Alt can come with it; Esc cancels), or press
+"Off" to free the key; the window still opens from the menu. When two windows
+want the same key, both rows say so in orange. "Reset all keys" puts every key
+back. Your choices are kept in mods\hotkeys.json (delete it to start over).
+Only the mods you installed are listed. Their usual keys stay as they were
+(for example F5 Multitask, F6 Action Queue, F8 Cheat Menu).
 
 
 UNINSTALL

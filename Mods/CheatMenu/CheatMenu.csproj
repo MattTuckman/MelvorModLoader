@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>CheatMenu</AssemblyName>
     <RootNamespace>CheatMenu</RootNamespace>
-    <Version>0.6.0</Version>
+    <Version>0.6.1</Version>
     <Product>Melvor Idle 2 Cheat Menu</Product>
     <AssemblyTitle>Cheat Menu</AssemblyTitle>
     <Description>Cheat and tuning menu for Melvor Idle 2 (requires Melvor Mod Loader). Opens with F8.</Description>
@@ -17,6 +17,7 @@
     <LoaderDir>..\..\..\data_MelvorModLoader_windows_x86_64</LoaderDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\Shared\WindowKey.cs" Link="WindowKey.cs" />
     <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>

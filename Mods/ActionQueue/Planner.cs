@@ -236,9 +236,15 @@ public static class Planner
         BankEntity? bank = Bank(game);
         long Now(Item item) => stock.TryGetValue(item, out long n) ? n : bank?.Inventory.GetQuantity(item) ?? 0;
 
-        var byId = makers.Keys.ToDictionary(i => i.Id);
+        var byId = makers.Keys.Concat(makers.Values.SelectMany(l => l).SelectMany(m => m.Costs).Select(c => c.Item))
+            .Distinct().ToDictionary(i => i.Id);
         foreach (Step step in queued)
         {
+            if (step.IsSell)
+            {
+                if (step.Run != RunState.Done && byId.TryGetValue(step.TargetId, out Item? sold)) stock[sold] = Math.Min(Now(sold), (long)Math.Max(0, step.Amount));
+                continue;
+            }
             if (step.Until is not (Until.Item or Until.Made) || !byId.TryGetValue(step.Subject, out Item? item)) continue;
             Maker? maker = makers[item].FirstOrDefault(m => m.Entity.Id == step.Entity && m.Target.Id == step.TargetId);
             if (maker == null) continue;
@@ -260,16 +266,18 @@ public static class Planner
     // ---------------------------------------------------------------- the plan
 
     /// <summary>
-    /// The best way to make an item right now: unlocked before locked, a main product before a side product, then the
-    /// fastest. Actions the game does not show at the moment (quest targets) are never chosen: the player could not
-    /// find them on the skill page, and they only exist for the quest.
+    /// The best way to make an item right now: one whose whole chain can be done (it and everything its ingredients
+    /// are made with are unlocked), then one that is at least unlocked itself, then the rest; a main product before a
+    /// side product; then the fastest. So Headless Bolts are made from Iron Bars when the faster recipe needs
+    /// Ironsteel Bars the character cannot make yet. Actions the game does not show at the moment (quest targets) are
+    /// never chosen: the player could not find them on the skill page, and they only exist for the quest.
     /// </summary>
-    static Maker? Choose(List<Maker>? candidates, Dictionary<Maker, string> problems)
+    static Maker? Choose(List<Maker>? candidates, Dictionary<Maker, string> problems, Func<Maker, bool> chainOpen)
     {
         candidates = candidates?.Where(m => !m.Hidden).ToList();
         if (candidates == null || candidates.Count == 0) return null;
         return candidates
-            .OrderBy(m => Problem(m, problems) == "" ? 0 : 1)
+            .OrderBy(m => Problem(m, problems) != "" ? 2 : chainOpen(m) ? 0 : 1)
             .ThenBy(m => m.Main ? 0 : 1)
             .ThenBy(m => m.Seconds <= 0 ? double.MaxValue : m.Seconds / m.PerAction)
             .First();
@@ -296,11 +304,26 @@ public static class Planner
         Dictionary<Item, long> stock = StockAfterQueue(game, makers, queued ?? Queue.Steps);
         var problems = new Dictionary<Maker, string>();
         var chosen = new Dictionary<Item, Maker?>();
+        var choosing = new HashSet<Item>();          // a recipe loop leads back here: that way is not taken
+        var open = new Dictionary<Item, bool>();     // the item can be had without anything locked
         Maker? MakerOf(Item i)
         {
-            if (!chosen.TryGetValue(i, out Maker? m)) chosen[i] = m = Choose(makers.GetValueOrDefault(i), problems);
-            return m;
+            if (chosen.TryGetValue(i, out Maker? m)) return m;
+            if (!choosing.Add(i)) return null;
+            m = Choose(makers.GetValueOrDefault(i), problems, ChainOpen);
+            choosing.Remove(i);
+            return chosen[i] = m;
         }
+        // An ingredient no skill on the queue makes has to be brought by the player: that does not lock a chain.
+        bool ItemOpen(Item i)
+        {
+            if (open.TryGetValue(i, out bool known)) return known;
+            if (choosing.Contains(i)) return false;   // a recipe loop is not a way to get it
+            open[i] = false;                           // asked again while being worked out (an item made from itself): not a way
+            Maker? m = MakerOf(i);
+            return open[i] = m == null || ChainOpen(m);
+        }
+        bool ChainOpen(Maker m) => Problem(m, problems) == "" && m.Costs.All(c => ItemOpen(c.Item));
         long Stock(Item i) => stock.TryGetValue(i, out long n) ? n : Bank(game)?.Inventory.GetQuantity(i) ?? 0;
 
         if (more) result.Own = own = Stock(item) + own;
@@ -334,10 +357,22 @@ public static class Planner
             line.Missing = Math.Max(0, line.Need - line.Have);
             lines[i] = line;
             if (line.Missing == 0 || maker == null) continue;
+            // Every way to make it is still locked: no step the queue would only skip; the player has to bring it.
+            string locked = Problem(maker, problems);
+            if (locked != "")
+            {
+                if (i == item)
+                {
+                    result.Problem = $"You cannot make {line.ItemName} yet: {locked}.";
+                    return result;
+                }
+                line.Problem = locked;
+                line.Maker = null;
+                continue;
+            }
 
             line.Actions = Actions(line.Missing, maker);
             line.Seconds = maker.Seconds * line.Actions;
-            line.Problem = Problem(maker, problems);
             foreach ((Item cost, int quantity) in maker.Costs)
             {
                 if (lines.ContainsKey(cost)) late[cost] = late.GetValueOrDefault(cost) + line.Actions * quantity;
@@ -371,18 +406,30 @@ public static class Planner
         return result;
     }
 
-    /// <summary>Adds the plan's steps to the end of the queue. Returns how many were added.</summary>
-    public static int AddToQueue(PlanResult plan)
+    /// <summary>
+    /// Adds the plan's steps to the end of the queue, in the given lane. With <paramref name="sell"/> a step that sells
+    /// what was made comes last (keeping what the bank held before a "make N more"). Returns how many were added.
+    /// </summary>
+    public static int AddToQueue(PlanResult plan, int lane = 1, bool sell = false)
     {
         var steps = plan.Steps.Select(line => new Step
         {
             Entity = line.Maker!.Entity.Id, TargetId = line.Maker.Target.Id, Extra = line.Maker.Target.Extra,
             Name = line.Maker.Name, Until = Until.Item, Amount = line.Need,
-            Subject = line.Item.Id, SubjectName = line.ItemName,
+            Subject = line.Item.Id, SubjectName = line.ItemName, Lane = lane,
         }).ToList();
+        if (sell && steps.Count > 0)
+            steps.Add(SellStep(plan.Item, plan.More ? Math.Max(0, plan.Own - plan.Asked) : 0, lane));
         Queue.AddRange(steps);
         return steps.Count;
     }
+
+    /// <summary>A step that sells all of an item but <paramref name="keep"/>.</summary>
+    public static Step SellStep(Item item, long keep, int lane = 1) => new()
+    {
+        Entity = Step.SellEntity, TargetId = item.Id, Extra = "", Name = "Sell: " + item.DisplayName.GetPluralText(2),
+        Until = Until.Stops, Amount = keep, Subject = item.Id, SubjectName = item.DisplayName.GetPluralText(2), Lane = lane,
+    };
 
     public static string Time(double seconds)
     {

@@ -1,4 +1,4 @@
-Cheat Menu 0.6.0  -  a mod for Melvor Idle 2
+Cheat Menu 0.6.1  -  a mod for Melvor Idle 2
 ============================================
 
 One window with more than 60 settings and tools: bank slots, XP, game speed, skill bonuses,
@@ -24,7 +24,7 @@ INSTALL
 
 HOW TO USE
 ----------
-Open a character and press F8. Pick a section on the left and change what you like.
+Open a character and press F8 (or pick it from the Mods button in the top bar; the key can be changed or switched off there). Pick a section on the left and change what you like.
 A setting takes effect the moment you change it (a slider: when you let go of it).
 "Reset" on a row puts that one setting back; "Reset all settings" needs two clicks.
 
@@ -49,6 +49,13 @@ GOOD TO KNOW
   caught pickpocketing ("never stunned" only stops the stun).
 - Game speed runs the whole game faster while you play. It does not change how fast the
   game computes offline progress.
+- "Farming: normal pace" and "Ranching: normal pace" (Speed page) keep crops, the grain mill
+  and animals at the game's normal pace while Game speed runs everything else faster.
+  Farming also gets back what "Skill action speed" takes off its times. The skill's own
+  speed on the Per skill page still counts.
+- Ranching speed (Per skill page) gives the animals extra ticks while you play: the game
+  itself has no bonus that speeds Ranching up. Like Game speed, it does not count for
+  offline progress.
 - "Skill action speed" and a skill's own speed on the Per skill page multiply: x2 and x4
   together are x8. Together they stop at x20 (no action is left with no time at all).
 - A speed setting also counts for crops that are already growing: change it and the plots

@@ -1,4 +1,4 @@
-Multitask 0.2.2  -  a mod for Melvor Idle 2
+Multitask 0.3.0  -  a mod for Melvor Idle 2
 ===========================================
 
 Do more than one thing at a time. Nothing to set up: switch a slot on and play as usual.
@@ -31,9 +31,11 @@ INSTALL
 
 HOW TO USE
 ----------
-Open a character, press F5 and switch Slot 1 (and Slot 2) ON. That is all.
+Open a character, press F5 (or use the top bar's Mods button) and switch Slot 1
+(and Slot 2) ON. That is all.
   - Start a new action in the game: the one before it keeps going.
-  - Start another one: with no room left, the oldest drops out.
+  - Start another one: with no room left, an action whose materials ran out
+    drops out first; otherwise the oldest.
   - To drop an action, press its own Stop button in the game.
   - Choose another rock, tree or recipe: that skill simply does the new thing.
     (A skill can only do one thing at a time.)
@@ -61,6 +63,10 @@ GOOD TO KNOW
   waits or ends" action. Your own actions keep their slots.
 - The game's bottom bar shows your latest action. The others are listed in the F5 window.
 - The switches and the list are remembered per character in "multitask.json".
+- For mod authors: Multitask publishes "MultitaskOrder" on the scene root (skill ids of
+  every action it keeps, running or waiting, latest first, "id|id"). A mod that starts
+  an action only as a stand-in can name it in "MultitaskStandIn" (same "id|id" form);
+  it is then the first to make room. "DefaultActionDriving" (true, or ids) works too.
 
 
 UNINSTALL

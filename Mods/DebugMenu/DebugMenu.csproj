@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>DebugMenu</AssemblyName>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Nullable>enable</Nullable>
     <DebugType>none</DebugType>
     <GenerateDependencyFile>false</GenerateDependencyFile>
@@ -10,6 +10,7 @@
     <LoaderDir>..\..\..\data_MelvorModLoader_windows_x86_64</LoaderDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\Shared\WindowKey.cs" Link="WindowKey.cs" />
     <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>

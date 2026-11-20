@@ -31,6 +31,11 @@ static class Ar
         ["XP multiplier"] = "مضاعف الخبرة",
         ["Game speed"] = "سرعة اللعبة",
         ["Skill action speed"] = "سرعة أفعال المهارات",
+        ["Farming: normal pace"] = "الزراعة: السرعة العادية", ["Ranching: normal pace"] = "تربية المواشي: السرعة العادية",
+        ["Crops and the grain mill keep their normal pace when Game speed or Skill action speed is raised. Farming's own speed (Per skill page) still counts."]
+            = "تبقى المحاصيل ومطحنة الحبوب على سرعتها العادية عند رفع سرعة اللعبة أو سرعة أفعال المهارات. تظل سرعة الزراعة الخاصة (صفحة «لكل مهارة») محتسبة.",
+        ["Animals grow, eat and produce at their normal pace when Game speed is raised. Ranching's own speed (Per skill page) still counts."]
+            = "تنمو الحيوانات وتأكل وتنتج بسرعتها العادية عند رفع سرعة اللعبة. تظل سرعة تربية المواشي الخاصة (صفحة «لكل مهارة») محتسبة.",
         ["Monster respawn speed"] = "سرعة عودة ظهور الوحوش",
         ["Extra offline time limit"] = "مدة إضافية للتقدم دون اتصال",
         ["Double product chance"] = "فرصة مضاعفة الناتج",

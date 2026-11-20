@@ -29,6 +29,11 @@ static class ZhCn
         ["XP multiplier"] = "经验倍率",
         ["Game speed"] = "游戏速度",
         ["Skill action speed"] = "技能动作速度",
+        ["Farming: normal pace"] = "农务：正常速度", ["Ranching: normal pace"] = "畜牧：正常速度",
+        ["Crops and the grain mill keep their normal pace when Game speed or Skill action speed is raised. Farming's own speed (Per skill page) still counts."]
+            = "提高“游戏速度”或“技能动作速度”时，作物和磨坊仍按正常速度进行。农务自身的速度（“各技能”页面）仍然有效。",
+        ["Animals grow, eat and produce at their normal pace when Game speed is raised. Ranching's own speed (Per skill page) still counts."]
+            = "提高“游戏速度”时，动物的成长、进食和产出仍按正常速度进行。畜牧自身的速度（“各技能”页面）仍然有效。",
         ["Monster respawn speed"] = "怪物重生速度",
         ["Extra offline time limit"] = "额外离线时间上限",
         ["Double product chance"] = "双倍产物概率",

@@ -34,7 +34,7 @@ Steps:
    ```
 
    The project builds straight into the game: `mods\ExampleMod\ExampleMod.dll`.
-4. Start the game, open a character and press **F10**. A panel with your skill levels appears.
+4. Start the game, open a character and press **F10** (or pick it in the top bar's **Mods** menu). A panel with your skill levels appears.
 
 To make it your own: rename the folder, the `.csproj`, the `AssemblyName` and the namespace, then change the code.
 Close the game before you rebuild (the game keeps your DLL open while it runs).
@@ -71,6 +71,7 @@ public sealed class ModContext
     public SceneTree Tree { get; }     // Godot's scene tree: add your nodes to Tree.Root
     public void Log(string message);   // writes "[YourMod] message" to MelvorModLoader.log
     public event Action Frame;         // once per rendered frame; a handler that throws is removed
+    public ModWindow AddWindow(string title, Action toggle, Key defaultKey = Key.None);   // loader 0.2.0+, see below
 }
 
 public static class GameAccess
@@ -84,6 +85,25 @@ public static class GameAccess
 
 That is deliberately small. Everything else is the game itself (`GamesByMalcs.Melvor2.dll`) and Godot
 (`GodotSharp.dll`), which your project references directly.
+
+### Your window in the Mods menu, and its key (loader 0.2.0+)
+
+Players open every mod window from one place: the **Mods** button in the game's top bar (or F1). Register yours
+once in `OnLoad` instead of listening to a key yourself:
+
+```csharp
+ModWindow window = ctx.AddWindow("My window", Toggle);               // no key: opens from the Mods menu
+// or ctx.AddWindow("My window", Toggle, Key.F10)                    // a default key the player can change
+string shown = window.KeyLabel;                                       // "F10", "Ctrl+M", or "" when switched off
+window.Changed += () => _close.Text = window.KeyLabel == "" ? "Close" : $"Close ({window.KeyLabel})";
+```
+
+The player can give the window another key or switch it off in that menu (kept in `mods\hotkeys.json`), and a row
+turns orange when two windows want the same key. The F keys are crowded (F1 is the menu, F2-F9 are taken by mods
+already), so please leave `defaultKey` out unless your window is used all the time, and show `KeyLabel` instead of
+a fixed key name. Letter keys are ignored while a text box has the keyboard; F keys always work.
+If your mod should also run with loader 0.1.x, call `AddWindow` from a separate method inside
+`try { } catch (MissingMethodException) { }` and fall back to `Input.IsKeyPressed` there.
 
 ---
 

@@ -67,6 +67,7 @@ internal sealed class PickList<T>
         // Room for the arrow: the button's own boxes, with a wider right margin.
         _button.Ready += () =>
         {
+            if (_tile) return;
             foreach (string state in new[] { "normal", "hover", "pressed", "hover_pressed", "disabled", "focus" })
                 if (_button.GetThemeStylebox(state)?.Duplicate() is StyleBox box)
                 {
@@ -104,6 +105,9 @@ internal sealed class PickList<T>
         _popup.PopupHide += () => { _hiddenAt = Time.GetTicksMsec(); if (_button.IsInsideTree() && _button.IsVisibleInTree()) _button.GrabFocus(); };
         _button.AddChild(_popup);
     }
+
+    /// <summary>Opt-in: the width of the hint column on the right (96 by default).</summary>
+    public int HintWidth { set => _tree.SetColumnCustomMinimumWidth(1, value); }
 
     /// <summary>The button to put into the window.</summary>
     public Button Control => _button;
@@ -153,9 +157,40 @@ internal sealed class PickList<T>
         PaintButton();
     }
 
+    bool _tile;
+    Texture2D? _emptyIcon;
+
+    /// <summary>
+    /// Opt-in: the button becomes a square picture tile (an equipment slot): the chosen entry's icon, or
+    /// <paramref name="emptyIcon"/> dimmed when nothing is chosen; no text and no arrow, the name is in the tooltip.
+    /// </summary>
+    public void MakeTile(float size, Texture2D? emptyIcon)
+    {
+        _tile = true;
+        _emptyIcon = emptyIcon;
+        _arrow.Visible = false;
+        _button.CustomMinimumSize = new Vector2(size, size);
+        _button.ExpandIcon = true;
+        _button.IconAlignment = HorizontalAlignment.Center;
+        _button.VerticalIconAlignment = VerticalAlignment.Center;
+        _button.AddThemeConstantOverride("icon_max_width", (int)(size - 14));
+        PaintButton();
+    }
+
     void PaintButton()
     {
         PickEntry<T>? e = Selected;
+        if (_tile)
+        {
+            bool none = e == null || e.Icon == null;
+            _button.Text = "";
+            _button.Icon = none ? _emptyIcon : e!.Icon;
+            _button.AddThemeColorOverride("icon_normal_color", new Color(1, 1, 1, none ? 0.3f : 1f));
+            _button.AddThemeColorOverride("icon_hover_color", new Color(1, 1, 1, none ? 0.55f : 1f));
+            // (on a tile the placeholder names the slot)
+            _button.TooltipText = e != null ? $"{_placeholder}: {e.Text}" + (e.Tooltip != "" ? "\n" + e.Tooltip : e.Hint != "" ? "\n" + e.Hint : "") : $"{_placeholder}: nothing";
+            return;
+        }
         if (e != null)
         {
             _missingText = "";

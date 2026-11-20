@@ -5,7 +5,8 @@ using MelvorModLoader;
 namespace Multitask;
 
 /// <summary>
-/// F5 opens the Multitask window. With a slot switched on, the action before the latest one keeps running.
+/// F5 (or the loader's Mods menu) opens the Multitask window. With a slot switched on, the action before the latest
+/// one keeps running.
 /// </summary>
 public class MultitaskMod : IMod
 {
@@ -14,11 +15,13 @@ public class MultitaskMod : IMod
     ModContext _ctx = null!;
     SlotWindow? _window;
     Game? _game;
-    bool _wasDown;
     int _frame;
     ulong _lastTick;
 
     public SlotWindow? Window => _window;
+    internal WindowKey Key { get; private set; } = null!;
+    /// <summary>For tests: the key shown for the window ("F5", or "" when switched off).</summary>
+    public string KeyLabel => Key.Label;
 
     public void OnLoad(ModContext ctx)
     {
@@ -26,8 +29,9 @@ public class MultitaskMod : IMod
         _ctx = ctx;
         Slots.Dir = ctx.Directory;
         Slots.Log = ctx.Log;
+        Key = new WindowKey(ctx, "Multitask", ToggleWindow, Godot.Key.F5);
         ctx.Frame += Tick;
-        ctx.Log("Ready. Press F5 while a character is open.");
+        ctx.Log($"Ready. Press {Key.Spoken} while a character is open.");
     }
 
     void Tick()
@@ -55,9 +59,7 @@ public class MultitaskMod : IMod
             if (_game != null) Slots.Tick(_game, now / 1000.0);
         }
 
-        bool down = Input.IsKeyPressed(Key.F5);
-        if (down && !_wasDown) ToggleWindow();
-        _wasDown = down;
+        Key.Poll();
     }
 
     public void ToggleWindow()
@@ -66,7 +68,7 @@ public class MultitaskMod : IMod
         Game? game = GameAccess.CurrentGame;
         if (game is not { IsSaveLoaded: true })
         {
-            _ctx.Log("F5: open a character first (the window does not work on the main menu).");
+            _ctx.Log("Multitask: open a character first (the window does not work on the main menu).");
             return;
         }
         _game = game;

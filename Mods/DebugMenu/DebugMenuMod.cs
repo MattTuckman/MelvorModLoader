@@ -8,27 +8,30 @@ namespace DebugMenuMod;
 
 /// <summary>
 /// Opens the developer debug menu that ships inside the game but is never connected or shown.
-/// F9 (or the game's own unused shortcut, Ctrl + the key left of 1) toggles it while a save is open.
+/// F9 (or the loader's Mods menu, or the game's own unused shortcut, Ctrl + the key left of 1) toggles it while a save is open.
 /// </summary>
 public class DebugMenuMod : IMod
 {
     static readonly StringName OriginalAction = "open_debug_menu";
 
     ModContext _ctx = null!;
+    WindowKey _key = null!;
     bool _wasDown;
     Game? _boundGame;
 
     public void OnLoad(ModContext ctx)
     {
         _ctx = ctx;
+        _key = new WindowKey(ctx, "Debug Menu", Toggle, Key.F9);
         ctx.Frame += Tick;
-        ctx.Log("Ready. Press F9 while a character is open.");
+        ctx.Log($"Ready. Press {_key.Spoken} while a character is open.");
     }
 
     void Tick()
     {
-        bool down = Input.IsKeyPressed(Key.F9)
-                    || (InputMap.HasAction(OriginalAction) && Input.IsActionPressed(OriginalAction));
+        _key.Poll();
+        // The game's own unused shortcut (Ctrl + the key left of 1) works too.
+        bool down = InputMap.HasAction(OriginalAction) && Input.IsActionPressed(OriginalAction);
         if (down && !_wasDown)
             Toggle();
         _wasDown = down;
@@ -40,7 +43,7 @@ public class DebugMenuMod : IMod
         Game? game = GameAccess.CurrentGame;
         if (view == null || game == null)
         {
-            _ctx.Log("F9: open a character first (the menu does not work on the main menu).");
+            _ctx.Log("Debug Menu: open a character first (the menu does not work on the main menu).");
             return;
         }
 

@@ -111,7 +111,9 @@ public sealed class Menu
         header.AddChild(_character);
         header.AddChild(LanguagePick());
         header.AddChild(ResetAllButton());
-        header.AddChild(MakeButton("Close  (F8)", Hide));
+        _close = MakeButton("Close  (F8)", Hide);
+        _close.Text = CloseText;
+        header.AddChild(_close);
         head.AddChild(header);
         root.AddChild(head);
 
@@ -171,6 +173,7 @@ public sealed class Menu
 
     public void Show(Game game)
     {
+        _close.Text = CloseText;
         if (!ReferenceEquals(_game, game))
         {
             _game = game;
@@ -291,6 +294,22 @@ public sealed class Menu
         foreach (Feature f in Features.All.Where(f => f.Tab == tab))
             page.AddChild(FeatureRow(f));
     }
+
+    Button _close = null!;
+
+    /// <summary>"Close  (F8)" in the menu's language, with the key the player chose (none: just "Close").</summary>
+    static string CloseText
+    {
+        get
+        {
+            string label = CheatMenuMod.Instance?.Key.Label ?? "F8";
+            string text = T("Close  (F8)");
+            return label == "" ? text.Replace("(F8)", "").TrimEnd() : text.Replace("F8", label);
+        }
+    }
+
+    /// <summary>For tests: what the Close button says.</summary>
+    public string CloseLabel => _close.Text;
 
     static Button MakeButton(string text, Action onPressed)
     {

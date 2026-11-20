@@ -15,12 +15,17 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (file requirement, min 0.1.3)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\Multitask-0.2.2.zip   (name: Multitask, version 0.2.2)
+MAIN FILE:  dist\Multitask-0.3.0.zip   (name: Multitask, version 0.3.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\coklu-1-pencere.png (main image)
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.3.0
+- When there is no room, an action whose materials ran out makes room first, so a working action is not dropped for an idle one (suggested by a mod author, thank you!)
+- For mod authors: "MultitaskOrder" (every kept action, latest first) and "MultitaskStandIn" (an action another mod started only as a stand-in goes first)
+- Works with Action Queue 0.8.0 lanes; its window can be opened from the loader's Mods menu and its key changed there (loader 0.2.0)
+
 0.2.2
 - Works with Action Queue 0.6.0: the queue's "when the queue waits or ends" action only takes a free slot, never one of yours
 
@@ -46,7 +51,7 @@ When you start a new action, the one you were doing keeps running next to it.[/c
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Multitask [b]0.2.2[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character, press [b]F5[/b] and switch a slot [b]ON[/b].
+This is Multitask [b]0.3.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character, press [b]F5[/b] (or use the [b]Mods[/b] button in the top bar) and switch a slot [b]ON[/b].
 
 [b]This is a cheat.[/b] The game is balanced around one action at a time; this mod lets up to three run together. Use it if that is the game you want to play.
 
@@ -60,7 +65,7 @@ Fish, then start cooking: both run. Go mining, then start a fight: both run. Eac
 
 [size=5][b]You stay in charge, the way you already play[/b][/size]
 [list]
-[*][b]Start something new:[/b] it joins. With no room left, the oldest drops out.
+[*][b]Start something new:[/b] it joins. With no room left, an action whose materials ran out makes room first; otherwise the oldest drops out.
 [*][b]Press an action's own Stop button:[/b] that action is dropped. The others go on.
 [*][b]Choose another rock, tree or recipe:[/b] that skill simply does the new thing. (A skill can only do one thing at a time.)
 [*][b]Switch a slot off:[/b] what no longer fits is stopped. With both off, the mod does nothing at all.
@@ -89,7 +94,7 @@ With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.5.0 
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]Multitask-0.2.2.zip[/b] there. The mod ends up in [b]mods\Multitask[/b].
+[*]Extract [b]Multitask-0.3.0.zip[/b] there. The mod ends up in [b]mods\Multitask[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

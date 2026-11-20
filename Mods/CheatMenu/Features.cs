@@ -85,6 +85,9 @@ public static class Features
         // ---------------- Speed ----------------
         new() { Id = "speed.game", Tab = TabSpeed, En = "Game speed", Suffix = "x",
                 Min = 1, Max = 20, Off = 1, Custom = true },
+        // The passive skills at their normal pace while the rest of the game runs faster (see NormalPace).
+        new() { Id = "speed.farmingNormal", Tab = TabSpeed, En = "Farming: normal pace", Kind = FeatureKind.Toggle, Custom = true },
+        new() { Id = "speed.ranchingNormal", Tab = TabSpeed, En = "Ranching: normal pace", Kind = FeatureKind.Toggle, Custom = true },
         new() { Id = "speed.actions", Tab = TabSpeed, En = "Skill action speed", Suffix = "x",
                 Min = 1, Max = 20, Off = 1, ToMultiplier = Faster, Globals = { new("GlobalPercentActionInterval", -1) } },
         new() { Id = "speed.spawn", Tab = TabSpeed, En = "Monster respawn speed", Suffix = "x",
@@ -179,6 +182,22 @@ public static class Features
         ["RanchingAction"] = new[] { "PercentProductInterval" },
     };
 
+    /// <summary>
+    /// The settings that keep a passive skill at its normal pace: Game speed's extra ticks skip the skill's
+    /// passive parts, and what "Skill action speed" takes off its times is given back. The skill's own speed on
+    /// the Per skill page still counts.
+    /// </summary>
+    public static readonly (string Setting, string Skill, string Entity)[] NormalPace =
+    {
+        ("speed.farmingNormal", "Farming", "MelvorBase:Farming"),
+        ("speed.ranchingNormal", "Ranching", "MelvorBase:Ranching"),
+    };
+
+    public static bool IsNormalPace(string id) => NormalPace.Any(n => n.Setting == id);
+
+    /// <summary>The normal-pace setting of a skill, or null when it has none.</summary>
+    public static string? NormalPaceOf(string? skill) => NormalPace.FirstOrDefault(n => n.Skill == skill).Setting;
+
     /// <summary>Two settings per skill: its own XP multiplier and, for skills that perform actions, its own speed.</summary>
     static IEnumerable<Feature> PerSkill()
     {
@@ -191,11 +210,16 @@ public static class Features
             };
             var skill = Skills.FirstOrDefault(s => s.Entity == name);
             if (skill.Entity == null) continue;
+            var stats = IntervalStats[skill.Class].Select(stat => new StatRef(skill.Class, stat, skill.Entity, skill.Component, -1)).ToList();
+            // Farming's grain mill has a time of its own, which "Skill action speed" shortens as well.
+            if (name == "Farming") stats.Add(new StatRef("GrainMill", "PercentInterval", "Farming", "GrainMill", -1));
+            // The game never reads Ranching's "product interval" bonus (the product time is a fixed hour), so
+            // Ranching's speed is extra ticks for its animals, handled in code (see GameSpeed).
+            bool ticks = name == "Ranching";
             yield return new Feature
             {
                 Id = $"skill.{name}.speed", Tab = TabPerSkill, En = name + " speed", Skill = name, Column = "speed", Suffix = "x",
-                Min = 1, Max = 20, Off = 1, ToMultiplier = Faster,
-                Stats = IntervalStats[skill.Class].Select(stat => new StatRef(skill.Class, stat, skill.Entity, skill.Component, -1)).ToList()
+                Min = 1, Max = 20, Off = 1, ToMultiplier = Faster, Stats = ticks ? new() : stats, Custom = ticks
             };
         }
     }
@@ -210,6 +234,8 @@ public static class Features
         ["bank.buryReward"] = "Multiplies what you get for burying bones.",
         ["xp.multiplier"] = "Multiplies all XP you gain, in every skill.",
         ["speed.game"] = "Runs the whole game faster: skills, combat and timers.",
+        ["speed.farmingNormal"] = "Crops and the grain mill keep their normal pace when Game speed or Skill action speed is raised. Farming's own speed (Per skill page) still counts.",
+        ["speed.ranchingNormal"] = "Animals grow, eat and produce at their normal pace when Game speed is raised. Ranching's own speed (Per skill page) still counts.",
         ["speed.actions"] = "Shortens every skill action. Combat is not affected. Multiplies with a skill's own speed on the Per skill page (x2 here and x4 there is x8); together they stop at x20.",
         ["speed.spawn"] = "Monsters appear sooner after a kill.",
         ["speed.offlineHours"] = "Raises the limit of offline progress you can collect.",

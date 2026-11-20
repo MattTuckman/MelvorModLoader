@@ -15,12 +15,18 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\CheatMenu-0.6.0.zip   (name: Cheat Menu, version 0.6.0)
+MAIN FILE:  dist\CheatMenu-0.6.1.zip   (name: Cheat Menu, version 0.6.1)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\menu-5-combat.png (main image), menu-1-bank.png, menu-3-speed.png, menu-4-skills.png, menu-6-per-skill.png, menu-7-loot-filter.png, menu-8-materials.png, menu-9-tools.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.6.1
+- New (asked for on Nexus): "Farming: normal pace" and "Ranching: normal pace" on the Speed page. Crops, the grain mill and animals keep the game's normal pace while Game speed runs everything else faster. Farming also ignores "Skill action speed". The skill's own speed on the Per skill page still counts
+- Fixed: "Ranching speed" on the Per skill page did nothing, because the game never reads its product-time bonus. It now gives the animals extra ticks (while you play; not for offline progress)
+- "Farming speed" now also speeds up the grain mill
+- Its key (F8) can be changed or switched off in the loader's Mods menu (top bar button or F1, loader 0.2.0), so another mod can have F8
+
 0.6.0
 - New: the menu speaks seven languages: English, 简体中文 (Simplified Chinese), 繁體中文 (Traditional Chinese), Español, Français, العربية (Arabic) and हिन्दी (Hindi). Traditional Chinese was first made by a player of the community, thank you!
 - New: a language list at the top of the window, marked "Language". "Auto" follows the game's own language and shows which one it gives, e.g. "Auto (English)". Arabic mirrors the whole window (right to left). Names that come from the game (items, currencies) stay in the game's language
@@ -60,7 +66,7 @@ Every setting applies the moment you change it and is remembered per character.[
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Cheat Menu [b]0.6.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F8[/b].
+This is Cheat Menu [b]0.6.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F8[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed or switched off).
 
 [b]Languages:[/b] English, 简体中文 (Simplified Chinese), 繁體中文 (Traditional Chinese), Español, Français, العربية (Arabic) and हिन्दी (Hindi). Pick one in the list at the top of the window; "Auto" follows the game's own language. Traditional Chinese was first made by a player of the community.
 
@@ -77,6 +83,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [list]
 [*]XP multiplier for every skill
 [*]Game speed: the whole game runs up to 20x faster
+[*]Farming and Ranching can stay at their normal pace while the rest of the game runs faster
 [*]Skill action speed, monster respawn speed. Skill action speed multiplies with a skill's own speed (x2 and x4 are x8)
 [*]Higher offline progress limit
 [/list]
@@ -134,7 +141,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]CheatMenu-0.6.0.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
+[*]Extract [b]CheatMenu-0.6.1.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
@@ -152,6 +159,7 @@ Delete the folder [b]mods\CheatMenu[/b].
 [size=5][b]Good to know[/b][/size]
 [list]
 [*]Game speed makes the game run faster while you play. It does not change how fast the game computes offline progress.
+[*]Ranching speed works with extra ticks for the animals (the game has no bonus that speeds Ranching up), so like Game speed it counts while you play, not for offline progress.
 [*]A speed setting also counts for crops that are already growing: the plots show their new time at once.
 [*]On the Materials page, Farming recipes follow after the character has been opened again.
 [*]Changing a slayer task is never completely free: the game charges at least 1 coin.

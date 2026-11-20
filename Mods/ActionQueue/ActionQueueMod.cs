@@ -6,7 +6,7 @@ using MelvorModLoader;
 namespace ActionQueue;
 
 /// <summary>
-/// F6 opens the action queue. While it runs, one line at the top of the screen says which step is active.
+/// F6 (or the loader's Mods menu) opens the action queue. While it runs, one line at the top of the screen says which step is active.
 /// </summary>
 public class ActionQueueMod : IMod
 {
@@ -16,11 +16,15 @@ public class ActionQueueMod : IMod
     QueueWindow? _window;
     Label? _chip;
     Game? _game;
-    bool _wasDown;
     int _frame;
     ulong _lastTick;
+    string _flash = "";
+    ulong _flashUntil;
 
     public QueueWindow? Window => _window;
+    internal WindowKey Key { get; private set; } = null!;
+    /// <summary>For tests: the key shown for the window ("F6", or "" when switched off).</summary>
+    public string KeyLabel => Key.Label;
 
     public void OnLoad(ModContext ctx)
     {
@@ -29,7 +33,22 @@ public class ActionQueueMod : IMod
         Queue.Dir = ctx.Directory;
         Queue.Log = ctx.Log;
         ctx.Frame += Tick;
-        ctx.Log("Ready. Press F6 while a character is open.");
+        GameButtons.Watch(ctx.Tree);
+        // A character is opened: the game adds its screen, then computes the time it was closed. Bind right here,
+        // so a queue that was running carries on through that time.
+        ctx.Tree.NodeAdded += node =>
+        {
+            if (node is not GamesByMalcs.Melvor2.GameMenus.GameView) return;
+            try
+            {
+                if (GameAccess.CurrentGame is { IsSaveLoaded: true } game) { Queue.Bind(game); Offline.Attach(game); }
+            }
+            catch (System.Exception e) { ctx.Log("Could not get the queue ready early: " + e.Message); }
+        };
+        GameButtons.Tell = Flash;
+        Key = new WindowKey(ctx, "Action Queue", ToggleWindow, Godot.Key.F6);
+        Key.Changed += () => _window?.KeyChanged();
+        ctx.Log($"Ready. Press {Key.Spoken} while a character is open.");
     }
 
     void Tick()
@@ -42,7 +61,7 @@ public class ActionQueueMod : IMod
         {
             Game? game = GameAccess.CurrentGame;
             _game = game is { IsSaveLoaded: true } ? game : null;
-            if (_game != null) Queue.Bind(_game);
+            if (_game != null) { Queue.Bind(_game); Offline.Attach(_game); GameButtons.Refresh(); }
             else if (_window is { Visible: true }) _window.Hide();
             if (_frame % 60 == 0) _window?.Pulse();
         }
@@ -50,15 +69,15 @@ public class ActionQueueMod : IMod
         ulong now = Time.GetTicksMsec();
         if (now - _lastTick >= 500)
         {
+            // A long gap: frames were not raised (the game computed offline progress, or was loading).
+            if (_lastTick == 0 || now - _lastTick > 3000) Queue.HoldIdle();
             double seconds = _lastTick == 0 ? 0.5 : (now - _lastTick) / 1000.0;
             _lastTick = now;
-            if (_game != null && Queue.Running) Queue.Tick(_game, System.Math.Min(seconds, 5));
+            if (_game != null) Queue.Tick(_game, System.Math.Min(seconds, 5));
             UpdateChip();
         }
 
-        bool down = Input.IsKeyPressed(Key.F6);
-        if (down && !_wasDown) ToggleWindow();
-        _wasDown = down;
+        Key.Poll();
     }
 
     public void ToggleWindow()
@@ -67,7 +86,7 @@ public class ActionQueueMod : IMod
         Game? game = GameAccess.CurrentGame;
         if (game is not { IsSaveLoaded: true })
         {
-            _ctx.Log("F6: open a character first (the window does not work on the main menu).");
+            _ctx.Log("Action Queue: open a character first (the window does not work on the main menu).");
             return;
         }
         _game = game;
@@ -76,10 +95,22 @@ public class ActionQueueMod : IMod
         _window.Show(game);
     }
 
+    /// <summary>Shows a line in the reminder at the top of the screen for a few seconds (also when the queue is not running).</summary>
+    public void Flash(string text)
+    {
+        _flash = text;
+        _flashUntil = Time.GetTicksMsec() + 5000;
+        UpdateChip();
+    }
+
+    /// <summary>For tests: the line the reminder at the top of the screen shows ("" when hidden).</summary>
+    public string ChipShown => _chip is { Visible: true } ? _chip.Text : "";
+
     /// <summary>A small reminder at the top of the screen while the queue is running and its window is closed.</summary>
     void UpdateChip()
     {
-        bool show = _game != null && Queue.Running && _window is not { Visible: true };
+        bool flash = _flash != "" && Time.GetTicksMsec() < _flashUntil;
+        bool show = _game != null && (flash || Queue.Running && _window is not { Visible: true });
         if (!show)
         {
             if (_chip != null) _chip.Visible = false;
@@ -98,7 +129,7 @@ public class ActionQueueMod : IMod
             layer.AddChild(_chip);
             _ctx.Tree.Root.AddChild(layer);
         }
-        _chip.Text = Queue.Headline + "   (F6)";
+        _chip.Text = flash ? _flash : Queue.Headline + (Key.Label == "" ? "" : $"   ({Key.Label})");
         _chip.Visible = true;
     }
 }

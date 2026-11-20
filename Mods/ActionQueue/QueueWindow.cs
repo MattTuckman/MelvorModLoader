@@ -17,6 +17,7 @@ public sealed class QueueWindow
     {
         "it stops by itself", "I own this many of an item", "a skill reaches this level", "this many minutes have passed",
         "only this many of an item are left", "I make this many more of an item", "it has been done this many times",
+        "it has used up this many of an item",
     };
 
     /// <summary>One theme for the window and for the popups of its pick lists (a popup is a window of its own).</summary>
@@ -34,11 +35,19 @@ public sealed class QueueWindow
     readonly Button _run = new() { CustomMinimumSize = new Vector2(150, 0) };
     readonly Button _repeat = new() { ToggleMode = true, CustomMinimumSize = new Vector2(205, 0) };
     readonly Button _side = new() { ToggleMode = true, CustomMinimumSize = new Vector2(175, 0), Visible = false };
+    // Lanes: which lane a new step (or plan) goes to, and moving the selected step to another lane.
+    readonly OptionButton _lanePick = new() { Visible = false }, _planLanePick = new() { Visible = false };
+    readonly Button _laneButton = new() { Visible = false, CustomMinimumSize = new Vector2(120, 0) };
+    readonly CheckBox _planSell = new() { Text = "then sell them" };
+    readonly Label _untilLabel = Style.Label("until", Style.Text);
+    Button _useNow = null!;
 
     // "When the queue waits or ends, do": an action for the idle time.
     readonly OptionButton _idleSkill = new() { CustomMinimumSize = new Vector2(170, 0) };
     readonly PickList<Target> _idleTarget = new("Choose what to do", s_theme);
     readonly Label _idleState = Style.Label("", Style.Muted, 12);
+    readonly CheckBox _idleAlways = new() { Text = "Also when the queue is not running" };
+    readonly CheckBox _gameCreate = new() { Text = "The game's Create button adds to the queue" };
 
     // The card on top has two faces: the form for one step, and the planner.
     readonly Button _stepMode = new() { Text = "Add one step", ToggleMode = true };
@@ -124,7 +133,8 @@ public sealed class QueueWindow
         _quick.ItemSelected += QuickPicked;
         header.AddChild(_quick);
         header.AddChild(_run);
-        header.AddChild(MakeButton("Close  (F6)", Hide));
+        _close = MakeButton(CloseText, Hide);
+        header.AddChild(_close);
         head.AddChild(header);
         root.AddChild(head);
 
@@ -173,21 +183,22 @@ public sealed class QueueWindow
         var what = new HBoxContainer();
         what.AddThemeConstantOverride("separation", 10);
         what.AddChild(Fixed("Do", 50));
-        _skillPick.ItemSelected += _ => FillTargets(null);
+        _skillPick.ItemSelected += _ => { FillTargets(null); UntilChanged(); };
         _target.Picked += _ => { if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem(); };
         _target.Control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         _target.Control.CustomMinimumSize = new Vector2(300, 0);
         _target.Control.TooltipText = "Click and type to search. The groups are the ones of the skill's own page.";
         what.AddChild(_skillPick);
         what.AddChild(_target.Control);
-        Button useNow = MakeButton("Use what I am doing now", UseCurrent);
+        Button useNow = _useNow = MakeButton("Use what I am doing now", UseCurrent);
         useNow.TooltipText = "Fills in the skill and the action your character is performing right now.";
         what.AddChild(useNow);
         _stepForm.AddChild(what);
 
         var until = new HBoxContainer();
         until.AddThemeConstantOverride("separation", 10);
-        until.AddChild(Fixed("until", 50));
+        _untilLabel.CustomMinimumSize = new Vector2(50, 0);
+        until.AddChild(_untilLabel);
         foreach (string name in UntilNames) _untilPick.AddItem(name);
         _untilPick.ItemSelected += _ => UntilChanged();
         until.AddChild(_untilPick);
@@ -196,6 +207,14 @@ public sealed class QueueWindow
         until.AddChild(_item.Control);
         until.AddChild(_levelPick);
         until.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        for (int lane = 1; lane <= Queue.MaxLanes; lane++) { _lanePick.AddItem($"Lane {lane}"); _planLanePick.AddItem($"Lane {lane}"); }
+        _lanePick.TooltipText = _planLanePick.TooltipText =
+            "Lanes are queues of their own that run side by side (with the Multitask mod's slots on).\n"
+            + "Every lane does its steps one after another; e.g. lane 1 cuts logs and burns them, lane 2 fishes and cooks.\n"
+            + "With every step in lane 1 the queue works as one list.";
+        _lanePick.ItemSelected += i => _planLanePick.Select((int)i);
+        _planLanePick.ItemSelected += i => { _lanePick.Select((int)i); _planShown = ""; Replan(); };
+        until.AddChild(_lanePick);
         until.AddChild(MakeButton("Add step", AddStep));
         _stepForm.AddChild(until);
         _stepForm.AddChild(_now);
@@ -218,6 +237,7 @@ public sealed class QueueWindow
         }
         _table.SetColumnCustomMinimumWidth(0, 44);
         _table.SetColumnCustomMinimumWidth(2, 290);
+        _table.ItemSelected += PaintLaneButton;
         body.AddChild(_table);
 
         // -- the idle action
@@ -240,6 +260,20 @@ public sealed class QueueWindow
         idleNow.TooltipText = "Uses the skill and the action your character is performing right now.";
         idleRow.AddChild(idleNow);
         body.AddChild(idleRow);
+        var optionRow = new HBoxContainer();
+        optionRow.AddThemeConstantOverride("separation", 24);
+        _idleAlways.TooltipText = "ON: the idle action above also runs while the queue is paused, finished or not used at all,\n"
+            + "whenever your character does nothing. Press Stop on it in the game and it waits until you start something yourself.\n"
+            + "OFF: it only runs while the queue runs and after the queue has finished.";
+        _idleAlways.Toggled += on => { if (!_syncing) Queue.SetIdleAlways(on); };
+        optionRow.AddChild(_idleAlways);
+        _gameCreate.TooltipText = "ON: on the Smithing, Crafting, Fletching, Runecrafting, Beastcrafting, Cooking and Herblore pages,\n"
+            + "the game's Create button (it then reads \"Add to queue\") puts the recipe at the end of the queue, with the\n"
+            + "stop option you chose there. With nothing left in the queue, it starts the recipe through the queue.\n"
+            + "The \"+ Queue\" button next to it always adds to the queue, even when you lack the materials yet.";
+        _gameCreate.Toggled += on => { if (!_syncing) Queue.SetGameCreate(on); };
+        optionRow.AddChild(_gameCreate);
+        body.AddChild(optionRow);
         _idleState.Visible = false;
         body.AddChild(_idleState);
 
@@ -249,6 +283,9 @@ public sealed class QueueWindow
         buttons.AddChild(MakeButton("Move up", () => MoveSelected(-1)));
         buttons.AddChild(MakeButton("Move down", () => MoveSelected(1)));
         buttons.AddChild(MakeButton("Remove", () => { int i = SelectedIndex(); if (i >= 0) Queue.RemoveAt(i); }));
+        _laneButton.TooltipText = "Puts the selected step into the next lane (after the last lane it goes back to lane 1).";
+        _laneButton.Pressed += NextLane;
+        buttons.AddChild(_laneButton);
         buttons.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         StyleBoxFlat on = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 5);
         _repeat.AddThemeStyleboxOverride("pressed", on);
@@ -302,6 +339,9 @@ public sealed class QueueWindow
         _planAdd.AddThemeStyleboxOverride("normal", go);
         _planAdd.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 5));
         _planAdd.Pressed += AddPlan;
+        _planSell.TooltipText = "Adds a last step that sells what the plan made (with \"Make\", what you had before is kept).";
+        row.AddChild(_planSell);
+        row.AddChild(_planLanePick);
         row.AddChild(_planAdd);
         _planForm.AddChild(row);
 
@@ -383,6 +423,13 @@ public sealed class QueueWindow
         form.AddChild(_savedForm);
     }
 
+    Button _close = null!;
+    static string CloseText => ActionQueueMod.Instance?.Key.With("Close") ?? "Close";
+    /// <summary>The player gave the window another key in the loader's Mods menu.</summary>
+    public void KeyChanged() => _close.Text = CloseText;
+    /// <summary>For tests: what the Close button says.</summary>
+    public string CloseLabel => _close.Text;
+
     static Button MakeButton(string text, Action onPressed)
     {
         var b = new Button { Text = text };
@@ -413,7 +460,7 @@ public sealed class QueueWindow
             _items = game.Data.GetDataRegistryOutput<Item>().GetAllObjects()
                 .OrderBy(i => i.DisplayName.GetPluralText(1), StringComparer.OrdinalIgnoreCase).ToList();
             _levelSkills = game.LeveledEntities.Select(s => s.DisplayName.Text).ToList();
-            Fill(_skillPick, _skills.Select(s => s.Entity.DisplayName.Text));
+            Fill(_skillPick, _skills.Select(s => s.Entity.DisplayName.Text).Append(SellChoice));
             Fill(_idleSkill, _skills.Select(s => s.Entity.DisplayName.Text).Prepend("Nothing"));
             Fill(_levelPick, _levelSkills);
             _makeable = Planner.Makeable(game);
@@ -436,10 +483,29 @@ public sealed class QueueWindow
         _layer.Visible = false;
     }
 
+    /// <summary>
+    /// "Side by side" and the lane controls: only worth showing when the Multitask mod has made room for more than
+    /// one action (lanes always once the queue uses them). Kept fresh every second: slots can be switched any time.
+    /// </summary>
+    void PaintRoom()
+    {
+        int room = Targets.MultitaskCapacity();
+        _side.Visible = room > 1 && !Queue.LaneMode;
+        _syncing = true;
+        _side.ButtonPressed = Queue.SideBySide;
+        _syncing = false;
+        _side.Text = Queue.SideBySide ? $"Side by side: {room} at once" : "Side by side: OFF";
+        bool lanesShown = room > 1 || Queue.LaneMode;
+        _lanePick.Visible = _planLanePick.Visible = _laneButton.Visible = lanesShown;
+        if (_lanePick.Selected < 0) { _lanePick.Select(0); _planLanePick.Select(0); }
+        PaintLaneButton();
+    }
+
     /// <summary>Called about once a second while open.</summary>
     public void Pulse()
     {
         if (_game == null) return;
+        PaintRoom();
         ActionComponent? active = Targets.Main(_game);
         Target? target = active == null ? null : Targets.Current(active);
         _now.Text =active == null ? "Your character is doing nothing right now."
@@ -631,8 +697,11 @@ public sealed class QueueWindow
             DrawPlan("none", () => { _planNote.Text = "Choose the item you want: click the list and type its name."; });
             return;
         }
-        PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value, more: _planKind.Selected == 0);
-        string shown = item.Id + "|" + plan.Own + "|" + plan.More + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply).Concat(plan.Covered)
+        // In lanes, what other lanes will make is not counted: they run at the same time, not before.
+        int lane = NewLane;
+        IEnumerable<Step> before = Queue.LaneMode || lane > 1 ? Queue.Steps.Where(st => Math.Clamp(st.Lane, 1, Queue.MaxLanes) == lane) : Queue.Steps;
+        PlanResult plan = _plan = Planner.Compute(_game, item, (long)_planAmount.Value, before.ToList(), more: _planKind.Selected == 0);
+        string shown = item.Id + "|" + lane + "|" + plan.Own + "|" + plan.More + "|" + plan.Problem + "|" + string.Join(";", plan.Steps.Concat(plan.Supply).Concat(plan.Covered)
             .Select(l => $"{l.Item.Id},{l.Maker?.Target.Id},{l.Need},{l.Have},{l.Actions},{l.Seconds:0},{l.Problem}"));
         DrawPlan(shown, () =>
         {
@@ -668,7 +737,8 @@ public sealed class QueueWindow
             foreach (PlanLine line in plan.Supply)
             {
                 TreeItem row = _planTable.CreateItem(root);
-                row.SetText(0, "Bring yourself (no skill on the queue makes it)");
+                row.SetText(0, line.Problem != "" ? "Bring yourself (its recipe is still locked)" : "Bring yourself (no skill on the queue makes it)");
+                if (line.Problem != "") for (int c = 0; c < 4; c++) row.SetTooltipText(c, "Locked for now: " + line.Problem + ".");
                 row.SetText(1, $"{line.Need:N0} {line.ItemName}");
                 row.SetText(2, line.Have.ToString("N0"));
                 for (int c = 0; c < 3; c++) row.SetCustomColor(c, Style.Accent);
@@ -720,7 +790,7 @@ public sealed class QueueWindow
         Replan();
         if (_plan == null || _plan.Steps.Count == 0) { Say(_plan?.Problem is { Length: > 0 } why ? why : "There is nothing to add."); return; }
         PlanResult plan = _plan;
-        int added = Planner.AddToQueue(plan);
+        int added = Planner.AddToQueue(plan, NewLane, _planSell.ButtonPressed);
         string itemName = plan.Item.DisplayName.GetPluralText(1);
         Say(plan.More ? $"Plan added: {added} step(s) to make {plan.Asked:N0} more {itemName}." : $"Plan added: {added} step(s) to own {plan.Own:N0} {itemName}.");
         _planShown = "";
@@ -791,6 +861,13 @@ public sealed class QueueWindow
     {
         if (_skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _target.Selected is not { } chosen) return;
         if ((Until)_untilPick.Selected == Until.ItemLeft) return;   // counting down: the item was chosen on purpose
+        if ((Until)_untilPick.Selected == Until.Spent)
+        {
+            // Using up: what the recipe eats (the first of its materials the list knows).
+            foreach (string id in Targets.Ingredients(_skills[_skillPick.Selected].Action, chosen.Value).OrderBy(i => i))
+                if (_item.Entry(id) != null) { _item.Select(id); return; }
+            return;
+        }
         Item? product = Targets.Product(_skills[_skillPick.Selected].Action, chosen.Value);
         if (product != null) _item.Select(product.Id);
     }
@@ -818,6 +895,7 @@ public sealed class QueueWindow
         if (skill < 0) return false;
         _skillPick.Select(skill);
         FillTargets(targetId);
+        UntilChanged();
         return _target.Selected is { } chosen && (chosen.Value.Id == targetId || chosen.Key == targetId);
     }
 
@@ -844,6 +922,7 @@ public sealed class QueueWindow
         if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
         _skillPick.Select(skill);
         FillTargets(Catalog.Key(target));
+        UntilChanged();
         Say($"Filled in: {_skills[skill].Entity.DisplayName.Text}: {target.Name}");
     }
 
@@ -933,6 +1012,32 @@ public sealed class QueueWindow
     }
 
     public void PressUseCurrentForIdle() => UseCurrentForIdle();
+    /// <summary>For tests: the sell face of the form (item, how many to keep), the lane for new steps, "then sell them".</summary>
+    public bool ChooseSell(string itemId, double keep)
+    {
+        _skillPick.Select(_skills.Count);
+        UntilChanged();
+        _amount.Value = keep;
+        return _item.Select(itemId);
+    }
+    public bool SellFaceShown => Selling && _item.Control.Visible && !_target.Control.Visible && _untilLabel.Text == "keep";
+    public bool LanePickShown => _lanePick.Visible;
+    public void ChooseLane(int lane) { _lanePick.Select(lane - 1); _planLanePick.Select(lane - 1); }
+    public void SetPlanSell(bool on) => _planSell.ButtonPressed = on;
+    public void SelectStep(int index) => SelectRow(index);
+    public void PressNextLane() => NextLane();
+    /// <summary>For tests: the list as shown, one line per row ("Lane 2" headings included).</summary>
+    public List<string> RowsShown()
+    {
+        var rows = new List<string>();
+        for (TreeItem? row = _table.GetRoot()?.GetFirstChild(); row != null; row = row.GetNext())
+        {
+            rows.Add($"{row.GetText(0)}|{row.GetText(1)}|{row.GetText(3)}");
+            for (TreeItem? child = row.GetFirstChild(); child != null; child = child.GetNext()) rows.Add($"  {child.GetText(0)}|{child.GetText(1)}|{child.GetText(3)}");
+        }
+        return rows;
+    }
+
     /// <summary>For tests: the "Add step" button and the Start / Pause button, as a click does them.</summary>
     public void PressAddStep() => AddStep();
     public void PressRun() => _run.EmitSignal(BaseButton.SignalName.Pressed);
@@ -942,12 +1047,47 @@ public sealed class QueueWindow
     public string IdleShown => _idleSkill.Selected <= 0 ? "Nothing"
         : $"{_idleSkill.GetItemText(_idleSkill.Selected)} | {(_idleTarget.Control.Visible && _idleTarget.Selected != null ? _idleTarget.Selected.Text : "?")}";
     public string IdleStateShown => _idleState.Visible ? _idleState.Text : "";
+    /// <summary>For tests: the two check boxes under the idle row, as a click does them.</summary>
+    public void PressIdleAlways(bool on) { _idleAlways.ButtonPressed = on; }
+    public void PressGameCreate(bool on) { _gameCreate.ButtonPressed = on; }
+
+    const string SellChoice = "Sell from the bank";
+    bool Selling => _skillPick.Selected >= 0 && _skillPick.Selected == _skills.Count;
+    bool _wasSelling;
 
     void UntilChanged()
     {
+        bool selling = Selling;
+        _target.Control.Visible = _useNow.Visible = _untilPick.Visible = !selling;
+        if (selling)
+        {
+            // Sell: which item, and how many to keep in the bank.
+            _untilLabel.Text = "keep";
+            _item.Control.Visible = _amount.Visible = true;
+            _levelPick.Visible = false;
+            _amount.MinValue = 0;
+            _amount.MaxValue = 100_000_000;
+            _amount.Suffix = "";
+            if (!_wasSelling)
+            {
+                if (_lastKind == Until.ItemLeft) _amountLeft = _amount.Value; else _amountOther = Math.Max(1, _amount.Value);
+                _amount.Value = 0;
+            }
+            _amount.TooltipText = "How many to keep in the bank: 0 sells all of them.";
+            _wasSelling = true;
+            return;
+        }
+        _untilLabel.Text = "until";
+        _amount.TooltipText = "";
+        if (_wasSelling)
+        {
+            _wasSelling = false;
+            _amount.MinValue = _lastKind == Until.ItemLeft ? 0 : 1;
+            _amount.Value = _lastKind == Until.ItemLeft ? _amountLeft : Math.Max(1, _amountOther);
+        }
         var kind = (Until)_untilPick.Selected;
         _amount.Visible = kind != Until.Stops;
-        _item.Control.Visible = kind is Until.Item or Until.ItemLeft or Until.Made;
+        _item.Control.Visible = kind is Until.Item or Until.ItemLeft or Until.Made or Until.Spent;
         _amount.MinValue = kind == Until.ItemLeft ? 0 : 1;
         if (kind == Until.ItemLeft && _lastKind != Until.ItemLeft)
         {
@@ -960,8 +1100,9 @@ public sealed class QueueWindow
         {
             _amountLeft = _amount.Value;
             _amount.Value = Math.Max(1, _amountOther);
-            if (kind is Until.Item or Until.Made) SuggestItem();
+            if (kind is Until.Item or Until.Made or Until.Spent) SuggestItem();
         }
+        else if (kind != _lastKind && (kind == Until.Spent || _lastKind == Until.Spent)) SuggestItem();
         _lastKind = kind;
         _levelPick.Visible = kind == Until.Level;
         _amount.Suffix = kind == Until.Minutes ? " min" : "";
@@ -969,8 +1110,19 @@ public sealed class QueueWindow
         if (kind == Until.Level && _amount.Value > 999) _amount.Value = 99;
     }
 
+    /// <summary>The lane new steps go to (1 when lanes are not shown).</summary>
+    int NewLane => _lanePick.Visible ? _lanePick.Selected + 1 : 1;
+
     void AddStep()
     {
+        if (Selling)
+        {
+            if (_item.Selected is not { } toSell) { Say("Pick the item to sell first."); return; }
+            Step sale = Planner.SellStep(toSell.Value, (long)_amount.Value, NewLane);
+            Queue.Add(sale);
+            Say($"Added: {sale.Name}, {sale.Goal}.");
+            return;
+        }
         if (_skillPick.Selected < 0 || _target.Selected is not { } chosen) { Say("Choose what to do first."); return; }
         GameEntity entity = _skills[_skillPick.Selected].Entity;
         Target target = chosen.Value;
@@ -978,9 +1130,9 @@ public sealed class QueueWindow
         {
             Entity = entity.Id, TargetId = target.Id, Extra = target.Extra,
             Name = $"{entity.DisplayName.Text}: {target.Name}",
-            Until = (Until)_untilPick.Selected, Amount = _amount.Value,
+            Until = (Until)_untilPick.Selected, Amount = _amount.Value, Lane = NewLane,
         };
-        if (step.Until is Until.Item or Until.ItemLeft or Until.Made)
+        if (step.Until is Until.Item or Until.ItemLeft or Until.Made or Until.Spent)
         {
             if (_item.Selected is not { } counted) { Say("Pick the item to count first."); return; }
             step.Subject = counted.Value.Id;
@@ -999,20 +1151,43 @@ public sealed class QueueWindow
 
     int SelectedIndex() => _table.GetSelected() is { } row ? (int)row.GetMetadata(0) : -1;
 
+    /// <summary>The step rows of the list, in order (under lane headings when there are lanes).</summary>
+    IEnumerable<TreeItem> StepRows()
+    {
+        for (TreeItem? row = _table.GetRoot()?.GetFirstChild(); row != null; row = row.GetNext())
+        {
+            if ((int)row.GetMetadata(0) >= 0) yield return row;
+            for (TreeItem? child = row.GetFirstChild(); child != null; child = child.GetNext()) yield return child;
+        }
+    }
+
+    void NextLane()
+    {
+        int index = SelectedIndex();
+        if (index < 0 || index >= Queue.Steps.Count) { Say("Select a step first."); return; }
+        int lane = Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes) % Queue.MaxLanes + 1;
+        Queue.SetLane(index, lane);
+        Say($"Step {index + 1} is now in lane {lane}.");
+        SelectRow(index);
+    }
+
+    void PaintLaneButton()
+    {
+        int index = SelectedIndex();
+        _laneButton.Text = index >= 0 && index < Queue.Steps.Count ? $"Lane {Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes)} > {Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes) % Queue.MaxLanes + 1}" : "Change lane";
+    }
+
     void MoveSelected(int by)
     {
         int index = SelectedIndex();
-        if (index < 0) return;
-        if (Queue.Running) { Say("Pause the queue before changing the order."); return; }
-        Queue.Move(index, by);
-        SelectRow(index + by);
+        int to = index < 0 ? -1 : Queue.MoveTo(index, by);   // in lanes it may jump over the steps of other lanes
+        if (to >= 0) SelectRow(to);
     }
 
     void SelectRow(int index)
     {
-        TreeItem? row = _table.GetRoot()?.GetFirstChild();
-        for (int i = 0; i < index && row != null; i++) row = row.GetNext();
-        row?.Select(0);
+        StepRows().FirstOrDefault(r => (int)r.GetMetadata(0) == index)?.Select(0);
+        PaintLaneButton();
     }
 
     void Say(string text) => _status.Text = text;
@@ -1022,12 +1197,27 @@ public sealed class QueueWindow
         int selected = SelectedIndex();
         _table.Clear();
         TreeItem root = _table.CreateItem();
+        // With lanes: one heading per lane, its steps under it.
+        bool laneMode = Queue.LaneMode;
+        var headings = new Dictionary<int, TreeItem>();
+        if (laneMode)
+            foreach (int lane in Queue.Steps.Select(st => Math.Clamp(st.Lane, 1, Queue.MaxLanes)).Distinct().OrderBy(l => l))
+            {
+                TreeItem heading = _table.CreateItem(root);
+                heading.SetMetadata(0, -1);
+                var mine = Queue.Steps.Where(st => Math.Clamp(st.Lane, 1, Queue.MaxLanes) == lane).ToList();
+                Step? at = mine.FirstOrDefault(st => st.Run != RunState.Done);
+                heading.SetText(1, $"Lane {lane}");
+                heading.SetText(3, !Queue.Running ? $"{mine.Count} step(s)" : at == null ? "finished" : $"at step {Queue.Steps.IndexOf(at) + 1}");
+                for (int c = 0; c < 4; c++) { heading.SetCustomColor(c, Style.Accent); heading.SetSelectable(c, false); }
+                headings[lane] = heading;
+            }
         for (int i = 0; i < Queue.Steps.Count; i++)
         {
             Step step = Queue.Steps[i];
             bool current = Queue.Running && step.Run == RunState.Running;
             bool waiting = Queue.Running && step.Run == RunState.Waiting;
-            TreeItem row = _table.CreateItem(root);
+            TreeItem row = _table.CreateItem(laneMode ? headings[Math.Clamp(step.Lane, 1, Queue.MaxLanes)] : root);
             row.SetMetadata(0, i);
             row.SetText(0, (i + 1).ToString());
             row.SetText(1, step.Name);
@@ -1045,13 +1235,11 @@ public sealed class QueueWindow
         _repeat.ButtonPressed = Queue.Repeat;
         _syncing = false;
         _repeat.Text = Queue.Repeat ? "Start over at the end: ON" : "Start over at the end: OFF";
-        // Only worth showing when the Multitask mod has made room for more than one action.
-        int room = Targets.MultitaskCapacity();
-        _side.Visible = room > 1;
+        PaintRoom();
         _syncing = true;
-        _side.ButtonPressed = Queue.SideBySide;
+        _idleAlways.ButtonPressed = Queue.IdleAlways;
+        _gameCreate.ButtonPressed = Queue.GameCreate;
         _syncing = false;
-        _side.Text = Queue.SideBySide ? $"Side by side: {room} at once" : "Side by side: OFF";
         PaintIdle();
         if (Queue.Note != "") Say(Queue.Note);
         else if (Queue.Running) Say(Queue.Headline);

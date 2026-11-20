@@ -33,6 +33,9 @@ public sealed class Kept
     [JsonIgnore] internal double RetryAt;
     [JsonIgnore] internal long Pile;              // a recipe: how many crafts the bank had materials for at the last look
     [JsonIgnore] internal double GrewAt;          // ...and when that number last went up
+    /// <summary>It waits because the bank holds nothing for it at all (not: a small pile is being collected).
+    /// Such an action makes room first when something new starts.</summary>
+    [JsonIgnore] internal bool OutOfMaterials;
 
     [JsonIgnore] public string Title => $"{SkillName}: {Name}";
 }
@@ -43,7 +46,8 @@ public sealed class Kept
 /// The game stops every running action when a new one starts. With a slot switched on, the action the player
 /// was doing before is started again next to the new one. So with one slot on, the last two actions run
 /// together; with both on, the last three. Nothing has to be picked anywhere:
-///   - start something new            -> it joins, the oldest drops out when there is no room
+///   - start something new            -> it joins; when there is no room, an action whose materials ran out
+///                                       drops out first, otherwise the oldest
 ///   - choose another rock/recipe     -> that skill simply does the new thing (a skill can only do one)
 ///   - press the game's own Stop      -> that action is dropped
 ///   - materials run out              -> it waits and goes on when there are some again
@@ -168,6 +172,8 @@ public static class Slots
         PublishCapacity(1);
         Publish(new List<string>());
         Targets.PublishPlayerKept(Array.Empty<string>());
+        PublishOrder(Array.Empty<string>());
+        s_driven = "";
     }
 
     // ---------------------------------------------------------------- the switches
@@ -246,6 +252,7 @@ public static class Slots
             kept.Extra = target.Extra;
             kept.Name = target.Name;
             kept.Pending = false;
+            kept.OutOfMaterials = false;
             kept.ByQueue = queueSkills.Contains(kept.Entity);
             kept.State = "running";
         }
@@ -267,6 +274,8 @@ public static class Slots
             Trim(game, stopExtras: false);
             Publish(new List<string>());
             Targets.PublishPlayerKept(s_recent.Where(k => !k.ByQueue).Select(k => k.Entity));
+            PublishOrder(s_recent.Select(k => k.Entity));
+            NoteDriven();
             return;
         }
 
@@ -279,7 +288,7 @@ public static class Slots
             if (somethingNew) { kept.Pending = true; kept.RetryAt = 0; continue; }   // stopped by the game because of the new action
             // It stopped while nothing new was started: the player pressed Stop, or it ran out of something.
             ActionComponent action = s_actions[kept.Entity];
-            if (Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0) { kept.Pending = true; continue; }   // out of materials: wait
+            if (Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0) { kept.Pending = true; kept.OutOfMaterials = true; continue; }   // out of materials: wait
             s_recent.Remove(kept);
         }
 
@@ -293,15 +302,24 @@ public static class Slots
         Publish(held);
         // The Action Queue only starts its "while idle" action in a slot nobody else holds, running or waiting.
         Targets.PublishPlayerKept(s_recent.Where(k => !k.ByQueue).Select(k => k.Entity));
+        PublishOrder(s_recent.Select(k => k.Entity));
+        NoteDriven();
         Order(game);
     }
 
     static void Trim(Game game, bool stopExtras)
     {
+        HashSet<string> standIns = StandIns();
         while (s_recent.Count > Capacity)
         {
-            // The Action Queue's own steps keep their place; the oldest of the player's own actions makes room.
-            int at = s_recent.FindLastIndex(k => !k.ByQueue);
+            // Who makes room, first to last (the oldest first within each group; the latest action never):
+            //   1. a stand-in another mod started while the player's own action had nothing to do,
+            //   2. one of the player's actions that waits because its materials ran out (it does nothing anyway),
+            //   3. the oldest of the player's own actions.
+            // The Action Queue's own steps keep their place.
+            int at = LastIndex(k => standIns.Contains(k.Entity) && !k.ByQueue);
+            if (at < 0) at = LastIndex(k => k.OutOfMaterials && !k.ByQueue && !IsRunning(k));
+            if (at < 0) at = s_recent.FindLastIndex(k => !k.ByQueue);
             if (at < 0) at = s_recent.Count - 1;
             Kept oldest = s_recent[at];
             s_recent.RemoveAt(at);
@@ -309,6 +327,66 @@ public static class Slots
             // the queue started a step beside it, or when a slot was just switched off.
             if (IsRunning(oldest)) s_actions[oldest.Entity].TryStop(force: true);
         }
+    }
+
+    /// <summary>The oldest entry that matches, never the latest one (index 0); -1 when none does.</summary>
+    static int LastIndex(Predicate<Kept> match)
+    {
+        int at = s_recent.FindLastIndex(match);
+        return at > 0 ? at : -1;
+    }
+
+    // ---------------------------------------------------------------- other mods
+
+    /// <summary>Scene-root meta any mod may set: "id|id" of skills it started only as a stand-in (to keep the
+    /// character busy). Such an action is the first to make room when the player starts something.</summary>
+    public const string StandInMeta = "MultitaskStandIn";
+    /// <summary>The same idea as published by the "Default Action" mod: true while its stand-in runs (or the ids).</summary>
+    public const string DefaultActionMeta = "DefaultActionDriving";
+    /// <summary>Published here: every action kept, running or waiting, the latest first ("id|id").</summary>
+    public const string OrderMeta = "MultitaskOrder";
+
+    static string s_driven = "";       // the latest action while Default Action said "true": its stand-in
+    static string s_orderPublished = "\0";
+
+    static HashSet<string> StandIns()
+    {
+        var ids = new HashSet<string>();
+        try
+        {
+            Godot.Window root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
+            foreach (string meta in new[] { StandInMeta, DefaultActionMeta })
+            {
+                if (!root.HasMeta(meta)) continue;
+                Godot.Variant value = root.GetMeta(meta);
+                if (value.VariantType == Godot.Variant.Type.String)
+                    foreach (string id in value.AsString().Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) ids.Add(id);
+                else if (value.VariantType == Godot.Variant.Type.Bool && value.AsBool() && s_driven != "") ids.Add(s_driven);
+            }
+        }
+        catch { }
+        return ids;
+    }
+
+    /// <summary>Remembers which action Default Action is driving (the latest one while it says "true").</summary>
+    static void NoteDriven()
+    {
+        try
+        {
+            Godot.Window root = ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root;
+            bool driving = root.HasMeta(DefaultActionMeta) && root.GetMeta(DefaultActionMeta) is { VariantType: Godot.Variant.Type.Bool } v && v.AsBool();
+            if (!driving) s_driven = "";
+            else if (s_driven == "" && s_recent.Count > 0) s_driven = s_recent[0].Entity;
+        }
+        catch { }
+    }
+
+    static void PublishOrder(IEnumerable<string> entities)
+    {
+        string order = string.Join("|", entities);
+        if (order == s_orderPublished) return;
+        s_orderPublished = order;
+        try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(OrderMeta, order); } catch { }
     }
 
     static void Restore(Game game, Kept kept, double now)
@@ -336,6 +414,7 @@ public static class Slots
         long batches = Targets.Batches(game, action, target);
         if (batches > kept.Pile) kept.GrewAt = now;
         kept.Pile = batches;
+        kept.OutOfMaterials = batches == 0;
         if (batches == 0) { kept.State = "waiting: the materials have run out"; return; }
         if (batches < PileSize && now - kept.GrewAt < SettleSeconds) { kept.State = $"waiting: collecting materials ({batches}/{PileSize})"; return; }
 

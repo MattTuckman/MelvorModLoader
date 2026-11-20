@@ -5,7 +5,7 @@ using MelvorModLoader;
 namespace CheatMenu;
 
 /// <summary>
-/// F8 opens a menu of cheats and tuning options for the open character.
+/// F8 (or the loader's Mods menu) opens a menu of cheats and tuning options for the open character.
 /// Values are remembered per character (settings.json) and never written into the save file.
 /// </summary>
 public class CheatMenuMod : IMod
@@ -14,10 +14,12 @@ public class CheatMenuMod : IMod
 
     ModContext _ctx = null!;
     Menu? _menu;
-    bool _wasDown;
     int _frame;
 
     public Menu? Menu => _menu;
+    internal WindowKey Key { get; private set; } = null!;
+    /// <summary>For tests: the key shown for the menu ("F8", or "" when switched off).</summary>
+    public string KeyLabel => Key.Label;
 
     public void OnLoad(ModContext ctx)
     {
@@ -28,10 +30,11 @@ public class CheatMenuMod : IMod
         PickListText.T = Lang.T;
         Engine.Log = ctx.Log;
         Crops.Log = ctx.Log;
+        Key = new WindowKey(ctx, "Cheat Menu", ToggleMenu, Godot.Key.F8);
         ctx.Frame += Tick;
         GameSpeed.Tree = ctx.Tree;
         ctx.Tree.PhysicsFrame += GameSpeed.OnPhysicsFrame;
-        ctx.Log("Ready. Press F8 while a character is open.");
+        ctx.Log($"Ready. Press {Key.Spoken} while a character is open.");
     }
 
     void Tick()
@@ -52,9 +55,7 @@ public class CheatMenuMod : IMod
             else if (game == null && _menu is { Visible: true }) _menu.Hide();
         }
 
-        bool down = Input.IsKeyPressed(Key.F8);
-        if (down && !_wasDown) ToggleMenu();
-        _wasDown = down;
+        Key.Poll();
     }
 
     public void ToggleMenu()
@@ -63,7 +64,7 @@ public class CheatMenuMod : IMod
         Game? game = GameAccess.CurrentGame;
         if (game is not { IsSaveLoaded: true })
         {
-            _ctx.Log("F8: open a character first (the menu does not work on the main menu).");
+            _ctx.Log("Cheat Menu: open a character first (the menu does not work on the main menu).");
             return;
         }
         Engine.Bind(game);

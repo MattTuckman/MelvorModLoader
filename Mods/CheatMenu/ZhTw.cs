@@ -30,6 +30,11 @@ static class ZhTw
         ["XP multiplier"] = "經驗倍率",
         ["Game speed"] = "遊戲速度",
         ["Skill action speed"] = "技能動作速度",
+        ["Farming: normal pace"] = "農務：正常速度", ["Ranching: normal pace"] = "畜牧：正常速度",
+        ["Crops and the grain mill keep their normal pace when Game speed or Skill action speed is raised. Farming's own speed (Per skill page) still counts."]
+            = "提高「遊戲速度」或「技能動作速度」時，作物和磨坊仍按正常速度進行。農務本身的速度（「各技能」頁面）仍然有效。",
+        ["Animals grow, eat and produce at their normal pace when Game speed is raised. Ranching's own speed (Per skill page) still counts."]
+            = "提高「遊戲速度」時，動物的成長、進食和產出仍按正常速度進行。畜牧本身的速度（「各技能」頁面）仍然有效。",
         ["Monster respawn speed"] = "怪物重生速度",
         ["Extra offline time limit"] = "額外離線時間上限",
         ["Double product chance"] = "雙倍產物機率",

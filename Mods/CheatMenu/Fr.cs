@@ -28,6 +28,11 @@ static class Fr
         ["XP multiplier"] = "Multiplicateur d'XP",
         ["Game speed"] = "Vitesse du jeu",
         ["Skill action speed"] = "Vitesse des actions de compétence",
+        ["Farming: normal pace"] = "Agriculture : rythme normal", ["Ranching: normal pace"] = "Élevage : rythme normal",
+        ["Crops and the grain mill keep their normal pace when Game speed or Skill action speed is raised. Farming's own speed (Per skill page) still counts."]
+            = "Les cultures et le moulin à grain gardent leur rythme normal quand la vitesse du jeu ou celle des actions est augmentée. La vitesse propre de l'Agriculture (« Par compétence ») compte toujours.",
+        ["Animals grow, eat and produce at their normal pace when Game speed is raised. Ranching's own speed (Per skill page) still counts."]
+            = "Les animaux grandissent, mangent et produisent à leur rythme normal quand la vitesse du jeu est augmentée. La vitesse propre de l'Élevage (« Par compétence ») compte toujours.",
         ["Monster respawn speed"] = "Vitesse de réapparition des monstres",
         ["Extra offline time limit"] = "Temps hors ligne supplémentaire",
         ["Double product chance"] = "Chance de production double",

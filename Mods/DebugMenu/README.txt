@@ -1,4 +1,4 @@
-Debug Menu 1.0.2  -  a mod for Melvor Idle 2
+Debug Menu 1.0.3  -  a mod for Melvor Idle 2
 ============================================
 
 Opens the developers' own debug menu that ships inside the game but is never shown.
@@ -22,7 +22,7 @@ INSTALL
 
 HOW TO USE
 ----------
-Open a character and press F9.
+Open a character and press F9 (or pick it from the Mods button in the top bar; the key can be changed there).
 
 
 GOOD TO KNOW

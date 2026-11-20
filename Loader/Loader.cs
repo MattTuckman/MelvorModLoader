@@ -24,6 +24,7 @@ public static class Loader
         try
         {
             s_tree = (SceneTree)Engine.GetMainLoop();
+            Hotkeys.Start();
             LoadMods();
             s_tree.ProcessFrame += OnFrame;
             ShowBanner();
@@ -77,6 +78,8 @@ public static class Loader
         // While the game computes offline progress it runs its ticks on a thread of its own (and pauses the
         // scene tree). Nothing else may touch the game then, so mods get no frames until it is done.
         if (s_tree.Paused) return;
+        try { Hotkeys.OnFrame(s_tree); }
+        catch (Exception e) { Log.Write("Hotkeys: " + e.Message); }
         for (int i = 0; i < s_frame.Count; i++)
         {
             var (owner, handler) = s_frame[i];

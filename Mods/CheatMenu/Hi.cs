@@ -28,6 +28,11 @@ static class Hi
         ["XP multiplier"] = "XP गुणक",
         ["Game speed"] = "गेम की गति",
         ["Skill action speed"] = "कौशल क्रियाओं की गति",
+        ["Farming: normal pace"] = "खेती: सामान्य गति", ["Ranching: normal pace"] = "पशुपालन: सामान्य गति",
+        ["Crops and the grain mill keep their normal pace when Game speed or Skill action speed is raised. Farming's own speed (Per skill page) still counts."]
+            = "गेम की गति या कौशल क्रियाओं की गति बढ़ाने पर भी फसलें और आटा चक्की सामान्य गति से चलती हैं। \"हर कौशल\" पेज पर खेती की अपनी गति फिर भी लागू होती है।",
+        ["Animals grow, eat and produce at their normal pace when Game speed is raised. Ranching's own speed (Per skill page) still counts."]
+            = "गेम की गति बढ़ाने पर भी जानवर सामान्य गति से बढ़ते, खाते और उत्पादन करते हैं। \"हर कौशल\" पेज पर पशुपालन की अपनी गति फिर भी लागू होती है।",
         ["Monster respawn speed"] = "राक्षसों की वापसी की गति",
         ["Extra offline time limit"] = "अतिरिक्त ऑफ़लाइन समय",
         ["Double product chance"] = "दोगुने उत्पाद की संभावना",

@@ -40,6 +40,8 @@ public static class Share
         public double A { get; set; }         // amount
         public string J { get; set; } = "";   // goal subject (item id / skill name)
         public string K { get; set; } = "";   // its shown name
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
+        public int L { get; set; }            // lane (0 or missing: lane 1; older versions ignore it)
     }
 
     public static string Export(string name, IEnumerable<Step> steps, bool repeat)
@@ -47,7 +49,7 @@ public static class Share
         var packed = new Packed
         {
             N = name, R = repeat,
-            S = steps.Select(s => new PackedStep { E = s.Entity, T = s.TargetId, X = s.Extra, N = s.Name, U = (int)s.Until, A = s.Amount, J = s.Subject, K = s.SubjectName }).ToList(),
+            S = steps.Select(s => new PackedStep { E = s.Entity, T = s.TargetId, X = s.Extra, N = s.Name, U = (int)s.Until, A = s.Amount, J = s.Subject, K = s.SubjectName, L = s.Lane > 1 ? Math.Min(s.Lane, Queue.MaxLanes) : 0 }).ToList(),
         };
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(packed);
         using var buffer = new MemoryStream();
@@ -93,8 +95,8 @@ public static class Share
 
         foreach (PackedStep s in packed.S)
         {
-            if (s == null || string.IsNullOrWhiteSpace(s.E) || string.IsNullOrWhiteSpace(s.T) || s.U < 0 || s.U > (int)Until.Times
-                || double.IsNaN(s.A) || double.IsInfinity(s.A) || s.A < 0 || s.A > 1_000_000_000)
+            if (s == null || string.IsNullOrWhiteSpace(s.E) || string.IsNullOrWhiteSpace(s.T) || s.U < 0 || s.U > (int)Until.Spent
+                || double.IsNaN(s.A) || double.IsInfinity(s.A) || s.A < 0 || s.A > 1_000_000_000 || s.L < 0 || s.L > Queue.MaxLanes)
             {
                 problem = "That code holds a step that makes no sense, so none of it was taken.";
                 steps.Clear();
@@ -103,7 +105,7 @@ public static class Share
             steps.Add(new Step
             {
                 Entity = Clip(s.E), TargetId = Clip(s.T), Extra = Clip(s.X), Name = Clip(s.N),
-                Until = (Until)s.U, Amount = s.A, Subject = Clip(s.J), SubjectName = Clip(s.K),
+                Until = (Until)s.U, Amount = s.A, Subject = Clip(s.J), SubjectName = Clip(s.K), Lane = Math.Max(1, s.L),
             });
         }
         name = CleanName(packed.N);

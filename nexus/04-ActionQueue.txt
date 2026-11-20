@@ -15,12 +15,25 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.7.0.zip   (name: Action Queue, version 0.7.0)
+MAIN FILE:  dist\ActionQueue-0.8.0.zip   (name: Action Queue, version 0.8.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\sira-2-pencere.png (main image), sira-5-yan-yana.png, sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.8.0
+- New: lanes. With the Multitask mod's slots on, give steps Lane 1, 2, 3...: every lane runs its own steps in order, side by side (cut and burn in one lane, fish and cook in another). "Start over" restarts each lane on its own (suggested by a player, thank you!)
+- New step: "Sell from the bank". Pick an item and how many to keep; when the queue gets there it sells the rest. The planner can add it with "then sell them". Locked stacks are never sold (suggested by a player, thank you!)
+- The planner never adds a step you cannot do yet: it picks a recipe whose whole chain is open (Ruby Bolts via Iron Bars while Ironsteel is locked), lists a locked material as something to bring, and says what is missing ("needs Fletching Level 45") (suggested by a player, thank you!)
+- The queue now keeps going while the game is closed (offline progress), and carries on where it was after a restart
+- Its window can be opened from the loader's Mods menu, and its key can be changed there (loader 0.2.0)
+- New: works with the game's own buttons (suggested by a player, thank you!). On the Smithing, Crafting, Fletching, Runecrafting, Beastcrafting, Cooking and Herblore pages a "+ Queue" button puts the selected recipe at the end of the queue, with the stop option you chose on the page (Recipe Creations, Products Owned, Products Gained, Ingredients Spent, Ingredients Remaining, Reach Level). It works even while you lack the materials
+- New setting "The game's Create button adds to the queue" (off by default): Create then reads "Add to queue" and does the same. With nothing left in the queue it starts the recipe through the queue, so the next one lines up behind it
+- The game's Stop button on a running step ("Stop Cutting", "Stop", "Run"...) takes that step out of the queue and the queue goes on with the next one. A saved queue keeps it
+- Steps can be moved up and down while the queue runs. A running step is not interrupted; the new order decides what comes next. After a pause, finished steps stay finished wherever they were moved
+- New setting "Also when the queue is not running" for the idle action: it then also runs while the queue is paused, finished or not used, whenever your character does nothing. Press Stop on it and it waits until you start something yourself
+- New goal: "it has used up this many of an item" (the game's "Ingredients Spent"). Counts only what the step's skill used, not what you sold
+
 0.7.0
 - New: searchable, grouped lists. Click a list (what to do, the item to count, the item to plan, the idle action) and type to search; arrows and Enter work. Entries are grouped like each skill's own page, in the game's order, with the game's pictures (suggested by a player, thank you!)
 - Things you have not unlocked yet are dimmed with the level they need; you can still queue them for later
@@ -76,7 +89,15 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.7.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.1.3. Open a character and press [b]F6[/b].
+This is Action Queue [b]0.8.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F6[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed).
+
+[size=5][b]New in 0.8.0[/b][/size]
+[list]
+[*][b]Lanes:[/b] with Multitask's slots on, give each step a lane. Every lane does its own steps in order, and the lanes run side by side: cut and burn logs in lane 1, fish and cook in lane 2. With "start over" on, a short lane starts again by itself instead of waiting for the long one. A step still waits for what another lane is making.
+[*][b]Sell step:[/b] "Sell from the bank" at the bottom of the skill list. Pick the item and how many to keep; when the queue gets there it sells the rest. The planner adds one for you with "then sell them". Locked stacks are never sold.
+[*][b]No impossible plans:[/b] the planner picks a recipe whose whole chain you can make (Ruby Bolts via Iron Bars while Ironsteel Bars are locked). A material you cannot make yet goes to the "bring yourself" list, and an item you cannot make at all says why ("needs Fletching Level 45").
+[*][b]Works while the game is closed:[/b] the queue moves on to its next steps during offline progress, and after a restart it carries on where it was.
+[/list]
 
 [size=5][b]An example[/b][/size]
 [list=1]
@@ -86,13 +107,23 @@ This is Action Queue [b]0.7.0[/b], tested on game version [b]0.11.6-alpha.1[/b] 
 [*]Combat: Golbin, [i]for 45 minutes[/i]
 [/list]
 
-[size=5][b]New: never stand still[/b][/size]
+[size=5][b]New: use the game's own buttons[/b][/size]
+On the Smithing, Crafting, Fletching, Runecrafting, Beastcrafting, Cooking and Herblore pages:
+[list]
+[*][b]+ Queue[/b] (next to the game's Create button): the selected recipe goes to the end of the queue, with the stop option you chose on the page (Recipe Creations, Products Owned, Products Gained, Ingredients Spent, Ingredients Remaining, Reach Level). It works even while you lack the materials.
+[*][b]Create itself can do it:[/b] switch on "The game's Create button adds to the queue" in the queue window and Create reads [b]Add to queue[/b]. With nothing left in the queue it starts the recipe through the queue, so the next one lines up behind it.
+[*][b]Stop moves on:[/b] the game's Stop button on a running step ("Stop Cutting", "Stop", "Run"...) takes that step out of the queue and the next one starts. A saved queue keeps it.
+[*][b]Reorder any time:[/b] move steps up and down while the queue runs. The running step is not interrupted; the new order decides what comes next.
+[/list]
+
+[size=5][b]Never stand still[/b][/size]
 At the bottom of the window: [b]When the queue waits or ends, do[/b] [i]skill[/i] [i]action[/i]. Pick something there and:
 [list]
 [*][b]While the queue waits[/b] (a recipe collecting materials, a step waiting for its skill), that action runs in the free slot. When a step can go on, it makes room again.
 [*][b]When the queue has finished[/b], that action starts and keeps going.
+[*][b]Also when the queue is not running[/b] (a check box, off by default): it then also runs while the queue is paused, finished or not used at all, whenever your character does nothing.
 [*][b]It never takes your place.[/b] It only uses a free slot; your own actions are never stopped for it. Without Multitask it simply starts when the queue is done.
-[*]It is not started when it would use up what a waiting step needs. Press Stop on it and the queue leaves it alone; a fight is never walked back into after a death.
+[*]It is not started when it would use up what a waiting step needs. Press Stop on it and it waits until you start something yourself; a fight is never walked back into after a death.
 [/list]
 
 [size=5][b]New: the planner[/b][/size]
@@ -110,7 +141,7 @@ Press [b]Plan an item[/b], choose [b]Make[/b] (this many more) or [b]Own in tota
 [*][b]It tells you how long:[/b] each step shows the time it takes at normal game speed. In testing the forecast was within a few percent for most skills.
 [*][b]One click adds it:[/b] the steps go to the end of the queue as ordinary steps. Reorder them, remove them, mix them with your own.
 [*][b]Plans stack:[/b] add a second and a third plan. A later plan knows what the earlier ones will make and use up, so two plans never count on the same ore.
-[*][b]It is honest about gaps:[/b] actions you have not unlocked yet are shown in red, and items no skill makes (monster drops, shop items) are listed in yellow for you to bring.
+[*][b]It is honest about gaps:[/b] a plan never contains a step you cannot do yet. Materials whose recipe is still locked, and items no skill makes (monster drops, shop items), are listed for you to bring, with the reason.
 [/list]
 Plans cover Woodcutting, Mining, Fishing, Hunting, Smithing, Cooking, Crafting, Runecrafting, Fletching, Beastcrafting, Herblore and Firemaking: more than 1,000 items.
 
@@ -126,7 +157,7 @@ Plans cover Woodcutting, Mining, Fishing, Hunting, Smithing, Cooking, Crafting, 
 [size=5][b]How it works[/b][/size]
 [list]
 [*][b]Pick what to do:[/b] choose a skill, then click the list and type to search (grouped like the skill page, with the game's pictures), or press "Use what I am doing now".
-[*][b]Pick when it ends:[/b] when it stops by itself, when you own a number of an item, when you have made a number more of an item (whatever the bank already holds), when it has been done a number of times (every catch, hit, finished bar, lap or kill counts, like mastery), when a skill reaches a level, after a number of minutes, or when only a number of an item are left (fight until only 5 of your food are left). For the item goal the item is filled in with what the action makes (Smithing: Gold Bar counts Gold Bars); you can still pick another one.
+[*][b]Pick when it ends:[/b] when it stops by itself, when you own a number of an item, when you have made a number more of an item (whatever the bank already holds), when it has been done a number of times (every catch, hit, finished bar, lap or kill counts, like mastery), when it has used up a number of an item, when a skill reaches a level, after a number of minutes, or when only a number of an item are left (fight until only 5 of your food are left). For the item goal the item is filled in with what the action makes (Smithing: Gold Bar counts Gold Bars); you can still pick another one.
 [*][b]Start the queue.[/b] One line at the top of the screen shows the current step and its progress.
 [*][b]Start over at the end[/b] turns the queue into a loop.
 [/list]
@@ -144,14 +175,15 @@ On its own the queue does one step after another. Add the [url=https://www.nexus
 [*]"Until I own N" counts what was gathered, so cooking the fish as they come does not make the fishing step run twice as long.
 [*]Two steps for the same skill still take turns.
 [*]One button in the queue window switches it back to one step at a time.
+[*][b]Lanes[/b] give you separate queues instead: see "New in 0.8.0" above.
 [/list]
 
 [size=5][b]It plays fair and it plays safe[/b][/size]
 [list]
 [*][b]Never bypasses requirements.[/b] A step you are not allowed to do yet, or have no materials for, is marked "skipped" with the reason, and the next one starts.
-[*][b]You stay in charge.[/b] Start something else by hand and the queue pauses instead of fighting you. "Remove all" also stops what the running step had started.
+[*][b]You stay in charge.[/b] Start something else by hand and the queue pauses instead of fighting you. Press the game's Stop on a step and the queue moves on without it. "Remove all" also stops what the running step had started.
 [*][b]Death pauses it.[/b] If your character dies the queue stops and does not walk back into the fight, even with "start over" switched on.
-[*][b]Runs while the game is open.[/b] While the game is closed, the game's normal offline progress continues the last action only.
+[*][b]Runs while the game is closed too.[/b] During offline progress the queue moves on to its next steps; a fight waits until the game is open again. After a restart it carries on where it was.
 [*]Hunting needs a trap and Agility needs a path chosen on the skill's own page first. The queue does not make that choice for you.
 [/list]
 
@@ -159,7 +191,7 @@ On its own the queue does one step after another. Add the [url=https://www.nexus
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.7.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.8.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
