@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>PhoneScreen</AssemblyName>
+    <RootNamespace>PhoneScreen</RootNamespace>
+    <Version>0.1.0</Version>
+    <Product>Melvor Idle 2 Phone Screen</Product>
+    <AssemblyTitle>Phone Screen</AssemblyTitle>
+    <Description>Follow your Melvor Idle 2 character from your phone's browser on the same Wi-Fi: what is running, combat, the Action Queue, your adventurers and the bank, with alerts (requires Melvor Mod Loader). F2 opens it.</Description>
+    <Company>Melvor Mod Loader</Company>
+    <Copyright>MIT License</Copyright>
+    <Nullable>enable</Nullable>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GameData>..\..\..\data_GamesByMalcs.Melvor2_windows_x86_64</GameData>
+    <LoaderDir>..\..\..\data_MelvorModLoader_windows_x86_64</LoaderDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- the game's own look (panels, letterings) -->
+    <Compile Include="..\Adventurers\Look.cs" Link="Look.cs" />
+    <!-- the window's key: listed in the loader's Mods menu (F1), changeable there; F2 with an older loader -->
+    <Compile Include="..\Shared\WindowKey.cs" Link="WindowKey.cs" />
+    <!-- the Action Queue's per-skill start code: every skill and target, started the way the game does -->
+    <Compile Include="..\ActionQueue\Targets.cs" Link="Targets.cs" />
+    <Reference Include="MelvorModLoader"><HintPath>$(LoaderDir)\MelvorModLoader.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GodotSharp"><HintPath>$(GameData)\GodotSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GamesByMalcs.Melvor2"><HintPath>$(GameData)\GamesByMalcs.Melvor2.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

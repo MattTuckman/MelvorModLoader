@@ -1,0 +1,123 @@
+==========================================================================================
+PHONE SCREEN  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Phone Screen
+
+KATEGORI ONERISI (Category):
+Utilities (yoksa Miscellaneous)
+
+KISA ACIKLAMA (Summary / Brief overview):
+Play Melvor Idle 2 from your phone's browser, at home or anywhere (work, school, a café) with the free Tailscale app: see what runs, fix what went wrong, start skills and fights, change gear, potions and prayers, Slayer, Farming, the bank and the shop, the Action Queue. Nothing to install on the phone but Tailscale.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (file requirement, min 0.2.0)
+Off-site: Tailscale  https://tailscale.com/download  ("only to use it away from home")
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\PhoneScreen-0.1.0.zip   (name: Phone Screen, version 0.1.0)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src\Dev\shots\telefon-rehber):
+(sira ve aciklamalari - her goruntunun Description kutusuna yazilacak metin)
+10-telefon-simdi.png (main image)  Now: everything that runs, your HP and food, the fixes first
+02-pencere-tailscale-qr.png        In the game: F2, pick Tailscale, Start, scan the QR code
+13-telefon-savas.png               Combat: every area, SAFE / RISKY / DEADLY with Combat Advisor
+14-telefon-ekipman.png             Gear: loadouts and every slot, from the bank
+15-telefon-buffs.png               Buffs: potions, prayers and spells
+16-telefon-slayer.png              Slayer: get, swap, extend and fight your task
+12-telefon-farming.png             Farming: every plot with its timer, plant and harvest
+17-telefon-banka.png               Bank: search, sell; Sell junk, Bury all, Open all with Bulk Sell
+18-telefon-dukkan.png              Shop: what you can buy now
+20-telefon-sira.png                Action Queue: resume, add, move, save and load steps
+21-telefon-multitask.png           Multitask: how many at once, what each slot runs
+19-telefon-more.png                More: your other mods, when they are installed
+11-telefon-beceriler.png           Skills: start any skill from the phone
+01-pencere-kapali.png              The Phone window before Start
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.1.0
+- First version
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]PHONE SCREEN[/b][/size]
+[size=4][i]Your character, in your pocket.[/i][/size]
+At work, at school, in a café: see what your character is doing and change it from your phone's browser.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
+
+This is Phone Screen [b]0.1.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. It is still young: your feedback is very welcome.
+
+[size=5][b]What you need[/b][/size]
+[list]
+[*][b]Melvor Mod Loader[/b] (see Requirements).
+[*][b]Tailscale[/b], free, on your PC and on your phone: only to use it away from home. On your home Wi-Fi you need nothing else.
+[*]Your PC on and awake, with the game running.
+[/list]
+
+[size=5][b]Set it up (5 minutes, once)[/b][/size]
+[list=1]
+[*][b]Install the mod[/b] like any other (see Install below).
+[*][b]Install Tailscale[/b] on your PC ([url=https://tailscale.com/download]tailscale.com/download[/url]) and on your phone (App Store / Google Play).
+[*][b]Sign in to Tailscale on both with the same account[/b] (Google, Microsoft or Apple sign-in works). In the Tailscale app on your phone, your PC now shows up in the device list.
+[*][b]In the game press F2[/b] (or the [b]Phone[/b] button at the end of the top bar). Pick [b]"Tailscale: works anywhere"[/b] in the network list and press [b]Start[/b].
+[*][b]Tick "Allow phone controls"[/b] (without it the phone only watches). Also tick [b]"Turn on by itself when the game starts"[/b]: then after a restart your phone finds the game again without a new QR code.
+[*][b]Scan the QR code[/b] with your phone's camera. Done. Add the page to your home screen to open it like an app.
+[/list]
+Only at home? Skip Tailscale: pick your Wi-Fi in step 4 instead.
+
+[size=5][b]What you can do from the phone[/b][/size]
+[list]
+[*][b]Now:[/b] what needs you first (food low or gone, nothing running, bank full, crops ready, an adventurer stopped), each with the button that fixes it; everything that runs, one card per Multitask slot, with your HP and the auto-eat line in a fight.
+[*][b]Skills:[/b] start any skill target, see what is still missing for the rest. [b]Farming:[/b] every plot with its timer, Harvest all, plant (with compost), buy plots.
+[*][b]Combat:[/b] every area and monster, with [b]SAFE / RISKY / DEADLY[/b] if you have the Combat Advisor mod. [b]Gear:[/b] loadouts and every slot, put on or take off from the bank. [b]Buffs:[/b] potions (combat and skills), prayers, spells. [b]Slayer:[/b] get, swap, extend and fight your task, Auto Slayer.
+[*][b]Bank:[/b] search, sell (it asks first), recent gains, food; [b]Shop[/b] with "can buy now"; with Bulk Sell: Sell junk, Bury all, Open all.
+[*][b]More:[/b] the Action Queue (add, move, save, load), Adventurers (food, target, recall, loot), Multitask, and the Cheat Menu (opens closed: nothing changes until you switch something).
+[/list]
+The other mods' screens show up only when those mods are installed.
+
+[size=5][b]Updating[/b][/size]
+Install the new version, restart the game, then refresh the page on your phone. Your phone stays paired.
+
+[size=5][b]Safe[/b][/size]
+[list]
+[*]Off until you press Start (or tick "Turn on by itself").
+[*]Only a phone that scanned the code can see anything. [b]Sign out all phones[/b] in the window signs every phone out.
+[*]Controls are off until you allow them on the PC. Every command is checked again by the game; selling, buying and risky fights ask first.
+[*]Through Tailscale the connection is encrypted end to end, straight between your phone and your PC. No server of ours in between.
+[*]Nothing is written into your save.
+[/list]
+
+[size=5][b]If the phone cannot open the page[/b][/size]
+[list]
+[*][b]The page stays blank:[/b] your phone is signed in to another Tailscale account. Your PC must show up in the device list of the Tailscale app on your phone. (A "DNS unavailable" warning in the app does not matter here.)
+[*]Tailscale must be on, on both. Another VPN app on the phone or the PC can get in its way.
+[*]Still nothing: allow [b]Melvor Idle 2[/b] in Windows Firewall on private and public networks.
+[*]The PC must stay on and awake with the game running.
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]PhoneScreen-0.1.0.zip[/b] there. The mod ends up in [b]mods\PhoneScreen[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script.
+
+[size=5][b]Uninstall[/b][/size]
+Delete the folder [b]mods\PhoneScreen[/b]. Your save needs no clean-up.
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]One file: [b]PhoneScreen.dll[/b]. No .exe, no .bat, no installer.
+[*]VirusTotal: [url=https://www.virustotal.com/gui/file/be580e5f9c71e9771b5f10501b78eed00f9704f0d965d9fc688bdba57a562446]PhoneScreen.dll[/url] (0 of 71)
+[*]Open source on [url=https://github.com/falorfrozen-cmd/MelvorModLoader]GitHub[/url].
+[/list]
+
+[size=5][b]Help[/b][/size]
+Something wrong? Bring [b]MelvorModLoader.log[/b] from the game folder to [url=https://discord.gg/q6aexZZSAf]Discord[/url] or the Posts tab. Ideas are welcome too.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
