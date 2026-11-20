@@ -1,0 +1,101 @@
+==========================================================================================
+COMBAT ADVISOR  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+Combat Advisor
+
+KATEGORI ONERISI (Category):
+User Interface
+
+KISA ACIKLAMA (Summary / Brief overview):
+Before you fight: is it safe to leave running, how fast you kill each monster, the XP and food per hour. Worked out from your own gear, stance, food and bonuses, special attacks included, on every monster card of the combat menu. Changes nothing in your game.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (file requirement, min 0.1.3)
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\CombatAdvisor-0.1.0.zip   (name: Combat Advisor, version 0.1.0)
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+Dev\shots\ozel-2-pencere.png (main image), ozel-1-kartlar.png, ozel-3-blackfang.png, ozel-5-olumcul.png, ozel-4-onizleme.png, ozel-2b-ayrintilar.png
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.1.0
+- First version
+
+------------------------------------------------------------------------------------------
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]COMBAT ADVISOR[/b][/size]
+[size=4][i]Know before you fight.[/i][/size]
+Is it safe to leave running? How many kills, how much XP, how much food per hour?
+The answer is on every monster card, worked out from [b]your[/b] character.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is Combat Advisor [b]0.1.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0 (works from 0.1.3). Open a character and open the game's combat area menu: every monster card gets a line at the bottom. Press [b]Advisor[/b] on a card for the full picture.
+
+[size=5][b]On every monster card[/b][/size]
+[code]SAFE   533 kills/h   3.0k Strength XP/h   4.3 food/h            [Advisor][/code]
+[list]
+[*][color=#4dc75a][b]SAFE[/b][/color]: no single hit can take you from just above your auto-eat point to 0. Leave it running.
+[*][color=#ffa82e][b]RISKY[/b][/color]: a hit just above your auto-eat point can take you down, you have no food for a monster that hurts you, or you cannot hurt it fast enough.
+[*][color=#ed4038][b]DEADLY[/b][/color]: one hit can do more than all your HP.
+[*][b]UNKNOWN[/b]: a mechanic the advisor cannot work out yet (it says which).
+[/list]
+When your food runs out within the hour, the card says so ("food lasts 25 min").
+
+[size=5][b]The Advisor window[/b][/size]
+In the order you would ask:
+[list=1]
+[*][b]Is it safe?[/b] The verdict in one sentence and a gauge: the monster's biggest hit as a bar, against your auto-eat point (gold line) and your max HP (white line). Stops before the gold line: safe. Crosses it: risky. Crosses the white line too: deadly. When it is not safe, it tells you what would make it safe.
+[*][b]What you fight with:[/b] weapon, special attack, food, and stance buttons that [b]preview[/b] another stance. Only the numbers change, never your stance in the game.
+[*][b]What you get per hour:[/b] kills, XP for every skill your stance trains, and food, ammunition and runes for 1 or 8 hours (with 20% spare if you like), and how long what you have lasts.
+[*][b]Show details:[/b] hit chances, damage, timing, your special attack in words.
+[*][b]The other monsters of the area[/b] side by side, the best safe XP marked. Click one to see it.
+[/list]
+
+[size=5][b]Worked out from your character, not from a table[/b][/size]
+[list]
+[*]Your gear, stance, spell, food, levels and [b]every bonus you have right now[/b]: prayers, potions, pets, upgrades, mastery, the combat triangle, the area's effects and the monster's passives.
+[*][b]Special attacks, both sides.[/b] Monsters with special attacks or effects are played out 2,000 kills hit by hit. [b]Your own weapon's special attack[/b] too: Dragonrune Greatsword's Crushing Blade, a bow's multi-shot, bleeding and poison on the monster, stuns, the boosts it gives you, ammunition for every shot. All 77 weapons with a special attack are covered.
+[*]Your XP bonuses and the chance to keep ammunition are counted.
+[*]Checked against the game's own fights: kills, XP, damage taken, food and ammunition per kill match real fights within a few percent.
+[/list]
+
+[size=5][b]Changes nothing[/b][/size]
+The fights are worked out on a private copy of your bonuses. Your stance, gear and save are never touched; nothing is written into your save. The heavy work runs on a thread of its own, so the game does not stutter.
+
+[size=5][b]Good to know[/b][/size]
+[list]
+[*]"Safe" is not a promise against bad luck. The advisor never shows a death chance.
+[*]Dungeons are not forecast yet (their wave cards get no line).
+[*]Monster and item names come from the game; the mod's own text is English for now.
+[/list]
+
+[size=5][b]Install[/b][/size]
+[list=1]
+[*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
+[*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
+[*]Extract [b]CombatAdvisor-0.1.0.zip[/b] there. The mod ends up in [b]mods\CombatAdvisor[/b].
+[*]Start the game from Steam as usual.
+[/list]
+No installer, no .exe, no script. Nothing is written outside the game folder.
+
+[size=5][b]Uninstall[/b][/size]
+Delete the folder [b]mods\CombatAdvisor[/b]. Your save needs no clean-up.
+
+[size=5][b]Safe to download[/b][/size]
+[list]
+[*]One file: [b]CombatAdvisor.dll[/b]. No .exe, no .bat, no installer.
+[*]VirusTotal: [url=https://www.virustotal.com/gui/file/6c067a5e277d6921685ca916e028532ee040b486807a4fcc8d086e2e9bc39ba8]CombatAdvisor.dll[/url]
+[*]Open source: read or build the code yourself on [url=https://github.com/falorfrozen-cmd/MelvorModLoader]GitHub[/url].
+[*]None of the game's own files are changed or included.
+[/list]
+
+[size=5][b]Help[/b][/size]
+When something does not work, look at [b]MelvorModLoader.log[/b] in the game folder (it is rewritten on every start) and bring it to [url=https://discord.gg/q6aexZZSAf]Discord[/url]. Bug reports and ideas are welcome there and in the Posts tab.
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
