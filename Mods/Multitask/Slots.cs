@@ -76,6 +76,8 @@ public static class Slots
         public int? Extra { get; set; }
         /// <summary>One "true" per slot that is on; still written so an older Multitask reads the first two.</summary>
         public List<bool> On { get; set; } = new();
+        /// <summary>0.5.0+: false = an action whose materials run out is dropped instead of waiting.</summary>
+        public bool? WaitForMaterials { get; set; }
         public List<Kept> Recent { get; set; } = new();
     }
 
@@ -94,6 +96,7 @@ public static class Slots
     static bool s_restoring, s_startedNow;
     static string s_published = "", s_savedAs = "";
     static int s_extra;   // extra slots on: slot i is on when i < s_extra
+    static bool s_wait = true;
     static List<Kept> s_recent = new();
 
     /// <summary>The actions being kept, the latest first.</summary>
@@ -103,6 +106,9 @@ public static class Slots
     public static int Extra => s_extra;
     /// <summary>How many actions may run together: the latest one plus one per slot that is on.</summary>
     public static int Capacity => 1 + s_extra;
+    /// <summary>True: an action whose materials run out keeps its place and goes on when there are some again.
+    /// False: it is dropped from the list, as if the player had pressed Stop.</summary>
+    public static bool WaitForMaterials => s_wait;
     /// <summary>How many times this mod started an action again since the character was opened.</summary>
     public static int Starts { get; private set; }
     /// <summary>The last thing worth telling the player.</summary>
@@ -117,7 +123,7 @@ public static class Slots
         catch { return new(); }   // also an older file with another layout: start clean
     }
 
-    static string Signature() => s_extra + "|" + string.Join(";", s_recent.Select(k => $"{k.Entity},{k.TargetId},{k.Extra}"));
+    static string Signature() => s_extra + (s_wait ? "" : "d") + "|" + string.Join(";", s_recent.Select(k => $"{k.Entity},{k.TargetId},{k.Extra}"));
 
     static void Save()
     {
@@ -128,7 +134,7 @@ public static class Slots
         {
             // Only this character's entry is replaced in what is on disk right now.
             Dictionary<string, Saved> all = Read();
-            all[s_character] = new Saved { Extra = s_extra, On = Enumerable.Repeat(true, s_extra).ToList(), Recent = s_recent };
+            all[s_character] = new Saved { Extra = s_extra, On = Enumerable.Repeat(true, s_extra).ToList(), WaitForMaterials = s_wait, Recent = s_recent };
             File.WriteAllText(FilePath, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
             s_savedAs = now;
         }
@@ -147,6 +153,7 @@ public static class Slots
         Note = "";
         Read().TryGetValue(s_character, out Saved? saved);
         s_extra = Math.Clamp(saved?.Extra ?? saved?.On.Count(on => on) ?? 0, 0, Count);
+        s_wait = saved?.WaitForMaterials ?? true;
         s_recent = (saved?.Recent ?? new List<Kept>()).Where(k => k.Entity != "" && k.TargetId != "" && s_actions.ContainsKey(k.Entity))
             .GroupBy(k => k.Entity).Select(g => g.First()).ToList();
         // What was running when the game was closed is brought back by the game itself. Anything on file that
@@ -209,6 +216,35 @@ public static class Slots
         if (s_game != null) Trim(s_game, stopExtras: true);   // a slot switched off: what no longer fits is stopped
         Save();
         Changed?.Invoke();
+    }
+
+    public static void SetWaitForMaterials(bool wait)
+    {
+        if (wait == s_wait) return;
+        s_wait = wait;
+        Note = "";
+        // Switched off: what already waits for materials goes now.
+        if (!wait)
+            foreach (Kept k in s_recent.Where(k => k.OutOfMaterials && !k.ByQueue && !IsRunning(k)).ToList())
+            {
+                s_recent.Remove(k);
+                Note = $"{k.Title} was dropped: its materials ran out.";
+            }
+        Save();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Takes one action off the list (the x in the window): it is stopped if it runs, and not started again.</summary>
+    public static bool Drop(int index)
+    {
+        if (index < 0 || index >= s_recent.Count) return false;
+        Kept kept = s_recent[index];
+        s_recent.RemoveAt(index);
+        if (s_game != null && IsRunning(kept)) s_actions[kept.Entity].TryStop(force: true);
+        Note = $"{kept.Title} was taken off the list.";
+        Save();
+        Changed?.Invoke();
+        return true;
     }
 
     // ---------------------------------------------------------------- running
@@ -305,7 +341,11 @@ public static class Slots
             if (somethingNew) { kept.Pending = true; kept.RetryAt = 0; continue; }   // stopped by the game because of the new action
             // It stopped while nothing new was started: the player pressed Stop, or it ran out of something.
             ActionComponent action = s_actions[kept.Entity];
-            if (Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0) { kept.Pending = true; kept.OutOfMaterials = true; continue; }   // out of materials: wait
+            if (Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0)
+            {
+                if (s_wait) { kept.Pending = true; kept.OutOfMaterials = true; continue; }   // out of materials: wait
+                Note = $"{kept.Title} was dropped: its materials ran out.";
+            }
             s_recent.Remove(kept);
         }
 
@@ -432,6 +472,12 @@ public static class Slots
         if (batches > kept.Pile) kept.GrewAt = now;
         kept.Pile = batches;
         kept.OutOfMaterials = batches == 0;
+        if (batches == 0 && !s_wait)
+        {
+            s_recent.Remove(kept);
+            Note = $"{kept.Title} was dropped: its materials ran out.";
+            return;
+        }
         if (batches == 0) { kept.State = "waiting: the materials have run out"; return; }
         if (batches < PileSize && now - kept.GrewAt < SettleSeconds) { kept.State = $"waiting: collecting materials ({batches}/{PileSize})"; return; }
 

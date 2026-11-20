@@ -194,7 +194,7 @@ public class BulkSellMod : IMod
         _junkButton.Text = count > 0 ? $"Sell junk ({items.Count})" : "Sell junk";
         _junkButton.Disabled = count == 0;
         _junkButton.TooltipText = Junk.Count == 0
-            ? "You have no junk list yet. Open \"Bulk sell\", mark the items you never want and press \"Save marked as my junk list\"."
+            ? "You have no junk list yet. Open \"Bulk sell\", mark the items you never want and press \"Add marked to junk\"."
             : count == 0 ? $"Nothing from your junk list ({Junk.Count} item(s)) is in the bank."
             : "Sells everything from your junk list that is in the bank. Asks once before selling.";
     }

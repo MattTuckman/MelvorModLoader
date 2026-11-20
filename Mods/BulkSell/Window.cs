@@ -30,6 +30,8 @@ public sealed class Window
     readonly Tree _table;
     readonly Button _sell = new() { Text = "Sell marked", CustomMinimumSize = new Vector2(250, 0) };
     readonly Button _junkCheck = new();
+    readonly Button _addJunk = new() { Text = "Add marked to junk" };
+    readonly Button _removeJunk = new() { Text = "Remove marked from junk" };
 
     Game? _game;
     BankEntity? _bank;
@@ -79,7 +81,7 @@ public sealed class Window
         var header = new HBoxContainer();
         header.AddThemeConstantOverride("separation", 12);
         header.AddChild(Style.Label("BULK SELL", Style.Accent, 20));
-        Label hint = Style.Label("Click a row to mark it. Locked items never appear here.", Style.Muted);
+        Label hint = Style.Label("Click a row to mark it. \"junk\" = on your junk list. Locked items never appear here.", Style.Muted);
         hint.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         hint.VerticalAlignment = VerticalAlignment.Center;
         hint.SizeFlagsVertical = Control.SizeFlags.Fill;
@@ -171,14 +173,12 @@ public sealed class Window
         totals.AddChild(_summary);
         totals.AddChild(_hidden);
         bottom.AddChild(totals);
-        Button saveJunk = MakeButton("Save marked as my junk list", () =>
-        {
-            Junk.Set(_marked);
-            Repaint();
-            Say(_marked.Count == 0 ? "Your junk list is empty now." : $"Junk list saved: {_marked.Count} item(s). \"Sell junk\" in the bank sells them with two clicks.");
-        });
-        saveJunk.TooltipText = "The junk list is remembered for this character. The \"Sell junk\" button in the bank sells everything on it.";
-        bottom.AddChild(saveJunk);
+        _addJunk.Pressed += AddJunkPressed;
+        _addJunk.TooltipText = "Puts the marked items on your junk list (remembered for this character).\nThe \"Sell junk\" button in the bank sells everything on it.";
+        bottom.AddChild(_addJunk);
+        _removeJunk.Pressed += RemoveJunkPressed;
+        _removeJunk.TooltipText = "Takes the marked items off your junk list. Tip: \"My junk list\" marks everything on it.";
+        bottom.AddChild(_removeJunk);
         StyleBoxFlat go = Style.Box(Style.GoodDim, 5, Style.Good, 1, 12, 7);
         _sell.AddThemeStyleboxOverride("normal", go);
         _sell.AddThemeStyleboxOverride("hover", Style.Box(new Color(0.16f, 0.38f, 0.23f), 5, Style.Good, 1, 12, 7));
@@ -306,7 +306,6 @@ public sealed class Window
             row.SetIcon(ColItem, e.Item.Icon);
             row.SetIconMaxWidth(ColItem, 22);
             for (int c = ColQuantity; c <= ColTotal; c++) row.SetTextAlignment(c, HorizontalAlignment.Right);
-            row.SetCustomColor(ColMark, Style.Good);
             row.SetCustomColor(ColEach, Style.Muted);
         }
         Repaint();
@@ -324,7 +323,9 @@ public sealed class Window
             Entry e = _shown[i];
             bool marked = _marked.Contains(e.Item);
             int amount = Sellable(e);
-            row.SetText(ColMark, marked ? "SELL" : "");
+            bool junk = Junk.Contains(e.Item);
+            row.SetText(ColMark, marked ? "SELL" : junk ? "junk" : "");
+            row.SetCustomColor(ColMark, marked ? Style.Good : Style.Muted);
             row.SetText(ColQuantity, e.Quantity.ToString("N0"));
             row.SetText(ColEach, e.Price.ToString("N0"));
             row.SetText(ColTotal, (e.Price * (marked ? amount : e.Quantity)).ToString("N0"));
@@ -343,6 +344,8 @@ public sealed class Window
         _sell.Text = "Sell marked";
         _junkCheck.Text = $"My junk list ({Junk.Count})";
         _junkCheck.Disabled = Junk.Count == 0;
+        _addJunk.Disabled = !_marked.Any(i => !Junk.Contains(i));
+        _removeJunk.Disabled = !_marked.Any(Junk.Contains);
     }
 
     (int Stacks, long Items, Dictionary<Currency, long> Worth) Plan()
@@ -360,6 +363,22 @@ public sealed class Window
             worth[c] = worth.GetValueOrDefault(c) + e.Price * amount;
         }
         return (stacks, items, worth);
+    }
+
+    void AddJunkPressed()
+    {
+        int n = Junk.Add(_marked);
+        _marked.Clear();
+        Repaint();
+        Say($"{n} item(s) added to your junk list ({Junk.Count} on it). \"Sell junk\" in the bank sells them with two clicks.");
+    }
+
+    void RemoveJunkPressed()
+    {
+        int n = Junk.Remove(_marked);
+        _marked.Clear();
+        Repaint();
+        Say(Junk.Count == 0 ? $"{n} item(s) taken off. Your junk list is empty now." : $"{n} item(s) taken off your junk list ({Junk.Count} left on it).");
     }
 
     void Toggle(Item item) { if (!_marked.Remove(item)) _marked.Add(item); }
@@ -408,6 +427,17 @@ public sealed class Window
         Repaint();
     }
     public void PressSell() => SellPressed();
+    public void PressMyJunk() => _junkCheck.EmitSignal(BaseButton.SignalName.Pressed);
+    public void PressAddJunk() => AddJunkPressed();
+    public void PressRemoveJunk() => RemoveJunkPressed();
+    public bool RemoveJunkEnabled => !_removeJunk.Disabled;
+    /// <summary>For tests: the text in the first column of a shown row ("SELL", "junk" or empty).</summary>
+    public string MarkText(int index)
+    {
+        TreeItem? row = _table.GetRoot()?.GetFirstChild();
+        for (int i = 0; i < index && row != null; i++) row = row.GetNext();
+        return row?.GetText(ColMark) ?? "";
+    }
     public string Summary => _summary.Text;
     public string Status => _status.Text;
 }

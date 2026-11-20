@@ -208,9 +208,29 @@ public static class Junk
         s_ids = Read().TryGetValue(character, out List<string>? ids) ? ids.ToHashSet() : new HashSet<string>();
     }
 
-    public static void Set(IEnumerable<Item> items)
+    public static void Set(IEnumerable<Item> items) => Save(items.Select(i => i.Id).ToHashSet());
+
+    /// <summary>Puts items on the list; what is already on it stays (also items not in the bank now).</summary>
+    public static int Add(IEnumerable<Item> items)
     {
-        s_ids = items.Select(i => i.Id).ToHashSet();
+        var ids = new HashSet<string>(s_ids);
+        int added = items.Count(i => ids.Add(i.Id));
+        Save(ids);
+        return added;
+    }
+
+    /// <summary>Takes items off the list; the rest stays.</summary>
+    public static int Remove(IEnumerable<Item> items)
+    {
+        var ids = new HashSet<string>(s_ids);
+        int removed = items.Count(i => ids.Remove(i.Id));
+        Save(ids);
+        return removed;
+    }
+
+    static void Save(HashSet<string> ids)
+    {
+        s_ids = ids;
         if (s_character == "") return;
         try
         {

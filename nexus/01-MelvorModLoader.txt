@@ -70,7 +70,7 @@ This is Melvor Mod Loader [b]0.2.0[/b] for Windows / Steam, tested on game versi
 [*][url=https://www.nexusmods.com/melvoridle2/mods/4][b]Bulk Sell[/b][/url] (F7): bulk sell window, one-click "Sell junk", "Bury all" and "Open all" buttons in the bank.
 [*][url=https://www.nexusmods.com/melvoridle2/mods/5][b]Action Queue[/b][/url] (F6): chain actions, "cut 1,000 logs, burn them, then go fishing".
 [*][url=https://www.nexusmods.com/melvoridle2/mods/6][b]Save Backup[/b][/url]: dated copies of your saves on every start.
-[*][url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] (F5): keep two extra actions running beside your main one. A cheat.
+[*][url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] (F5): keep up to 15 extra actions running beside your main one. A cheat.
 [*][b]Debug Menu[/b] (F9, optional file on this page): opens the developers' own hidden debug menu.
 [/list]
 Each has its own page: click a name above.

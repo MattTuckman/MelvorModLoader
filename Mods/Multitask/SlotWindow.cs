@@ -13,10 +13,13 @@ public sealed class SlotWindow
     readonly CanvasLayer _layer = new() { Layer = 118, Name = "Multitask", Visible = false };
     readonly Label _status = Style.Label("", Style.Muted);
     readonly List<Label> _lines = new();
+    readonly List<Button> _drops = new();
+    readonly List<HBoxContainer> _rows = new();
     readonly Label _summary = Style.Label("", Style.Text);
     Button _close = null!, _minus = null!, _plus = null!;
     Label _count = null!;
     GridContainer _grid = null!;
+    CheckBox _wait = null!;
 
     static string CloseText => MultitaskMod.Instance?.Key.With("Close") ?? "Close";
     public string CloseLabel => _close.Text;
@@ -125,21 +128,38 @@ public sealed class SlotWindow
         _grid.AddThemeConstantOverride("v_separation", 6);
         for (int i = 0; i < Slots.Count + 1; i++)
         {
+            var row = new HBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
+            row.AddThemeConstantOverride("separation", 6);
             Label line = Style.Label("", Style.Text);
             line.ClipText = true;
             line.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            line.VerticalAlignment = VerticalAlignment.Center;
+            int index = i;
+            var drop = new Button { Text = "x", CustomMinimumSize = new Vector2(30, 0), TooltipText = "Take this action off the list. It stops and is not started again." };
+            drop.Pressed += () => Slots.Drop(index);
+            row.AddChild(line);
+            row.AddChild(drop);
             _lines.Add(line);
-            _grid.AddChild(line);
+            _drops.Add(drop);
+            _rows.Add(row);
+            _grid.AddChild(row);
         }
         list.AddChild(_grid);
+        _wait = new CheckBox
+        {
+            Text = "Keep an action on the list when its materials run out (it goes on when there are some again)",
+            TooltipText = "Off: an action that runs out of materials (cooking with no fish left...) leaves the list, as if you pressed Stop."
+        };
+        _wait.Toggled += on => Slots.SetWaitForMaterials(on);
+        list.AddChild(_wait);
         listCard.AddChild(list);
         body.AddChild(listCard);
 
         Label note = Style.Label(
             "Nothing to pick here. Play as usual: when you start a new action, the one before it keeps going next to it.\n" +
             $"Each extra slot keeps one more of your recent actions running: 1 slot = your last two, 2 = your last three, {Slots.Count} = all of them. When there is no room, an action whose materials ran out makes room first.\n" +
-            "To drop an action, press its own Stop button in the game. A skill can only do one thing: choose another rock or recipe and it just switches.\n" +
-            "An action waits when its materials run out and goes on when there are some again. A fight is dropped if your character dies." +
+            "To drop an action, press the x next to it here, or its own Stop button in the game. A skill can only do one thing: choose another rock or recipe and it just switches.\n" +
+            "An action waits when its materials run out and goes on when there are some again (unless you untick the box above). A fight is dropped if your character dies." +
             // Players looked for "lanes" here; they live in the Action Queue window, when that mod is installed.
             (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == "ActionQueue")
                 ? "\nWant steps in a set order (cut, then burn; fish, then cook)? Open Action Queue (F6, or the Mods button) and give steps Lane 1, Lane 2...: every lane runs its own steps in order, side by side."
@@ -182,7 +202,11 @@ public sealed class SlotWindow
     public string CountText => _count.Text;
     public int Columns => _grid.Columns;
     public string LineText(int index) => _lines[index].Text;
-    public bool LineShown(int index) => _lines[index].Visible;
+    public bool LineShown(int index) => _rows[index].Visible;
+    public bool DropShown(int index) => _rows[index].Visible && _drops[index].Visible;
+    public void PressDrop(int index) => _drops[index].EmitSignal(BaseButton.SignalName.Pressed);
+    public void SetWait(bool on) => _wait.ButtonPressed = on;
+    public bool WaitTicked => _wait.ButtonPressed;
     public string StatusText => _status.Text;
 
     void Repaint()
@@ -196,11 +220,13 @@ public sealed class SlotWindow
         _summary.Text = room == 1 ? "One action at a time (the plain game)." : $"Up to {room} actions at the same time.";
         _summary.AddThemeColorOverride("font_color", room == 1 ? Style.Muted : Style.Good);
 
+        _wait.SetPressedNoSignal(Slots.WaitForMaterials);
         IReadOnlyList<Kept> recent = Slots.Recent;
         for (int i = 0; i < _lines.Count; i++)
         {
             Label line = _lines[i];
-            line.Visible = i < room;
+            _rows[i].Visible = i < room;
+            _drops[i].Visible = i < recent.Count;
             if (i >= recent.Count)
             {
                 line.Text = i == 0 ? "1.  (nothing yet: start an action in the game)"

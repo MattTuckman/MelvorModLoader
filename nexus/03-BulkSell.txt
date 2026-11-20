@@ -15,12 +15,17 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\BulkSell-0.2.3.zip   (name: Bulk Sell, version 0.2.3)
+MAIN FILE:  dist\BulkSell-0.2.4.zip   (name: Bulk Sell, version 0.2.4)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\banka-2-toplu-satis.png (main image), banka-1-dugmeler.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.2.4
+- Items can be taken off the junk list again: mark them and press "Remove marked from junk" (asked for on Nexus, thank you!). "Add marked to junk" adds without touching the rest
+- Rows on your junk list say "junk" in the first column
+- Adding or removing keeps the junk items that are not in the bank right now
+
 0.2.3
 - Its window can be opened from the loader's Mods menu, and its key (F7) changed or switched off there (loader 0.2.0)
 
@@ -47,7 +52,7 @@ Quality of life, not a cheat: everything goes through the game's own functions a
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Bulk Sell [b]0.2.3[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open the bank: the new buttons sit next to the search box. [b]F7[/b] opens the bulk sell window from anywhere.
+This is Bulk Sell [b]0.2.4[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open the bank: the new buttons sit next to the search box. [b]F7[/b] opens the bulk sell window from anywhere.
 
 [size=5][b]Bulk sell window[/b][/size]
 [list]
@@ -61,7 +66,7 @@ This is Bulk Sell [b]0.2.3[/b], tested on game version [b]0.11.6-alpha.1[/b] wit
 
 [size=5][b]One-click buttons in the bank[/b][/size]
 [list]
-[*][b]Sell junk:[/b] mark the things you never want once, save them as your junk list, and from then on one button sells whatever of it is in the bank.
+[*][b]Sell junk:[/b] mark the things you never want once and press "Add marked to junk"; from then on one button sells whatever of it is in the bank. Items on the list say "junk" in the table, and "Remove marked from junk" takes one off again.
 [*][b]Bury all:[/b] buries every bone and other buriable item. Only shown when there is something to bury.
 [*][b]Open all:[/b] opens every chest, bag and pack. Only shown when there is something to open.
 [/list]

@@ -1,4 +1,4 @@
-Multitask 0.4.0  -  a mod for Melvor Idle 2
+Multitask 0.5.0  -  a mod for Melvor Idle 2
 ===========================================
 
 Do more than one thing at a time. Nothing to set up: pick how many extra slots and play as usual.
@@ -39,7 +39,8 @@ with + and - (or Off, 2, All). That is all.
   - Start a new action in the game: the one before it keeps going.
   - Start another one: with no room left, an action whose materials ran out
     drops out first; otherwise the oldest.
-  - To drop an action, press its own Stop button in the game.
+  - To drop an action, press the x next to it in the F5 window, or its own Stop
+    button in the game.
   - Choose another rock, tree or recipe: that skill simply does the new thing.
     (A skill can only do one thing at a time.)
   - Fewer slots: what no longer fits is stopped, the oldest first.
@@ -51,6 +52,8 @@ GOOD TO KNOW
 - An action that makes something (cooking, smithing...) waits when its materials run out
   and goes on when there are some again. It works in small piles, about ten at a time,
   so the game does not report "action stopped" for every single fish.
+  Untick "Keep an action on the list when its materials run out" in the F5 window and
+  such an action leaves the list instead, making room for the next one.
 - A fight is dropped if your character dies. Nothing walks back in.
 - Offline progress: everything that was running when you closed the game goes on.
   An action that runs out of materials while the game is closed stays stopped until you
@@ -65,7 +68,7 @@ GOOD TO KNOW
   With Action Queue 0.6.0 or newer, a free slot is used for the queue's "when the queue
   waits or ends" action. Your own actions keep their slots.
 - The game's bottom bar shows your latest action. The others are listed in the F5 window.
-- The switches and the list are remembered per character in "multitask.json".
+- The slots, that box and the list are remembered per character in "multitask.json".
 - For mod authors: Multitask publishes "MultitaskOrder" on the scene root (skill ids of
   every action it keeps, running or waiting, latest first, "id|id"). A mod that starts
   an action only as a stand-in can name it in "MultitaskStandIn" (same "id|id" form);

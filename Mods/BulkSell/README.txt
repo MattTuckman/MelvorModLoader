@@ -1,4 +1,4 @@
-Bulk Sell 0.2.3  -  a mod for Melvor Idle 2
+Bulk Sell 0.2.4  -  a mod for Melvor Idle 2
 ===========================================
 
 Quality-of-life buttons for the bank. Not a cheat: everything goes through the game's own
@@ -26,7 +26,9 @@ HOW TO USE
 Open the bank. Next to the search box there are new buttons:
   Bulk sell   a table of everything you can sell. Click rows to mark them, use the filters,
               "Keep of each" and the column titles, then press "Sell marked" twice.
-  Sell junk   sells your saved junk list (make it once in the Bulk sell window).
+  Sell junk   sells your saved junk list. In the Bulk sell window, mark items and press
+              "Add marked to junk" or "Remove marked from junk". Items on the list show
+              "junk" in the first column; "My junk list" marks all of them.
   Bury all    buries every bone in the bank. Shown only when there is something to bury.
   Open all    opens every chest, bag and pack. Shown only when there is something to open.
 F7 opens the Bulk sell window from anywhere (so does the Mods button in the top bar, where the key can be changed).
