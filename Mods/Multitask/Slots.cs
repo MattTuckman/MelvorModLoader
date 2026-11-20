@@ -45,7 +45,7 @@ public sealed class Kept
 ///
 /// The game stops every running action when a new one starts. With a slot switched on, the action the player
 /// was doing before is started again next to the new one. So with one slot on, the last two actions run
-/// together; with both on, the last three. Nothing has to be picked anywhere:
+/// together; with two, the last three; with all 15, every action the game has. Nothing has to be picked anywhere:
 ///   - start something new            -> it joins; when there is no room, an action whose materials ran out
 ///                                       drops out first, otherwise the oldest
 ///   - choose another rock/recipe     -> that skill simply does the new thing (a skill can only do one)
@@ -58,7 +58,9 @@ public sealed class Kept
 /// </summary>
 public static class Slots
 {
-    public const int Count = 2;
+    /// <summary>The most extra slots: the game has 16 actions (15 skills you train by doing them, plus combat),
+    /// so 15 extra slots run all of them at once. Farming and Ranching run on their own and need none.</summary>
+    public const int Count = 15;
     const double RetrySeconds = 2;
     /// <summary>A recipe that waits for materials starts again once there is enough for this many crafts...</summary>
     const int PileSize = 10;
@@ -70,6 +72,9 @@ public static class Slots
 
     sealed class Saved
     {
+        /// <summary>How many extra slots are on (0.4.0+). Older files only have <see cref="On"/>.</summary>
+        public int? Extra { get; set; }
+        /// <summary>One "true" per slot that is on; still written so an older Multitask reads the first two.</summary>
         public List<bool> On { get; set; } = new();
         public List<Kept> Recent { get; set; } = new();
     }
@@ -88,14 +93,16 @@ public static class Slots
     static volatile ActionComponent? s_lastStarted;
     static bool s_restoring, s_startedNow;
     static string s_published = "", s_savedAs = "";
-    static readonly bool[] s_on = new bool[Count];
+    static int s_extra;   // extra slots on: slot i is on when i < s_extra
     static List<Kept> s_recent = new();
 
     /// <summary>The actions being kept, the latest first.</summary>
     public static IReadOnlyList<Kept> Recent => s_recent;
-    public static bool IsOn(int slot) => slot >= 0 && slot < Count && s_on[slot];
+    public static bool IsOn(int slot) => slot >= 0 && slot < s_extra;
+    /// <summary>How many extra slots are on (0 = the plain game).</summary>
+    public static int Extra => s_extra;
     /// <summary>How many actions may run together: the latest one plus one per slot that is on.</summary>
-    public static int Capacity => 1 + s_on.Count(on => on);
+    public static int Capacity => 1 + s_extra;
     /// <summary>How many times this mod started an action again since the character was opened.</summary>
     public static int Starts { get; private set; }
     /// <summary>The last thing worth telling the player.</summary>
@@ -110,7 +117,7 @@ public static class Slots
         catch { return new(); }   // also an older file with another layout: start clean
     }
 
-    static string Signature() => string.Join(",", s_on) + "|" + string.Join(";", s_recent.Select(k => $"{k.Entity},{k.TargetId},{k.Extra}"));
+    static string Signature() => s_extra + "|" + string.Join(";", s_recent.Select(k => $"{k.Entity},{k.TargetId},{k.Extra}"));
 
     static void Save()
     {
@@ -121,7 +128,7 @@ public static class Slots
         {
             // Only this character's entry is replaced in what is on disk right now.
             Dictionary<string, Saved> all = Read();
-            all[s_character] = new Saved { On = s_on.ToList(), Recent = s_recent };
+            all[s_character] = new Saved { Extra = s_extra, On = Enumerable.Repeat(true, s_extra).ToList(), Recent = s_recent };
             File.WriteAllText(FilePath, JsonSerializer.Serialize(all, new JsonSerializerOptions { WriteIndented = true }));
             s_savedAs = now;
         }
@@ -139,7 +146,7 @@ public static class Slots
         Starts = 0;
         Note = "";
         Read().TryGetValue(s_character, out Saved? saved);
-        for (int i = 0; i < Count; i++) s_on[i] = saved != null && i < saved.On.Count && saved.On[i];
+        s_extra = Math.Clamp(saved?.Extra ?? saved?.On.Count(on => on) ?? 0, 0, Count);
         s_recent = (saved?.Recent ?? new List<Kept>()).Where(k => k.Entity != "" && k.TargetId != "" && s_actions.ContainsKey(k.Entity))
             .GroupBy(k => k.Entity).Select(g => g.First()).ToList();
         // What was running when the game was closed is brought back by the game itself. Anything on file that
@@ -183,10 +190,20 @@ public static class Slots
         try { ((Godot.SceneTree)Godot.Engine.GetMainLoop()).Root.SetMeta(Targets.CapacityMeta, capacity); } catch { }
     }
 
+    /// <summary>Slots are on from the first one up: switching slot N on also switches on the ones before it,
+    /// switching it off also switches off the ones after it.</summary>
     public static void SetOn(int slot, bool on)
     {
-        if (slot < 0 || slot >= Count || s_on[slot] == on) return;
-        s_on[slot] = on;
+        if (slot < 0 || slot >= Count || IsOn(slot) == on) return;
+        SetExtra(on ? slot + 1 : slot);
+    }
+
+    /// <summary>How many extra slots are on, 0 to <see cref="Count"/>.</summary>
+    public static void SetExtra(int extra)
+    {
+        extra = Math.Clamp(extra, 0, Count);
+        if (extra == s_extra) return;
+        s_extra = extra;
         PublishCapacity(Capacity);
         Note = "";
         if (s_game != null) Trim(s_game, stopExtras: true);   // a slot switched off: what no longer fits is stopped

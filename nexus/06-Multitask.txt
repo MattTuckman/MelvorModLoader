@@ -9,18 +9,23 @@ KATEGORI ONERISI (Category):
 Miscellaneous
 
 KISA ACIKLAMA (Summary / Brief overview):
-Do more than one thing at a time in Melvor Idle 2. Switch a slot on and play as usual: when you start a new action, the one you were doing keeps running. Your last two or three actions run together, also offline. Nothing to set up. A cheat.
+Do more than one thing at a time in Melvor Idle 2. Pick how many extra slots and play as usual: when you start a new action, the ones you were doing keep running. From two actions at once up to all of them, also offline. Nothing else to set up. A cheat.
 
 GEREKSINIM (Requirements):
 Melvor Mod Loader (file requirement, min 0.1.3)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\Multitask-0.3.0.zip   (name: Multitask, version 0.3.0)
+MAIN FILE:  dist\Multitask-0.4.0.zip   (name: Multitask, version 0.4.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\coklu-1-pencere.png (main image)
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.4.0
+- New: choose how many extra slots, from 0 to 15, with + and - (or Off, 2, All). With all 15 on, every action you start keeps running: the game has 16 (asked for on Nexus, thank you!)
+- The list shows two columns when many actions run together
+- Your old setting carries over (one or two slots on)
+
 0.3.0
 - When there is no room, an action whose materials ran out makes room first, so a working action is not dropped for an idle one (suggested by a mod author, thank you!)
 - For mod authors: "MultitaskOrder" (every kept action, latest first) and "MultitaskStandIn" (an action another mod started only as a stand-in goes first)
@@ -45,21 +50,22 @@ UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
 ------------------------------------------------------------------------------------------
 [center][size=6][b]MULTITASK[/b][/size]
 [size=4][i]One action at a time? Not any more.[/i][/size]
-Switch a slot on and play as usual.
-When you start a new action, the one you were doing keeps running next to it.[/center]
+Pick how many extra slots and play as usual.
+When you start a new action, the ones you were doing keep running next to it.[/center]
 
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Multitask [b]0.3.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character, press [b]F5[/b] (or use the [b]Mods[/b] button in the top bar) and switch a slot [b]ON[/b].
+This is Multitask [b]0.4.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character, press [b]F5[/b] (or use the [b]Mods[/b] button in the top bar) and set [b]Extra slots[/b] with + and -.
 
-[b]This is a cheat.[/b] The game is balanced around one action at a time; this mod lets up to three run together. Use it if that is the game you want to play.
+[b]This is a cheat.[/b] The game is balanced around one action at a time; this mod lets two of them run together, or more, up to all of them. Use it if that is the game you want to play.
 
 [size=5][b]How it works[/b][/size]
-There is nothing to set up and nothing to pick.
+There is one number to set and nothing to pick.
 [list]
-[*][b]Slot 1 on:[/b] your last two actions run together.
-[*][b]Slot 1 and 2 on:[/b] your last three actions run together.
+[*][b]1 extra slot:[/b] your last two actions run together.
+[*][b]2 extra slots:[/b] your last three actions run together.
+[*][b]All 15:[/b] every action you start keeps running. The game has 16 (15 skills plus combat); Farming and Ranching run on their own anyway.
 [/list]
 Fish, then start cooking: both run. Go mining, then start a fight: both run. Each at its normal speed, each with its normal rewards.
 
@@ -68,7 +74,7 @@ Fish, then start cooking: both run. Go mining, then start a fight: both run. Eac
 [*][b]Start something new:[/b] it joins. With no room left, an action whose materials ran out makes room first; otherwise the oldest drops out.
 [*][b]Press an action's own Stop button:[/b] that action is dropped. The others go on.
 [*][b]Choose another rock, tree or recipe:[/b] that skill simply does the new thing. (A skill can only do one thing at a time.)
-[*][b]Switch a slot off:[/b] what no longer fits is stopped. With both off, the mod does nothing at all.
+[*][b]Fewer slots:[/b] what no longer fits is stopped, the oldest first. With no extra slot (Off), the mod does nothing at all.
 [/list]
 
 [size=5][b]It looks after itself[/b][/size]
@@ -80,7 +86,7 @@ Fish, then start cooking: both run. Go mining, then start a fight: both run. Eac
 [/list]
 
 [size=5][b]Works with Action Queue[/b][/size]
-With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.5.0 or newer, the queue runs as many of its own steps at the same time as there are places: one slot on, two steps; both on, three. Plan "100 cooked herring", press start, and it fishes and cooks at once. One button in the queue window switches that back to one step at a time, beside what you were doing.
+With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.5.0 or newer, the queue runs as many of its own steps at the same time as there are places: one extra slot, two steps; two, three; and so on. Plan "100 cooked herring", press start, and it fishes and cooks at once. One button in the queue window switches that back to one step at a time, beside what you were doing.
 
 [size=5][b]Good to know[/b][/size]
 [list]
@@ -94,13 +100,13 @@ With [url=https://www.nexusmods.com/melvoridle2/mods/5]Action Queue[/url] 0.5.0 
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]Multitask-0.3.0.zip[/b] there. The mod ends up in [b]mods\Multitask[/b].
+[*]Extract [b]Multitask-0.4.0.zip[/b] there. The mod ends up in [b]mods\Multitask[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.
 
 [size=5][b]Uninstall[/b][/size]
-Switch the slots OFF and delete the folder [b]mods\Multitask[/b]. Your save needs no clean-up: without the mod, extra actions simply stop the next time you start anything.
+Press Off and delete the folder [b]mods\Multitask[/b]. Your save needs no clean-up: without the mod, extra actions simply stop the next time you start anything.
 
 [size=5][b]Safe to download[/b][/size]
 [list]

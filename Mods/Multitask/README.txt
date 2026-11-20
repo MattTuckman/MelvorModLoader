@@ -1,18 +1,21 @@
-Multitask 0.3.0  -  a mod for Melvor Idle 2
+Multitask 0.4.0  -  a mod for Melvor Idle 2
 ===========================================
 
-Do more than one thing at a time. Nothing to set up: switch a slot on and play as usual.
+Do more than one thing at a time. Nothing to set up: pick how many extra slots and play as usual.
 When you start a new action, the one you were doing keeps running next to it.
 
-   Slot 1 on            your last two actions run together
-   Slot 1 and 2 on      your last three actions run together
+   1 extra slot         your last two actions run together
+   2 extra slots        your last three actions run together
+   15 extra slots       all of them: every action you start keeps running
+                        (the game has 16: 15 skills plus combat; Farming and
+                        Ranching run on their own anyway)
 
 Fish, then start cooking: both run. Go mining, then start a fight: both run.
 
 This is a cheat: the game is balanced around one action at a time. Use it if that is the
 game you want to play.
 
-Tested with game version 0.11.6-alpha.1 and Melvor Mod Loader 0.1.3.
+Tested with game version 0.11.6-alpha.1 and Melvor Mod Loader 0.2.0.
 
 
 REQUIRES
@@ -31,15 +34,15 @@ INSTALL
 
 HOW TO USE
 ----------
-Open a character, press F5 (or use the top bar's Mods button) and switch Slot 1
-(and Slot 2) ON. That is all.
+Open a character, press F5 (or use the top bar's Mods button) and set "Extra slots"
+with + and - (or Off, 2, All). That is all.
   - Start a new action in the game: the one before it keeps going.
   - Start another one: with no room left, an action whose materials ran out
     drops out first; otherwise the oldest.
   - To drop an action, press its own Stop button in the game.
   - Choose another rock, tree or recipe: that skill simply does the new thing.
     (A skill can only do one thing at a time.)
-  - Switch a slot OFF: what no longer fits is stopped.
+  - Fewer slots: what no longer fits is stopped, the oldest first.
 The window lists what is running together right now, your latest first.
 
 
@@ -53,7 +56,7 @@ GOOD TO KNOW
   An action that runs out of materials while the game is closed stays stopped until you
   are back.
 - It never bypasses the game's requirements.
-- With both slots OFF the mod does nothing at all: the game plays as it always did.
+- With no extra slot (Off) the mod does nothing at all: the game plays as it always did.
 - Works together with Action Queue 0.5.0 or newer: with slots on, the queue runs that
   many of its own steps at the same time (fish, cook the catch and mine, all at once).
   The queue's steps take the room; what you were doing before makes way for them.
