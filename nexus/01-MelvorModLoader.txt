@@ -108,7 +108,7 @@ Mods are C# class libraries. Your code runs inside the game with direct, type-ch
 [size=5][b]Safe to download[/b][/size]
 [list]
 [*]No .exe, no .bat, no installer in the package.
-[*]The loader itself is one small file, [b]MelvorModLoader.dll[/b]. VirusTotal, scanned on upload: [url=https://www.virustotal.com/gui/file/290856b19a910f3d43be51e1f3ab5b2e15609ab7e589caf1721c13d80e39478e]0 detections[/url].
+[*]The loader itself is one small file, [b]MelvorModLoader.dll[/b]. Open source: read or build it yourself on [url=https://github.com/falorfrozen-cmd/MelvorModLoader]GitHub[/url].
 [*]The rest of the folder is Microsoft's own .NET 10 runtime (MIT license, digitally signed by Microsoft), which the engine needs to start the loader. That is why the download is about 34 MB.
 [*]None of the game's own files are changed or included.
 [/list]
