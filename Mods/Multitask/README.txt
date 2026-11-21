@@ -1,4 +1,4 @@
-Multitask 0.5.0  -  a mod for Melvor Idle 2
+Multitask 0.6.0  -  a mod for Melvor Idle 2
 ===========================================
 
 Do more than one thing at a time. Nothing to set up: pick how many extra slots and play as usual.
@@ -67,7 +67,9 @@ GOOD TO KNOW
   beside what you were doing instead.
   With Action Queue 0.6.0 or newer, a free slot is used for the queue's "when the queue
   waits or ends" action. Your own actions keep their slots.
-- The game's bottom bar shows your latest action. The others are listed in the F5 window.
+- The game's bottom bar follows the page you have open: on the page of a skill that is
+  running, it shows that skill (XP per hour, time to level, what it gathered). On any other
+  page it shows your latest action. The full list is in the F5 window.
 - The slots, that box and the list are remembered per character in "multitask.json".
 - For mod authors: Multitask publishes "MultitaskOrder" on the scene root (skill ids of
   every action it keeps, running or waiting, latest first, "id|id"). A mod that starts

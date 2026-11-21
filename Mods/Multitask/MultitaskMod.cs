@@ -1,4 +1,7 @@
+using System.Reflection;
 using GamesByMalcs.Melvor2;
+using GamesByMalcs.Melvor2.GameMenus;
+using GamesByMalcs.Melvor2.GameMenus.Pages;
 using Godot;
 using MelvorModLoader;
 
@@ -52,6 +55,9 @@ public class MultitaskMod : IMod
             }
         }
 
+        // Which page is on screen, a few times per second: the bottom bar follows it.
+        if (_game != null && _frame % 6 == 0) Slots.Watch(_game, OpenPage());
+
         ulong now = Time.GetTicksMsec();
         if (now - _lastTick >= 500)
         {
@@ -60,6 +66,23 @@ public class MultitaskMod : IMod
         }
 
         Key.Poll();
+    }
+
+    static readonly PropertyInfo? s_currentPage = typeof(GameView).GetProperty("CurrentPage", BindingFlags.Instance | BindingFlags.NonPublic);
+    GameView? _view;
+
+    /// <summary>The skill (entity id) whose page is open, or "" for any other page.</summary>
+    string OpenPage()
+    {
+        try
+        {
+            if (_view == null || !GodotObject.IsInstanceValid(_view)) _view = GameAccess.FindGameView();
+            if (_view == null || s_currentPage == null) return "";
+            // (GamePage Data, ActiveGamePage Active)?: boxed as the tuple itself, or null
+            object? page = s_currentPage.GetValue(_view);
+            return page is System.Runtime.CompilerServices.ITuple { Length: > 0 } t && t[0] is EntityPage entityPage ? entityPage.Entity.Id : "";
+        }
+        catch { return ""; }
     }
 
     public void ToggleWindow()

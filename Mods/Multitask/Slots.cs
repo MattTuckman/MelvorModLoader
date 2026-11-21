@@ -183,6 +183,7 @@ public static class Slots
         if (s_game == null) return;
         s_game = null;
         s_character = "";
+        Watching = "";
         PublishCapacity(1);
         Publish(new List<string>());
         Targets.PublishPlayerKept(Array.Empty<string>());
@@ -505,9 +506,26 @@ public static class Slots
         }
     }
 
+    /// <summary>The skill whose page the player has open ("" for the bank, shop... or no character).</summary>
+    public static string Watching { get; private set; } = "";
+
+    /// <summary>
+    /// The player opened another page. When that skill is one of the running actions, the bottom bar shows it
+    /// (the game does the same for Farming and Ranching); otherwise it shows the latest action.
+    /// </summary>
+    public static void Watch(Game game, string entityId)
+    {
+        if (entityId == Watching) return;
+        Watching = entityId;
+        if (!ReferenceEquals(game, s_game)) return;
+        try { Order(game); }
+        catch (Exception e) { Log("The bottom bar could not follow the page: " + e.Message); }
+    }
+
     /// <summary>
     /// The game shows the last action of its list in the bottom bar. The list is kept in the order "oldest
-    /// first, latest last", so the bar shows what the player did last.
+    /// first, latest last", so the bar shows what the player did last - or, when the page the player has open
+    /// belongs to one of the running actions, that one.
     /// </summary>
     static void Order(Game game)
     {
@@ -515,6 +533,7 @@ public static class Slots
         if (running.Count < 2) { s_startedNow = false; return; }
         int Rank(ActionComponent a)
         {
+            if (a.Entity.Id == Watching) return -2;   // the page on screen: last, so the bar shows it
             int at = s_recent.FindIndex(k => k.Entity == a.Entity.Id);
             return at < 0 ? -1 : at;   // something this mod does not know: treat it as the very latest
         }
