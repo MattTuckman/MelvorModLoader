@@ -288,7 +288,10 @@ public static class Targets
     /// <summary>The Multitask mod writes how many actions may run at once (1 = the plain game) under this name.</summary>
     public const string CapacityMeta = "MultitaskCapacity";
 
-    public static int MultitaskCapacity() => int.TryParse(ReadMeta(CapacityMeta), out int n) ? Math.Clamp(n, 1, 8) : 1;
+    public static int MultitaskCapacity() => int.TryParse(ReadMeta(CapacityMeta), out int n) ? Math.Clamp(n, 1, MostActions) : 1;
+
+    /// <summary>The most actions Multitask runs at once: every action the game has (15 skills plus combat).</summary>
+    public const int MostActions = 16;
 
     /// <summary>
     /// The Multitask mod writes the skills of the player's own actions it is keeping under this name: running, or

@@ -15,12 +15,16 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.8.0.zip   (name: Action Queue, version 0.8.0)
+MAIN FILE:  dist\ActionQueue-0.8.1.zip   (name: Action Queue, version 0.8.1)  -  0.8.0 dosyasini Archived yap
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\sira-2-pencere.png (main image), sira-5-yan-yana.png, sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.8.1
+- Fixed: lanes stopped at 5 while Multitask can run up to 16 actions. The Lane list now offers as many lanes as Multitask runs at once (up to 16), and that many lanes really run side by side (reported by a player, thank you!)
+- New: a fight step ends when you can no longer attack: no ammo of your bow's kind left, or no runes for your spell. The game would keep the fight going while the monster hits you; the step now reads "done: out of ammo" and the queue moves on (suggested by a player, thank you!)
+
 0.8.0
 - New: lanes. With the Multitask mod's slots on, give steps Lane 1, 2, 3...: every lane runs its own steps in order, side by side (cut and burn in one lane, fish and cook in another). "Start over" restarts each lane on its own (suggested by a player, thank you!)
 - New step: "Sell from the bank". Pick an item and how many to keep; when the queue gets there it sells the rest. The planner can add it with "then sell them". Locked stacks are never sold (suggested by a player, thank you!)
@@ -89,7 +93,7 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.8.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F6[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed).
+This is Action Queue [b]0.8.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F6[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed).
 
 [size=5][b]New in 0.8.0[/b][/size]
 [list]
@@ -168,7 +172,7 @@ Woodcutting, Mining, Fishing, Firemaking, Cooking, Smithing, Crafting, Runecraft
 [b]Slayer tasks as a step:[/b] "Slayer tasks of <master>" fights whatever that master's task is and walks to the new monster when a task is done. Unlike the game's own Auto Slayer switch it can have a goal, for example "until Slayer level 20", and then hand over to the next step.
 
 [size=5][b]New: side by side, with Multitask[/b][/size]
-On its own the queue does one step after another. Add the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author, a cheat), switch its slots on, and the queue runs [b]two or three steps at the same time[/b]:
+On its own the queue does one step after another. Add the [url=https://www.nexusmods.com/melvoridle2/mods/8][b]Multitask[/b][/url] mod (same author, a cheat), switch its slots on, and the queue runs [b]several steps at the same time[/b] (as many as Multitask allows, up to 16):
 [list]
 [*]The fish are cooked while more are being caught, and a third step mines meanwhile.
 [*]A step that needs what an earlier step makes waits for it, in piles of about ten, instead of being skipped.
@@ -182,6 +186,7 @@ On its own the queue does one step after another. Add the [url=https://www.nexus
 [list]
 [*][b]Never bypasses requirements.[/b] A step you are not allowed to do yet, or have no materials for, is marked "skipped" with the reason, and the next one starts.
 [*][b]You stay in charge.[/b] Start something else by hand and the queue pauses instead of fighting you. Press the game's Stop on a step and the queue moves on without it. "Remove all" also stops what the running step had started.
+[*][b]Out of ammo ends the fight.[/b] When your bow has no arrows left (or your spell no runes), the fight step ends and the queue moves on, instead of standing in the fight while the monster hits you.
 [*][b]Death pauses it.[/b] If your character dies the queue stops and does not walk back into the fight, even with "start over" switched on.
 [*][b]Runs while the game is closed too.[/b] During offline progress the queue moves on to its next steps; a fight waits until the game is open again. After a restart it carries on where it was.
 [*]Hunting needs a trap and Agility needs a path chosen on the skill's own page first. The queue does not make that choice for you.
@@ -191,7 +196,7 @@ On its own the queue does one step after another. Add the [url=https://www.nexus
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]ActionQueue-0.8.0.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
+[*]Extract [b]ActionQueue-0.8.1.zip[/b] there. The mod ends up in [b]mods\ActionQueue[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

@@ -207,7 +207,7 @@ public sealed class QueueWindow
         until.AddChild(_item.Control);
         until.AddChild(_levelPick);
         until.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
-        for (int lane = 1; lane <= Queue.MaxLanes; lane++) { _lanePick.AddItem($"Lane {lane}"); _planLanePick.AddItem($"Lane {lane}"); }
+        OfferLanes(LanesOffered());
         _lanePick.TooltipText = _planLanePick.TooltipText =
             "Lanes are queues of their own that run side by side (with the Multitask mod's slots on).\n"
             + "Every lane does its steps one after another; e.g. lane 1 cuts logs and burns them, lane 2 fishes and cooks.\n"
@@ -497,8 +497,29 @@ public sealed class QueueWindow
         _side.Text = Queue.SideBySide ? $"Side by side: {room} at once" : "Side by side: OFF";
         bool lanesShown = room > 1 || Queue.LaneMode;
         _lanePick.Visible = _planLanePick.Visible = _laneButton.Visible = lanesShown;
+        if (_lanePick.ItemCount != LanesOffered()) OfferLanes(LanesOffered());
         if (_lanePick.Selected < 0) { _lanePick.Select(0); _planLanePick.Select(0); }
         PaintLaneButton();
+    }
+
+    /// <summary>
+    /// How many lanes the lists offer: as many as Multitask runs actions at once (up to 16), never fewer than five (as
+    /// before) nor than the highest lane a step is in.
+    /// </summary>
+    static int LanesOffered()
+    {
+        int used = Queue.Steps.Count == 0 ? 1 : Queue.Steps.Max(st => Math.Clamp(st.Lane, 1, Queue.MaxLanes));
+        return Math.Clamp(Math.Max(Math.Max(Targets.MultitaskCapacity(), used), 5), 1, Queue.MaxLanes);
+    }
+
+    void OfferLanes(int count)
+    {
+        int keep = Math.Clamp(_lanePick.Selected, 0, count - 1);
+        _lanePick.Clear();
+        _planLanePick.Clear();
+        for (int lane = 1; lane <= count; lane++) { _lanePick.AddItem($"Lane {lane}"); _planLanePick.AddItem($"Lane {lane}"); }
+        _lanePick.Select(keep);
+        _planLanePick.Select(keep);
     }
 
     /// <summary>Called about once a second while open.</summary>
@@ -1022,6 +1043,9 @@ public sealed class QueueWindow
     }
     public bool SellFaceShown => Selling && _item.Control.Visible && !_target.Control.Visible && _untilLabel.Text == "keep";
     public bool LanePickShown => _lanePick.Visible;
+    /// <summary>For tests: how many lanes the Lane lists offer (and the next lane the Lane button moves a step to).</summary>
+    public int LanesInList => _lanePick.ItemCount;
+    public int LanesInPlanList => _planLanePick.ItemCount;
     public void ChooseLane(int lane) { _lanePick.Select(lane - 1); _planLanePick.Select(lane - 1); }
     public void SetPlanSell(bool on) => _planSell.ButtonPressed = on;
     public void SelectStep(int index) => SelectRow(index);
@@ -1165,7 +1189,7 @@ public sealed class QueueWindow
     {
         int index = SelectedIndex();
         if (index < 0 || index >= Queue.Steps.Count) { Say("Select a step first."); return; }
-        int lane = Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes) % Queue.MaxLanes + 1;
+        int lane = Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes) % LanesOffered() + 1;
         Queue.SetLane(index, lane);
         Say($"Step {index + 1} is now in lane {lane}.");
         SelectRow(index);
@@ -1174,7 +1198,7 @@ public sealed class QueueWindow
     void PaintLaneButton()
     {
         int index = SelectedIndex();
-        _laneButton.Text = index >= 0 && index < Queue.Steps.Count ? $"Lane {Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes)} > {Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes) % Queue.MaxLanes + 1}" : "Change lane";
+        _laneButton.Text = index >= 0 && index < Queue.Steps.Count ? $"Lane {Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes)} > {Math.Clamp(Queue.Steps[index].Lane, 1, Queue.MaxLanes) % LanesOffered() + 1}" : "Change lane";
     }
 
     void MoveSelected(int by)

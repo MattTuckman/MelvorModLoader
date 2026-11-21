@@ -1,4 +1,4 @@
-Action Queue 0.8.0  -  a mod for Melvor Idle 2
+Action Queue 0.8.1  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -95,7 +95,7 @@ SIDE BY SIDE (WITH THE MULTITASK MOD)
 -------------------------------------
 On its own the queue does one step after another. With the Multitask mod installed and
 its slots switched on, the queue runs as many steps at once as Multitask has room for:
-one slot on = two steps, both on = three.
+one extra slot = two steps, two = three, up to all 16 actions of the game.
   - The fish are cooked while more are being caught, and a third step can mine meanwhile.
   - A step that needs what an earlier step makes waits for it (in piles of about ten)
     instead of being skipped.
@@ -121,6 +121,8 @@ planner's Add button). Lanes are queues of their own that run at the same time:
     through and does not wait for a long one.
   - As many lanes run at once as Multitask has room for; two lanes that use the same skill
     take turns. With every step in lane 1 the queue works as one list, as before.
+  - Up to 16 lanes: the list offers as many lanes as Multitask runs actions at once (at
+    least five).
   - Lanes are kept in saved queues and share codes.
 
 
@@ -188,6 +190,10 @@ GOOD TO KNOW
 - "Remove all" (or removing the step that is running) also stops what that step had started.
   "Pause" leaves your character doing what it was doing.
 - If your character dies, the queue pauses and does not walk back into the fight.
+- A fight step ends when you can no longer attack: your bow or crossbow has no ammo of its
+  kind equipped, or you cast spells and the bank lacks the runes (or no spell is picked).
+  The game itself would keep the fight going while the monster hits you. The step reads
+  "done: out of ammo" (or "out of runes") and the queue goes on with the next step.
 - Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
 - The queue is remembered per character in "queue.json" next to the mod.
 - With side by side switched off, the Multitask mod keeps what you were doing before

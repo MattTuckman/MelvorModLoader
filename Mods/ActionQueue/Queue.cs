@@ -172,7 +172,7 @@ public static class Queue
     public static int Lanes => SideBySide || LaneMode ? Targets.MultitaskCapacity() : 1;
 
     /// <summary>How many lanes a queue can have.</summary>
-    public const int MaxLanes = 5;
+    public const int MaxLanes = Targets.MostActions;   // as many lanes as Multitask can run actions at once (was 5)
     static int LaneOf(Step step) => Math.Clamp(step.Lane, 1, MaxLanes);
     /// <summary>
     /// True when the steps are spread over more than one lane: then every lane does its own steps one after another,
@@ -1449,7 +1449,49 @@ public static class Queue
             End(step, "done");
             return;
         }
+        // A fight the player can no longer take part in (no ammo left for the weapon, not enough runes for the spell)
+        // does not end by itself in the game: the monster keeps hitting while the player stands there. After two
+        // seconds of it (not a moment's gear change) the step ends and the queue goes on.
+        if (action is CombatActionComponent && CannotAttack(game) is { Length: > 0 } why)
+        {
+            double since = s_cannotAttack.GetValueOrDefault(step) + seconds;
+            s_cannotAttack[step] = since;
+            if (since >= 2)
+            {
+                s_cannotAttack.Remove(step);
+                if (!action.TryStop()) action.TryStop(force: true);
+                End(step, "done: " + why);
+                return;
+            }
+        }
+        else s_cannotAttack.Remove(step);
         step.State = "running  " + Progress(game, step);
+    }
+
+    static readonly Dictionary<Step, double> s_cannotAttack = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>
+    /// Why the player cannot attack in a fight right now, as the game itself decides it (PlayerComponent.CanAttack): the
+    /// weapon needs ammo and none of its kind is equipped, or the stance casts spells and no spell is picked or the
+    /// bank lacks its runes. "" when the player can attack.
+    /// </summary>
+    public static string CannotAttack(Game game)
+    {
+        if (!game.Entities.TryGetObjectById(CombatId, out GameEntity? e) || e is not CombatEntity combat) return "";
+        try
+        {
+            var weapon = combat.Equipment.CurrentWeapon.Weapon;
+            if (weapon.RequiredAmmoType is { } ammo && !combat.Equipment.IsAmmoEquipped(ammo)) return "out of ammo";
+            if (combat.Player.GetSelectedStance(weapon.Type).CombatStyle.UsesSpells)
+            {
+                var spell = combat.MagicSpells.SelectedSpell;
+                if (spell == null) return "no spell picked";
+                if (spell.RuneStats.RuneCosts.Values.Any(v => combat.MagicSpells.Inventory.GetQuantity(v.Value.Item) < v.Value.Quantity))
+                    return "out of runes";
+            }
+        }
+        catch { }   // (a game version that reads differently: the fight goes on as before)
+        return "";
     }
 
     /// <summary>
