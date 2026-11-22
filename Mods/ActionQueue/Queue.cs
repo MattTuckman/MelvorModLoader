@@ -39,6 +39,10 @@ public sealed class Step
     public string SubjectName { get; set; } = "";
     /// <summary>The lane (1..MaxLanes): with steps in more than one lane, every lane does its own steps in order, side by side.</summary>
     public int Lane { get; set; } = 1;
+    /// <summary>A recipe's other way of making for this step (Smithing's Sacrificial Anvil): its id to switch it on
+    /// when the step starts, "" to switch it off, null (older steps) to leave the game's switch as it is.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Mode { get; set; }
 
     /// <summary>A "sell" step is not an action: TargetId is the item, Amount how many to keep in the bank (0: sell all).</summary>
     public const string SellEntity = "ActionQueue:Sell";
@@ -680,11 +684,11 @@ public static class Queue
     static Step Copy(Step s) => new()
     {
         Entity = s.Entity, TargetId = s.TargetId, Extra = s.Extra, Name = s.Name,
-        Until = s.Until, Amount = s.Amount, Subject = s.Subject, SubjectName = s.SubjectName, Lane = s.Lane,
+        Until = s.Until, Amount = s.Amount, Subject = s.Subject, SubjectName = s.SubjectName, Lane = s.Lane, Mode = s.Mode,
     };
 
     static bool Same(Step a, Step b) => a.Entity == b.Entity && a.TargetId == b.TargetId && a.Extra == b.Extra
-        && a.Until == b.Until && a.Amount == b.Amount && a.Subject == b.Subject && LaneOf(a) == LaneOf(b);
+        && a.Until == b.Until && a.Amount == b.Amount && a.Subject == b.Subject && LaneOf(a) == LaneOf(b) && a.Mode == b.Mode;
 
     /// <summary>True when the steps on screen differ from the saved queue they came from.</summary>
     public static bool Modified =>
@@ -1336,6 +1340,9 @@ public static class Queue
 
         bool othersAtWork = Steps.Any(s => s != step && s.Run == RunState.Running);
         MakeRoomFor(game, step, othersAtWork);
+        // The step's own choice of the recipe's other way of making (the Sacrificial Anvil switch), as the game's switch sets it.
+        if (step.Mode != null && !Targets.SetMode(action, target.Id, step.Mode))
+            Trace($"{Number(step)}: the way of making '{step.Mode}' could not be switched (locked, or not for this recipe)");
         bool started = othersAtWork ?Targets.StartBeside(game, action, target, out problem) : Targets.Start(game, action, target, out problem);
         if (!started)
         {

@@ -1,4 +1,4 @@
-Action Queue 0.8.1  -  a mod for Melvor Idle 2
+Action Queue 0.9.0  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -194,6 +194,10 @@ GOOD TO KNOW
   kind equipped, or you cast spells and the bank lacks the runes (or no spell is picked).
   The game itself would keep the fight going while the monster hits you. The step reads
   "done: out of ammo" (or "out of runes") and the queue goes on with the next step.
+- Sacrificial Anvil: when the recipe you pick has the game's anvil switch (and you have it
+  unlocked), a "Sacrificial Anvil" box shows next to it. Ticked, that step switches the
+  anvil on when it starts; unticked, it switches it off. So one step can smith with the
+  anvil and the next without. Steps show "(Sacrificial Anvil)" in their name.
 - Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
 - The queue is remembered per character in "queue.json" next to the mod.
 - With side by side switched off, the Multitask mod keeps what you were doing before

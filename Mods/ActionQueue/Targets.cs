@@ -353,6 +353,45 @@ public static class Targets
         return recipe != null && c.CanCreateRecipe(recipe);
     }
 
+    /// <summary>
+    /// The game's other ways of making a recipe that the player can use now, such as Smithing's Sacrificial Anvil
+    /// (the switch under the recipe on the skill's page), as (id, name). Empty for everything else.
+    /// </summary>
+    public static List<(string Id, string Name)> Modes(ActionComponent action, string recipeId)
+    {
+        var modes = new List<(string Id, string Name)>();
+        if (action is not ArtisanActionComponent c) return modes;
+        try
+        {
+            ActiveArtisanRecipe? recipe = c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == recipeId).Value;
+            if (recipe == null) return modes;
+            foreach (AlternativeRewardMode mode in c.Config.RewardModes)
+                if (mode.ShowAlternativeMode(recipe) && mode.UnlockRequirements.AreMet) modes.Add((mode.Id, mode.DisplayName.Text));
+        }
+        catch (Exception) { }
+        return modes;
+    }
+
+    /// <summary>The id of the other way of making that is switched on for a recipe ("" for the normal way).</summary>
+    public static string ModeOf(ActionComponent action, string recipeId) =>
+        action is ArtisanActionComponent c ? c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == recipeId).Value?.CurrentRewardMode?.Id ?? "" : "";
+
+    /// <summary>Switches a recipe to one of its other ways of making (or back to normal with ""), as the game's switch does.
+    /// False when that way does not exist for the recipe or is still locked.</summary>
+    public static bool SetMode(ActionComponent action, string recipeId, string modeId)
+    {
+        if (action is not ArtisanActionComponent c) return modeId == "";
+        ActiveArtisanRecipe? recipe = c.ActiveRecipes.FirstOrDefault(r => r.Key.Id == recipeId).Value;
+        if (recipe == null) return false;
+        AlternativeRewardMode? now = recipe.CurrentRewardMode;
+        if ((now?.Id ?? "") == modeId) return true;
+        if (modeId == "") { recipe.ToggleRewardMode(now!); return recipe.CurrentRewardMode == null; }
+        AlternativeRewardMode? wanted = c.Config.RewardModes.FirstOrDefault(m => m.Id == modeId);
+        if (wanted == null || !wanted.ShowAlternativeMode(recipe) || !wanted.UnlockRequirements.AreMet) return false;
+        recipe.ToggleRewardMode(wanted);
+        return recipe.CurrentRewardMode == wanted;
+    }
+
     /// <summary>The ids of the items a recipe uses up; empty for gathering, thieving, combat...</summary>
     public static HashSet<string> Ingredients(ActionComponent action, Target target) => action switch
     {

@@ -49,6 +49,7 @@ public class CheatMenuMod : IMod
             if (game is { IsSaveLoaded: true })
             {
                 Engine.Bind(game);
+                SlayerLength.Check(game);
                 Settings.Flush();                               // writes settings.json only if something changed
                 if (_frame % 60 == 0) AutoSell.RunOnce(game);   // about once a second
             }

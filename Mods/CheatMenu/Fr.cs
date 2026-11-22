@@ -56,6 +56,7 @@ static class Fr
         ["Keep supplies chance"] = "Chance de conserver les consommables",
         ["Slayer coin reward"] = "Récompense en pièces de pourfendeur",
         ["Cheap slayer task rerolls"] = "Pourfendeur : changement de tâche à 1 pièce",
+        ["Slayer task: most kills"] = "Pourfendeur : nombre maximal de cibles par tâche",
 
         // ---- the line under each setting
         ["Adds bank slots on top of the ones you own."] = "Ajoute des places de banque en plus de celles que vous possédez.",
@@ -88,6 +89,7 @@ static class Fr
         ["Chance not to use up food, ammo, runes or prayer points."] = "Chance de ne pas consommer de nourriture, de munitions, de runes ni de points de prière.",
         ["Multiplies the slayer coins earned per task kill."] = "Multiplie les pièces de pourfendeur gagnées pour chaque cible de tâche tuée.",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "Changer de tâche de pourfendeur coûte 1 pièce (le minimum du jeu).",
+        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "Aucune tâche de pourfendeur ne demande plus de cibles que ce nombre (0 garde les longueurs du jeu). Prolonger une tâche ajoute toujours le nombre habituel du maître.",
 
         // ---- the window
         ["CHEAT MENU"] = "MENU DE TRICHE",

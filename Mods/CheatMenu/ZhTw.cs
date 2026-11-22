@@ -58,6 +58,7 @@ static class ZhTw
         ["Keep supplies chance"] = "補給保留機率",
         ["Slayer coin reward"] = "屠殺者硬幣獎勵",
         ["Cheap slayer task rerolls"] = "低價重抽屠殺者任務",
+        ["Slayer task: most kills"] = "屠殺者任務：最多擊殺數",
 
         // ---- the line under each setting
         ["Adds bank slots on top of the ones you own."] = "在原有倉庫格數之外增加容量。",
@@ -90,6 +91,7 @@ static class ZhTw
         ["Chance not to use up food, ammo, runes or prayer points."] = "不消耗食物、彈藥、符文或祝祭點的機率。",   // (changed: the game says 祝祭)
         ["Multiplies the slayer coins earned per task kill."] = "依倍率提高擊殺屠殺者任務目標所得的硬幣。",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "重抽屠殺者任務只需 1 枚硬幣（遊戲的最低費用）。",
+        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "屠殺者任務要求的擊殺數不會超過此值（0 表示保留遊戲原本的任務長度）。延長任務時仍會加上大師通常的擊殺數。",
 
         // ---- the window
         ["CHEAT MENU"] = "修改器選單",

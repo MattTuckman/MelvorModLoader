@@ -158,6 +158,7 @@ public static class Features
                 Min = 1, Max = 100, Off = 1, ToMultiplier = Times, Stats = { new("SlayerTasks", "PercentRewardCurrency", "Slayer", "Tasks", 1) } },
         new() { Id = "combat.slayerFreeReroll", Tab = TabCombat, En = "Cheap slayer task rerolls", Kind = FeatureKind.Toggle,
                 Stats = { new("SlayerTasks", "PercentRerollCost", "Slayer", "Tasks", -1) } },
+        new() { Id = SlayerLength.Setting, Tab = TabCombat, En = "Slayer task: most kills", Max = 300, Step = 1, Custom = true },
     };
 
     /// <summary>Every skill in menu order.</summary>
@@ -260,6 +261,7 @@ public static class Features
         ["combat.keepSupplies"] = "Chance not to use up food, ammo, runes or prayer points.",
         ["combat.slayerReward"] = "Multiplies the slayer coins earned per task kill.",
         ["combat.slayerFreeReroll"] = "Changing your slayer task costs 1 coin (the game's minimum).",
+        [SlayerLength.Setting] = "No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills.",
     };
 
     static readonly Dictionary<string, Feature> ById = All.ToDictionary(f => f.Id);

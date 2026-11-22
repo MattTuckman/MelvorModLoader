@@ -39,6 +39,9 @@ public sealed class QueueWindow
     readonly OptionButton _lanePick = new() { Visible = false }, _planLanePick = new() { Visible = false };
     readonly Button _laneButton = new() { Visible = false, CustomMinimumSize = new Vector2(120, 0) };
     readonly CheckBox _planSell = new() { Text = "then sell them" };
+    /// <summary>A recipe's other way of making for this step (Smithing's Sacrificial Anvil); shown only where the game offers one.</summary>
+    readonly CheckBox _mode = new() { Visible = false };
+    string _modeId = "";
     readonly Label _untilLabel = Style.Label("until", Style.Text);
     Button _useNow = null!;
 
@@ -184,12 +187,15 @@ public sealed class QueueWindow
         what.AddThemeConstantOverride("separation", 10);
         what.AddChild(Fixed("Do", 50));
         _skillPick.ItemSelected += _ => { FillTargets(null); UntilChanged(); };
-        _target.Picked += _ => { if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem(); };
+        _target.Picked += _ => { if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem(); ShowMode(); };
         _target.Control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         _target.Control.CustomMinimumSize = new Vector2(300, 0);
         _target.Control.TooltipText = "Click and type to search. The groups are the ones of the skill's own page.";
         what.AddChild(_skillPick);
         what.AddChild(_target.Control);
+        _mode.TooltipText = "Tick it and this step makes the recipe this other way (as the switch under the recipe on the skill's page);\n"
+            + "untick it and the step makes it the normal way. The queue sets the game's switch when the step starts.";
+        what.AddChild(_mode);
         Button useNow = _useNow = MakeButton("Use what I am doing now", UseCurrent);
         useNow.TooltipText = "Fills in the skill and the action your character is performing right now.";
         what.AddChild(useNow);
@@ -859,6 +865,7 @@ public sealed class QueueWindow
         var (entity, action) = _skills[_skillPick.Selected];
         List<PickEntry<Target>> entries = Catalog.For(_game, entity, action, select);
         _target.SetEntries(entries, KeyIn(entries, select) ?? entries.FirstOrDefault(e => !e.Muted)?.Key ?? entries.FirstOrDefault()?.Key);
+        ShowMode();
         if (!suggest) return;
         // A level goal is usually about the skill being trained.
         int level = _levelSkills.IndexOf(entity.DisplayName.Text);
@@ -892,6 +899,25 @@ public sealed class QueueWindow
         Item? product = Targets.Product(_skills[_skillPick.Selected].Action, chosen.Value);
         if (product != null) _item.Select(product.Id);
     }
+
+    /// <summary>
+    /// The box for the recipe's other way of making (Smithing's Sacrificial Anvil): shown only when the chosen recipe
+    /// has one the character can use, ticked the way the game's own switch stands right now.
+    /// </summary>
+    void ShowMode()
+    {
+        List<(string Id, string Name)> modes = Selling || _skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _target.Selected is not { } chosen
+            ? new() : Targets.Modes(_skills[_skillPick.Selected].Action, chosen.Value.Id);
+        _mode.Visible = modes.Count > 0;
+        if (modes.Count == 0) { _modeId = ""; return; }
+        _modeId = modes[0].Id;
+        _mode.Text = modes[0].Name;
+        _mode.ButtonPressed = Targets.ModeOf(_skills[_skillPick.Selected].Action, _target.Selected!.Value.Id) == _modeId;
+    }
+
+    /// <summary>For tests: the way-of-making box (null when it is hidden), and ticking it as a click does.</summary>
+    public string? ModeShown => _mode.Visible ? $"{_mode.Text}: {(_mode.ButtonPressed ? "on" : "off")}" : null;
+    public void PressMode(bool on) => _mode.ButtonPressed = on;
 
     void SuggestFood()
     {
@@ -1083,6 +1109,7 @@ public sealed class QueueWindow
     {
         bool selling = Selling;
         _target.Control.Visible = _useNow.Visible = _untilPick.Visible = !selling;
+        ShowMode();
         if (selling)
         {
             // Sell: which item, and how many to keep in the bank.
@@ -1156,6 +1183,11 @@ public sealed class QueueWindow
             Name = $"{entity.DisplayName.Text}: {target.Name}",
             Until = (Until)_untilPick.Selected, Amount = _amount.Value, Lane = NewLane,
         };
+        if (_mode.Visible && _modeId != "")
+        {
+            step.Mode = _mode.ButtonPressed ? _modeId : "";
+            if (_mode.ButtonPressed) step.Name += $" ({_mode.Text})";
+        }
         if (step.Until is Until.Item or Until.ItemLeft or Until.Made or Until.Spent)
         {
             if (_item.Selected is not { } counted) { Say("Pick the item to count first."); return; }

@@ -1,4 +1,4 @@
-Cheat Menu 0.6.1  -  a mod for Melvor Idle 2
+Cheat Menu 0.7.0  -  a mod for Melvor Idle 2
 ============================================
 
 One window with more than 60 settings and tools: bank slots, XP, game speed, skill bonuses,
@@ -63,6 +63,10 @@ GOOD TO KNOW
 - Materials page: mark a material (Coal, for example) as "Not needed" and no recipe or item
   upgrade asks for it any more. Your bank is not touched. "Needed again" puts it back.
   Farming recipes follow after the character has been opened again.
+- "Slayer task: most kills" (Combat page): no slayer task asks for more kills than this, e.g. 10.
+  New and rerolled tasks get it at once; a task already running is shortened (one already past it
+  ends with its next kill). "Extend task" still adds the master's usual kills. 0 = the game's own
+  lengths, which grow by 3 kills per Slayer level.
 - This mod changes the balance of the game. Use it the way you enjoy playing.
 
 

@@ -8,6 +8,9 @@ using System.Text.Json.Serialization;
 using ActionQueue;
 using GamesByMalcs.Melvor2;
 using GamesByMalcs.Melvor2.Components.Actions;
+using GamesByMalcs.Melvor2.Components.ActionUntilX;
+using GamesByMalcs.Melvor2.Conditions;
+using GamesByMalcs.Melvor2.Goals;
 using GamesByMalcs.Melvor2.Entities;
 using GamesByMalcs.Melvor2.Entities.Combat;
 using GamesByMalcs.Melvor2.GameMenus.Footer;
@@ -69,6 +72,53 @@ public static class Slots
 
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_activeActions")]
     static extern ref List<ActionComponent> Running(ActiveActionManager manager);
+
+    // The "stop when" box of the crafting pages (the game's ActionUntilX). The game forgets it whenever the action
+    // stops - also when it only stopped because the player started something else. These reach the parts the
+    // game keeps to itself, to note it just before and put it back when this mod starts the action again.
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "get_StopGoalData")]
+    static extern Goal? StopGoalData(ActionUntilXComponent untilX);
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "SetStopCondition")]
+    static extern void SetStopCondition(ActionUntilXComponent untilX, Condition condition);
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "SetStopGoal")]
+    static extern void SetStopGoal(ActionUntilXComponent untilX, Goal goal);
+
+    /// <summary>A "stop when" as it stood when its action stopped: a condition (reach level N...), or a goal
+    /// (make N...) with how far it had got.</summary>
+    sealed record StopNote(string TargetId, Condition? Condition, Goal? Goal, double Progress);
+    static readonly Dictionary<string, StopNote> s_stops = new();
+    static readonly ConditionalWeakTable<ActionUntilXComponent, object> s_watched = new();
+
+    /// <summary>
+    /// Skills whose action stopped because the materials ran out, noted the moment it stopped. Looking only at the
+    /// next look is too late when another action refills the bank in between (Hunting brings a fur half a second
+    /// after Beastcrafting ran out): the bank then holds materials again, and it looked as if the player had
+    /// pressed Stop.
+    /// </summary>
+    static readonly HashSet<string> s_ranOut = new();
+    static readonly ConditionalWeakTable<ActionComponent, object> s_stopWatched = new();
+
+    static void WatchRunOut(ActionComponent action)
+    {
+        if (s_stopWatched.TryGetValue(action, out _)) return;
+        string entity = action.Entity.Id;
+        EventHandler<ActionEventArgs> stopped = (_, _) =>
+        {
+            try
+            {
+                Game? game = s_game;
+                Kept? kept = s_recent.FirstOrDefault(k => k.Entity == entity);
+                if (game == null || kept == null) return;
+                bool empty = Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0;
+                lock (s_ranOut) { if (empty) s_ranOut.Add(entity); else s_ranOut.Remove(entity); }
+            }
+            catch { }
+        };
+        action.Stopped += stopped;
+        s_stopWatched.Add(action, stopped);
+    }
+
+    static bool RanOut(string entity) { lock (s_ranOut) return s_ranOut.Remove(entity); }
 
     sealed class Saved
     {
@@ -174,7 +224,73 @@ public static class Slots
         // thread (offline progress), so it only raises a flag; the next tick acts on it.
         if (game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? combat) && combat is CombatEntity fighter)
             fighter.Action.PlayerDied += (_, _) => { if (ReferenceEquals(game, s_game)) s_died = true; };
+        s_stops.Clear();
+        lock (s_ranOut) s_ranOut.Clear();
+        foreach (ActionComponent action in s_actions.Values) { WatchStops(action); WatchRunOut(action); }
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Notes a skill's "stop when" the moment its action stops, before the game clears it. The game's own handler
+    /// that clears it is taken off the action's Stopped event and put back after this one, so this one runs first.
+    /// </summary>
+    static void WatchStops(ActionComponent action)
+    {
+        try
+        {
+            ActionUntilXComponent? untilX = action.Entity.Components.Values.OfType<ActionUntilXComponent>().FirstOrDefault();
+            if (untilX == null || s_watched.TryGetValue(untilX, out _)) return;
+            System.Reflection.EventInfo stopped = typeof(ActionComponent).GetEvent(nameof(ActionComponent.Stopped))!;
+            System.Reflection.MethodInfo? clears = typeof(ActionUntilXComponent).GetMethod("ActionStoppedHandler",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (clears == null) { Log("Multitask: the game's 'stop when' handler was not found; it is not kept across restarts."); return; }
+            Delegate gameClears = Delegate.CreateDelegate(stopped.EventHandlerType!, untilX, clears);
+            string entity = action.Entity.Id;
+            EventHandler<ActionEventArgs> note = (_, _) => NoteStop(entity, action, untilX);
+            stopped.RemoveEventHandler(action, gameClears);
+            stopped.AddEventHandler(action, note);
+            stopped.AddEventHandler(action, gameClears);
+            s_watched.Add(untilX, note);
+        }
+        catch (Exception e) { Log("Multitask: the 'stop when' of a skill could not be watched: " + e.Message); }
+    }
+
+    static void NoteStop(string entity, ActionComponent action, ActionUntilXComponent untilX)
+    {
+        try
+        {
+            Condition? condition = untilX.StopCondition;
+            IActiveGoal? goal = untilX.StopGoal;
+            Goal? goalData = goal == null ? null : StopGoalData(untilX);
+            // Nothing set, or it is stopping because the goal was reached: nothing to keep. (The game has already
+            // let go of the recipe here; the one this mod saw running is the one the "stop when" belongs to.)
+            Kept? kept = s_recent.FirstOrDefault(k => k.Entity == entity);
+            if ((condition == null && goalData == null) || condition?.IsMet == true || goal?.IsComplete == true || kept == null)
+            {
+                s_stops.Remove(entity);
+                return;
+            }
+            s_stops[entity] = new StopNote(kept.TargetId, condition, goalData, goal?.CurrentProgress ?? 0);
+        }
+        catch (Exception e) { s_stops.Remove(entity); Log("Multitask: a 'stop when' could not be noted: " + e.Message); }
+    }
+
+    /// <summary>Puts a skill's "stop when" back after this mod started it again (only for the same recipe).</summary>
+    static void PutStopBack(Kept kept, ActionComponent action)
+    {
+        if (!s_stops.Remove(kept.Entity, out StopNote? note) || note.TargetId != kept.TargetId) return;
+        try
+        {
+            ActionUntilXComponent? untilX = action.Entity.Components.Values.OfType<ActionUntilXComponent>().FirstOrDefault();
+            if (untilX == null || untilX.StopCondition != null || untilX.StopGoal != null) return;   // it has one of its own now
+            if (note.Condition != null) SetStopCondition(untilX, note.Condition);
+            else if (note.Goal != null)
+            {
+                SetStopGoal(untilX, note.Goal);
+                untilX.StopGoal?.SetCurrentProgress(note.Progress);
+            }
+        }
+        catch (Exception e) { Log($"Multitask: the 'stop when' of {kept.Title} could not be put back: " + e.Message); }
     }
 
     /// <summary>No character is open any more.</summary>
@@ -309,6 +425,7 @@ public static class Slots
             kept.OutOfMaterials = false;
             kept.ByQueue = queueSkills.Contains(kept.Entity);
             kept.State = "running";
+            lock (s_ranOut) s_ranOut.Remove(kept.Entity);
         }
 
         // What the game started last is the player's latest action, also when it is the same one as before.
@@ -342,7 +459,7 @@ public static class Slots
             if (somethingNew) { kept.Pending = true; kept.RetryAt = 0; continue; }   // stopped by the game because of the new action
             // It stopped while nothing new was started: the player pressed Stop, or it ran out of something.
             ActionComponent action = s_actions[kept.Entity];
-            if (Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0)
+            if (RanOut(kept.Entity) | Targets.Batches(game, action, new Target(kept.TargetId, kept.Name, kept.Extra)) == 0)
             {
                 if (s_wait) { kept.Pending = true; kept.OutOfMaterials = true; continue; }   // out of materials: wait
                 Note = $"{kept.Title} was dropped: its materials ran out.";
@@ -483,6 +600,7 @@ public static class Slots
         if (batches < PileSize && now - kept.GrewAt < SettleSeconds) { kept.State = $"waiting: collecting materials ({batches}/{PileSize})"; return; }
 
         if (!Beside(game, () => Targets.Start(game, action, target, out problem))) { kept.State = "waiting: " + problem; return; }
+        PutStopBack(kept, action);
         Starts++;
         s_startedNow = true;
         kept.Pending = false;

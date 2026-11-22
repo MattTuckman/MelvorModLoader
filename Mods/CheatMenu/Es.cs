@@ -53,6 +53,7 @@ static class Es
         ["Keep supplies chance"] = "Probabilidad de conservar suministros",
         ["Slayer coin reward"] = "Recompensa en monedas de exterminio",
         ["Cheap slayer task rerolls"] = "Exterminio: cambios de tarea baratos",
+        ["Slayer task: most kills"] = "Exterminio: máximo de enemigos por tarea",
 
         // ---- the line under each setting
         ["Adds bank slots on top of the ones you own."] = "Añade espacios al banco además de los que ya tienes.",
@@ -85,6 +86,7 @@ static class Es
         ["Chance not to use up food, ammo, runes or prayer points."] = "Probabilidad de no gastar comida, munición, runas ni puntos de oración.",
         ["Multiplies the slayer coins earned per task kill."] = "Multiplica las monedas de exterminio obtenidas por cada enemigo de la tarea derrotado.",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "Cambiar tu tarea de exterminio cuesta 1 moneda (el mínimo del juego).",
+        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "Ninguna tarea de exterminio pide más enemigos que esto (0 deja la duración normal del juego). Ampliar una tarea sigue añadiendo los enemigos habituales del maestro.",
 
         // ---- the window
         ["CHEAT MENU"] = "MENÚ DE TRUCOS",

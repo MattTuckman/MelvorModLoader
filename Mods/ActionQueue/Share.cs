@@ -42,6 +42,8 @@ public static class Share
         public string K { get; set; } = "";   // its shown name
         [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)]
         public int L { get; set; }            // lane (0 or missing: lane 1; older versions ignore it)
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string? M { get; set; }        // the recipe's way of making (Sacrificial Anvil id, "" normal; missing: leave the game's switch)
     }
 
     public static string Export(string name, IEnumerable<Step> steps, bool repeat)
@@ -49,7 +51,7 @@ public static class Share
         var packed = new Packed
         {
             N = name, R = repeat,
-            S = steps.Select(s => new PackedStep { E = s.Entity, T = s.TargetId, X = s.Extra, N = s.Name, U = (int)s.Until, A = s.Amount, J = s.Subject, K = s.SubjectName, L = s.Lane > 1 ? Math.Min(s.Lane, Queue.MaxLanes) : 0 }).ToList(),
+            S = steps.Select(s => new PackedStep { E = s.Entity, T = s.TargetId, X = s.Extra, N = s.Name, U = (int)s.Until, A = s.Amount, J = s.Subject, K = s.SubjectName, L = s.Lane > 1 ? Math.Min(s.Lane, Queue.MaxLanes) : 0, M = s.Mode }).ToList(),
         };
         byte[] json = JsonSerializer.SerializeToUtf8Bytes(packed);
         using var buffer = new MemoryStream();
@@ -105,7 +107,7 @@ public static class Share
             steps.Add(new Step
             {
                 Entity = Clip(s.E), TargetId = Clip(s.T), Extra = Clip(s.X), Name = Clip(s.N),
-                Until = (Until)s.U, Amount = s.A, Subject = Clip(s.J), SubjectName = Clip(s.K), Lane = Math.Max(1, s.L),
+                Until = (Until)s.U, Amount = s.A, Subject = Clip(s.J), SubjectName = Clip(s.K), Lane = Math.Max(1, s.L), Mode = s.M == null ? null : Clip(s.M),
             });
         }
         name = CleanName(packed.N);

@@ -1,4 +1,4 @@
-Multitask 0.6.0  -  a mod for Melvor Idle 2
+Multitask 0.6.1  -  a mod for Melvor Idle 2
 ===========================================
 
 Do more than one thing at a time. Nothing to set up: pick how many extra slots and play as usual.
@@ -54,6 +54,9 @@ GOOD TO KNOW
   so the game does not report "action stopped" for every single fish.
   Untick "Keep an action on the list when its materials run out" in the F5 window and
   such an action leaves the list instead, making room for the next one.
+- A crafting action's "stop when" (the game's box for "make N", "reach level N"...) is kept:
+  when you start something else and Multitask starts the crafting again, the goal is put
+  back with the progress it had. Once the goal is reached the action stops for good.
 - A fight is dropped if your character dies. Nothing walks back in.
 - Offline progress: everything that was running when you closed the game goes on.
   An action that runs out of materials while the game is closed stays stopped until you

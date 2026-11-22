@@ -57,6 +57,7 @@ static class ZhCn
         ["Keep supplies chance"] = "补给保留概率",
         ["Slayer coin reward"] = "屠杀者硬币奖励",
         ["Cheap slayer task rerolls"] = "低价刷新屠杀者任务",
+        ["Slayer task: most kills"] = "屠杀者任务：最多击杀数",
 
         // ---- the line under each setting
         ["Adds bank slots on top of the ones you own."] = "在原有仓库格数之外增加容量。",
@@ -89,6 +90,7 @@ static class ZhCn
         ["Chance not to use up food, ammo, runes or prayer points."] = "不消耗食物、弹药、符文或祝祭点的概率。",
         ["Multiplies the slayer coins earned per task kill."] = "按倍率提高击杀屠杀者任务目标所得的硬币。",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "刷新屠杀者任务只需 1 枚硬币（游戏允许的最低费用）。",
+        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "屠杀者任务要求的击杀数不会超过此值（0 表示保留游戏原本的任务长度）。延长任务时仍会加上大师通常的击杀数。",
 
         // ---- the window
         ["CHEAT MENU"] = "修改器菜单",

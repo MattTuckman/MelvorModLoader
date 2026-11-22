@@ -59,6 +59,7 @@ static class Ar
         ["Keep supplies chance"] = "فرصة الاحتفاظ بالمؤن",
         ["Slayer coin reward"] = "مكافأة عملات صائد الوحوش",
         ["Cheap slayer task rerolls"] = "تغيير مهمة صائد الوحوش بعملة واحدة",
+        ["Slayer task: most kills"] = "مهمة صائد الوحوش: أقصى عدد للقتل",
 
         // ---- the line under each setting
         ["Adds bank slots on top of the ones you own."] = "يضيف خانات إلى المخزن فوق ما تملكه.",
@@ -91,6 +92,7 @@ static class Ar
         ["Chance not to use up food, ammo, runes or prayer points."] = "فرصة عدم استهلاك الطعام أو الذخيرة أو الرونات أو نقاط الصلاة.",
         ["Multiplies the slayer coins earned per task kill."] = "يضاعف عملات صائد الوحوش المكتسبة عن كل وحش يُقتل في المهمة.",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "تغيير مهمة صائد الوحوش يكلّف عملة واحدة (الحد الأدنى في اللعبة).",
+        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "لا تطلب أي مهمة لصائد الوحوش قتل وحوش أكثر من هذا العدد (0 يُبقي أطوال المهام كما في اللعبة). تمديد المهمة ما زال يضيف العدد المعتاد للمعلّم.",
 
         // ---- the window
         ["CHEAT MENU"] = "قائمة الغش",

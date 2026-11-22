@@ -56,6 +56,7 @@ static class Hi
         ["Keep supplies chance"] = "रसद बचने की संभावना",
         ["Slayer coin reward"] = "संहारक सिक्कों का इनाम",
         ["Cheap slayer task rerolls"] = "संहारक कार्य का सस्ता बदलाव",
+        ["Slayer task: most kills"] = "संहारक कार्य: सबसे ज़्यादा शिकार",
 
         // ---- the line under each setting
         ["Adds bank slots on top of the ones you own."] = "बैंक में मौजूदा स्लॉट के अलावा अतिरिक्त स्लॉट जोड़ता है।",
@@ -88,6 +89,7 @@ static class Hi
         ["Chance not to use up food, ammo, runes or prayer points."] = "भोजन, गोला-बारूद, रून या प्रार्थना अंक ख़र्च न होने की संभावना।",
         ["Multiplies the slayer coins earned per task kill."] = "कार्य में हर राक्षस मारने पर मिलने वाले संहारक सिक्कों को गुणा करता है।",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "संहारक कार्य बदलने में 1 सिक्का लगता है (गेम का न्यूनतम)।",
+        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "कोई भी संहारक कार्य इससे ज़्यादा राक्षस मारने को नहीं कहेगा (0 पर गेम की अपनी लंबाई रहती है)। कार्य बढ़ाने पर मास्टर के सामान्य शिकार अब भी जुड़ते हैं।",
 
         // ---- the window
         ["CHEAT MENU"] = "चीट मेनू",
