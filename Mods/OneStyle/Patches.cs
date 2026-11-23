@@ -35,7 +35,8 @@ namespace OneStyle;
 /// class, or to Off, puts the game back exactly as it was.
 ///
 /// 1. Immunity: monsters immune to the class's style (Wind Drifter, the Amalgamations, Blood Sanctum) can be hit.
-/// 2. Combat triangle: the matchups that go against the class lose their penalty; the good ones stay.
+/// 2. Combat triangle: off for the class's style, against every monster (no penalty and no bonus: every class is
+///    equal against every monster). 7 to 12 are in Patches.Balance.cs.
 /// 3. Style locks: the archery targets of the first main quest (and any quest goal or monster that asks for another
 ///    style) take the class's style instead.
 /// 4. Level locks: requirements on another style's level read the class's level instead: Battle Loadout, thieving
@@ -44,7 +45,7 @@ namespace OneStyle;
 /// 5. Magic evasion: melee and ranged dodge spells with their full Defence (the game counts Magic for 70% of it).
 /// 6. Class tiers: titles and bonuses at class level 20, 40, 60, 80 and 99.
 /// </summary>
-public static class Patches
+public static partial class Patches
 {
     sealed class Source(string name) : INamedObject
     {
@@ -107,6 +108,7 @@ public static class Patches
     public static int MappedLevels => s_levels.Count;
     public static int MappedStyles => s_styles.Count + s_goals.Count;
     public static int TrianglePenaltiesRemoved { get; private set; }
+    public static int TriangleBonusesRemoved { get; private set; }
 
     /// <summary>A character was opened: its class is applied (before the game works out the time it was closed).</summary>
     public static void Bind(Game game)
@@ -211,7 +213,7 @@ public static class Patches
     static void Apply()
     {
         Problems.Clear();
-        TrianglePenaltiesRemoved = 0;
+        TrianglePenaltiesRemoved = TriangleBonusesRemoved = 0;
         if (s_game == null || s_class == Class.None) return;
         CombatStyle? style = Try("combat style", () => s_game.Data.GetObject<CombatStyle>(Classes.StyleId(s_class)));
         if (style == null) return;
@@ -222,6 +224,7 @@ public static class Patches
         Step("hunting by hand", () => RestoreTrapless());
         Step("magic evasion", () => UpdateEvasion());
         Step("class tier", () => UpdatePerks());
+        ApplyBalance(style);
         Watch();
     }
 
@@ -248,7 +251,8 @@ public static class Patches
                 try { s_mods.Remove(source); } catch { }
         s_evasionNow = s_perkNow = 0;
         s_evasionValues = s_perkValues = null;
-        TrianglePenaltiesRemoved = 0;
+        TrianglePenaltiesRemoved = TriangleBonusesRemoved = 0;
+        RestoreBalance();
     }
 
     /// <summary>Drops the records without touching the game (its data is gone with it).</summary>
@@ -263,7 +267,8 @@ public static class Patches
         s_triangleOriginal = null;
         s_evasionNow = s_perkNow = 0;
         s_evasionValues = s_perkValues = null;
-        TrianglePenaltiesRemoved = 0;
+        TrianglePenaltiesRemoved = TriangleBonusesRemoved = 0;
+        ForgetBalance();
         Problems.Clear();
     }
 
@@ -309,14 +314,14 @@ public static class Patches
         s_triangleOriginal = new Dictionary<CombatStyle, List<CombatTriangleBonus>>(row);
         // A new list for every enemy style (never the same list changed in place): the game compares the list it
         // applied with the one it finds, takes the old bonuses off and puts the new ones on.
-        // A matchup left with no bonus at all is taken out of the table: the game shows an empty one as a red penalty
-        // badge, while a missing one is neutral (and applies nothing).
+        // Since 0.2 every matchup of the class is taken out of the table, the good ones too: the classes are equal
+        // against every monster. A missing matchup is neutral (the game shows an empty one as a red penalty badge).
+        // (0.1 kept the good ones, which left Magic favoured against 78 monsters, Melee against 59, Ranged against 55.)
         foreach (CombatStyle enemy in row.Keys.ToList())
         {
-            List<CombatTriangleBonus> kept = row[enemy].Where(b => b.IsPositiveForPlayer).ToList();
-            TrianglePenaltiesRemoved += row[enemy].Count - kept.Count;
-            if (kept.Count == 0) row.Remove(enemy);
-            else row[enemy] = kept;
+            TrianglePenaltiesRemoved += row[enemy].Count(b => !b.IsPositiveForPlayer);
+            TriangleBonusesRemoved += row[enemy].Count(b => b.IsPositiveForPlayer);
+            row.Remove(enemy);
         }
         RefreshTriangle();
     }

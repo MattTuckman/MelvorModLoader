@@ -133,15 +133,28 @@ public sealed class ClassWindow
         root.AddChild(cards);
 
         _body.AddThemeConstantOverride("separation", 8);
-        root.AddChild(_body);
+        _body.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+        // Since 0.2 the text below the cards is longer than a small screen: it scrolls.
+        _scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        _scroll.AddChild(_body);
+        root.AddChild(_scroll);
 
         tree.Root.AddChild(_layer);
+        _tree = tree;
     }
+
+    readonly ScrollContainer _scroll;
+    readonly SceneTree _tree;
+
+    /// <summary>The scrolling part as tall as the screen allows (the header and the cards take about 300 pixels).</summary>
+    void FitHeight() =>
+        _scroll.CustomMinimumSize = new Vector2(0, Math.Clamp(_tree.Root.GetVisibleRect().Size.Y - 330, 240, 620));
 
     public void Show()
     {
         _close.Text = OneStyleMod.Instance?.Key.With("Close") ?? "Close";
         _layer.Visible = true;
+        FitHeight();
         Repaint();
     }
 
@@ -157,7 +170,7 @@ public sealed class ClassWindow
         if (Signature() != _signature) Repaint();
     }
 
-    static string Signature() => $"{Patches.Current}|{Patches.ClassLevel}|{Patches.Tier}|{Patches.MappedLevels}|{Patches.Problems.Count}";
+    static string Signature() => $"{Patches.Current}|{Patches.ClassLevel}|{Patches.Tier}|{Patches.MappedLevels}|{Patches.Problems.Count}|{Rings.Problems.Count}|{Patches.EquivalentsActive.Count}";
 
     void Repaint()
     {
@@ -175,6 +188,7 @@ public sealed class ClassWindow
         if (c == Class.None)
         {
             _body.AddChild(Text("No class chosen: the game plays as usual. Pick Melee, Ranged or Magic above.", Style.Muted, 14));
+            _body.AddChild(RingSection());
             return;
         }
 
@@ -207,18 +221,72 @@ public sealed class ClassWindow
         ov.AddChild(Text("What your class opens", Style.Text, 15));
         string style = Classes.Name(c).ToLowerInvariant();
         ov.AddChild(Bullet($"Monsters immune to {style} can be hit with {style}: Wind Drifter, the Amalgamations, Blood Sanctum."));
-        ov.AddChild(Bullet("The combat triangle never works against you; its advantages stay."));
+        ov.AddChild(Bullet("The combat triangle is off for your class: no penalty and no bonus against any monster."));
         ov.AddChild(Bullet($"Quest goals and monsters that ask for another style take {style} (the archery targets of the first main quest)."));
         ov.AddChild(Bullet($"{Patches.MappedLevels} requirements on another style's level read your {skill} level: Battle Loadout, thieving distractions, "
                            + "the combat constellations, item upgrades, Hunting by hand, rings and amulets"
                            + (c == Class.Ranged ? ", and crossbows and throwing hammers that also ask for Strength." : ".")));
         if (c is Class.Melee or Class.Ranged) ov.AddChild(Bullet($"Your Defence counts in full when you dodge spells (the game uses Magic for 70% of it)."));
-        ov.AddChild(Text("Weapons and armour of other styles keep their own requirements. Nothing is written into your save.", Style.Muted, 12));
+        ov.AddChild(Text("Weapons and armour of other styles keep their own requirements. Nothing of the class is written into your save.", Style.Muted, 12));
         open.AddChild(ov);
         _body.AddChild(open);
 
+        // ---- equal footing (0.2)
+        var fair = Section();
+        var fv = new VBoxContainer();
+        fv.AddThemeConstantOverride("separation", 3);
+        fv.AddChild(Text("Equal footing", Style.Text, 15));
+        fv.AddChild(Bullet($"Weak spot: against every monster, your {style} stances meet its lowest evasion of all styles."));
+        if (c is Class.Melee or Class.Ranged) fv.AddChild(Bullet("Elemental edge: +15% max hit against monsters with an element, as a mage with the right spell."));
+        if (c == Class.Melee) fv.AddChild(Bullet("Attack and Strength share their XP: whatever one gains, the other gains too."));
+        fv.AddChild(Bullet(c switch
+        {
+            Class.Melee => "Class identity: 3% lifesteal with melee.",
+            Class.Ranged => "Class identity: +5% critical hit chance and +25% critical damage with ranged, and +30 light.",
+            _ => "Class identity: +3 ward and 25% chance of double ward damage with magic, and +30 light.",
+        }));
+        if (c is Class.Ranged or Class.Magic)
+        {
+            fv.AddChild(Bullet($"The pets Fen and Bruno can drop from your {Classes.Name(c)} XP."));
+            fv.AddChild(Bullet($"Your {Classes.Name(c)} guild ranks 3-5 and your constellation give what melee gets from the Attack and Strength guilds and its constellations."));
+            fv.AddChild(Text(Patches.EquivalentsActive.Count > 0 ? "Earned: " + string.Join(";  ", Patches.EquivalentsActive) : "Earned: none yet.", Style.Good, 12));
+        }
+        fair.AddChild(fv);
+        _body.AddChild(fair);
+        _body.AddChild(RingSection());
+
         if (Patches.Problems.Count > 0)
             _body.AddChild(Text("Not working with this game version: " + string.Join("; ", Patches.Problems), Style.Bad, 12));
+    }
+
+    string _ringNote = "";
+
+    /// <summary>The six ring slots (every class, and Off too) and the button to empty slots 2 to 6 before removing the mod.</summary>
+    PanelContainer RingSection()
+    {
+        var box = Section();
+        var v = new VBoxContainer();
+        v.AddThemeConstantOverride("separation", 4);
+        v.AddChild(Text($"{Rings.Total} ring slots", Style.Text, 15));
+        v.AddChild(Text("Ring Slot 2 is open without its Crafting 150 lock, and four more ring slots are on the equipment grid. "
+                        + "Each ring counts once: wear different rings. Works with every class, and with Off.", Style.Muted, 12));
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 10);
+        var bank = new Button { Text = "Put rings 2-6 in the bank" };
+        bank.Pressed += () =>
+        {
+            if (MelvorModLoader.GameAccess.CurrentGame is not { IsSaveLoaded: true } game) return;
+            int before = Rings.InAdded(game), moved = Rings.ToBank(game);
+            _ringNote = moved == before ? $"{moved} ring(s) put in the bank." : $"{moved} of {before} ring(s) put in the bank: make room in the bank for the rest.";
+            Repaint();
+        };
+        row.AddChild(bank);
+        if (_ringNote != "") row.AddChild(Text(_ringNote, Style.Good, 12));
+        v.AddChild(row);
+        v.AddChild(Text("Before you remove One Style, press this: without the mod the game drops what Ring Slot 2 to 6 hold.", Style.Bad, 12));
+        if (Rings.Problems.Count > 0) v.AddChild(Text("Ring slots: " + string.Join("; ", Rings.Problems), Style.Bad, 12));
+        box.AddChild(v);
+        return box;
     }
 
     static PanelContainer Section()

@@ -1,0 +1,81 @@
+==========================================================================================
+ONE STYLE  -  NEXUS MODS SAYFA BILGILERI
+==========================================================================================
+
+MOD ADI (Name):
+One Style
+
+KATEGORI ONERISI (Category):
+Gameplay
+
+KISA ACIKLAMA (Summary / Brief overview, 240 karakter):
+Play Melvor Idle 2 with one combat style only: melee, ranged or magic. Immune monsters, quest locks and level locks follow your class, every class is on an equal footing, and you get six ring slots.
+
+GEREKSINIM (Requirements):
+Melvor Mod Loader (link the loader's mod page)
+
+YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
+MAIN FILE:  dist\OneStyle-0.2.0.zip   (name: One Style, version 0.2.0)   -  henuz paketlenmedi
+
+YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
+Dev\shots\denge-pencere.png (main image), yuzuk-1-alti-slot.png
+
+DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.2.0
+- Equal footing for the three classes: weak spot (your style meets every monster's lowest evasion), combat triangle off, +15% max hit against elemental monsters for melee and ranged, melee shares Attack and Strength XP, guild and astrology equivalents for ranged and magic, class identity bonuses, the pets Fen and Bruno for ranged and magic
+- Six ring slots for every character, with a button that puts rings 2-6 back in the bank before you remove the mod
+- The window scrolls on small screens
+
+0.1.0
+- First version
+
+UZUN ACIKLAMA (Description) - asagidaki cizgiden sonrasini oldugu gibi kopyala
+------------------------------------------------------------------------------------------
+[center][size=6][b]ONE STYLE[/b][/size]
+[size=4][i]Melee, ranged or magic. Pick one and play the whole game with it.[/i][/size]
+No more training two styles you do not care about to get past one monster, one quest or one shop lock.[/center]
+
+[center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
+
+[size=5][b]Start here[/b][/size]
+This is One Style [b]0.2.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character, press the [b]Mods[/b] button in the top bar and pick [b]One Style[/b]. Click Melee, Ranged or Magic. [b]Off[/b] gives you the normal game back. The class is kept per character and can be changed at any time, for free.
+
+[size=5][b]What your class opens[/b][/size]
+[list]
+[*][b]Immune monsters:[/b] monsters immune to your style can be hit with it: Wind Drifter, the Amalgamations of the Sunken Tower and the Blood Sanctum dungeon.
+[*][b]Quests:[/b] quest goals and monsters that ask for another style take yours. The archery targets of the first main quest can be shot with melee or magic.
+[*][b]Level locks:[/b] requirements on another style's level read your class level: Battle Loadout, thieving distractions, the four combat constellations, item upgrades, Hunting by hand, rings and amulets. For Ranged also the crossbows and throwing hammers that ask for Strength.
+[*][b]Dodging spells:[/b] for Melee and Ranged your Defence counts in full (the game normally uses Magic for 70% of it).
+[*][b]Class tiers[/b] at class level 20, 40, 60, 80 and 99, each with a title and bonuses (per tier):
+Melee +3% max hit, +4% minimum hit, -5% monster respawn time.
+Ranged +8% chance to keep ammo, +4% accuracy, -2% attack time.
+Magic +8% chance to keep runes, +4% accuracy, +3% max hit.
+[/list]
+
+[size=5][b]Equal footing[/b][/size]
+Whoever you fight, no class is worse off than the others.
+[list]
+[*][b]Weak spot:[/b] every monster has a weakest style. Wind Elemental dodges magic 7 times better than ranged, Talm dodges ranged 10 times better than melee. With a class, your stances meet the monster's lowest evasion of all styles. Area and darkness effects still count.
+[*][b]Combat triangle off:[/b] no style is good or bad against another, for any class.
+[*][b]Elemental edge:[/b] Melee and Ranged get +15% max hit against the 135 monsters with an element, as a mage does with the right spell.
+[*][b]Melee shares its XP:[/b] whatever Attack gains, Strength gains too, and the other way round. Every class has one skill to train. XP from quests, lamps and other mods is shared as well.
+[*][b]Guild and Astrology equivalents:[/b] melee gets combat rewards from two guilds and two constellations. Ranged and Magic get the same from their own:
+guild rank 3: +6% ranged strength / +6% magic damage
+guild rank 4: -10% monster evasion and -10% monster armour
+guild rank 5: +5% minimum hit and +15% power
+Ranged, Syllia major 3: +4 Ranged levels
+Syllia major 4 (Ranged) or Arachi major 4 (Magic): +15% accuracy
+[*][b]Class identity:[/b] Melee 3% lifesteal. Ranged +5% critical chance and +25% critical damage. Magic +3 ward and 25% chance of double ward damage. Ranged and Magic carry +30 light (two-handed weapons leave no hand for a lantern).
+[*][b]Pets:[/b] Fen and Bruno drop from Attack and Strength XP. For Ranged and Magic they drop from your class's XP.
+[/list]
+
+[size=5][b]Six ring slots[/b][/size]
+Every character gets six ring slots instead of one, whatever the class. Ring Slot 2 is open (the game has it behind Crafting 150), and four more sit on the equipment grid. Wear six different rings. They stay on in every loadout and after you close the game.
+
+[size=5][b]Good to know[/b][/size]
+[list]
+[*]Weapons and armour of other styles keep their own requirements: a class stays a class.
+[*]The class is not written into your save. It lives in onestyle.json next to the mod.
+[*]Mastery Guild tasks that ask for another style are not changed yet.
+[*][b]Before you remove the mod:[/b] open its window and press "Put rings 2-6 in the bank" (in every loadout). Without the mod the game drops what those slots hold.
+[/list]

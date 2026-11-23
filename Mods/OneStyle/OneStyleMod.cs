@@ -22,12 +22,19 @@ public class OneStyleMod : IMod
         Store.Dir = ctx.Directory;
         Store.Log = ctx.Log;
         Patches.Log = ctx.Log;
+        Rings.Log = ctx.Log;
         // A character is opened: the game adds its screen, then works out the time it was closed on its own thread.
-        // Bind right here, so the class already counts for that time.
+        // Bind right here, so the class already counts for that time (and the extra rings are back on before the
+        // game saves for the first time).
         ctx.Tree.NodeAdded += node =>
         {
             if (node is not GamesByMalcs.Melvor2.GameMenus.GameView) return;
-            try { if (GameAccess.CurrentGame is { IsSaveLoaded: true } game) Patches.Bind(game); }
+            try
+            {
+                if (GameAccess.CurrentGame is not { IsSaveLoaded: true } game) return;
+                Rings.Add(game);
+                Patches.Bind(game);
+            }
             catch (System.Exception e) { ctx.Log("One Style: could not get ready early: " + e.Message); }
         };
         Key = new WindowKey(ctx, "One Style", ToggleWindow, Godot.Key.None);
@@ -42,9 +49,15 @@ public class OneStyleMod : IMod
         if (++_frame % 20 == 0)
         {
             Game? game = GameAccess.CurrentGame;
-            if (game is { IsSaveLoaded: true }) Patches.Bind(game);
+            if (game is { IsSaveLoaded: true })
+            {
+                Rings.Add(game);
+                Patches.Bind(game);
+                Patches.Poll();
+            }
             else
             {
+                Rings.Forget();
                 Patches.Unbind();
                 if (_window is { Visible: true }) _window.Hide();
             }
