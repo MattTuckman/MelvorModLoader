@@ -32,6 +32,17 @@ public class CheatMenuMod : IMod
         Crops.Log = ctx.Log;
         Key = new WindowKey(ctx, "Cheat Menu", ToggleMenu, Godot.Key.F8);
         ctx.Frame += Tick;
+        // A character is opened: the game adds its screen, then works out the time it was closed, on its own
+        // thread. Bind right here, so the settings (infinite ammo, say) count for that time as well.
+        ctx.Tree.NodeAdded += node =>
+        {
+            if (node is not GamesByMalcs.Melvor2.GameMenus.GameView) return;
+            try
+            {
+                if (GameAccess.CurrentGame is { IsSaveLoaded: true } game) Engine.Bind(game);
+            }
+            catch (System.Exception e) { ctx.Log("Could not apply the settings early: " + e.Message); }
+        };
         GameSpeed.Tree = ctx.Tree;
         ctx.Tree.PhysicsFrame += GameSpeed.OnPhysicsFrame;
         ctx.Log($"Ready. Press {Key.Spoken} while a character is open.");

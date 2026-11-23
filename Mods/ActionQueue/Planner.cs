@@ -34,6 +34,11 @@ public sealed class Maker
     public double Seconds;
     /// <summary>False when the yield is a matter of chance (fishing, cooking that can fail...).</summary>
     public bool Certain = true;
+    /// <summary>
+    /// The chance that one action gives anything at all (a hunt's try that catches the animal and the item drops);
+    /// 1 when unknown. <see cref="PerAction"/> already counts it in; the planner also uses it to plan enough tries.
+    /// </summary>
+    public double Chance = 1;
     /// <summary>True when the product is what this action is mainly for (not a side product).</summary>
     public bool Main = true;
     /// <summary>
@@ -156,13 +161,21 @@ public static class Planner
             case HerbloreActionComponent c: Crafting(entity, c, list, _ => 1, _ => 1, timeKnown: false); break;
 
             case HuntingActionComponent c:
-                // How long a catch takes depends on the trap and the hunt itself, so no time is promised.
+                // How long a catch takes depends on the trap and the hunt itself, so no time is promised. Every try to
+                // trap the animal uses up a trap (unless the animal is hunted without one), and only some tries catch
+                // it: one action here is one try, so the traps are planned like any other material.
                 foreach (ActiveHuntingAnimal animal in c.Locations.Values.SelectMany(l => l.Animals))
                 {
+                    Item? trap = animal.TraplessEnabled ? null : Targets.TrapFor(c, animal);
+                    double catches = 1;
+                    try { catches = Math.Clamp(animal.Stats.TrappingSuccessChance.Value, 0.01, 1); } catch (Exception) { }
                     bool first = true;
                     foreach (ItemQuantityChance p in animal.Animal.Products)
                     {
-                        list.Add(New(animal.Animal.Id, animal.Animal.DisplayName.Text, p.Item, p.Quantity * Math.Clamp(p.Chance, 0, 1), 0, certain: false, main: first));
+                        Maker maker = New(animal.Animal.Id, animal.Animal.DisplayName.Text, p.Item, p.Quantity * Math.Clamp(p.Chance, 0, 1) * catches, 0, certain: false, main: first);
+                        maker.Chance = Math.Clamp(catches * Math.Clamp(p.Chance, 0, 1), 0.01, 1);
+                        if (trap != null) maker.Costs = new List<(Item Item, int Quantity)> { (trap, 1) };
+                        list.Add(maker);
                         first = false;
                     }
                 }
@@ -260,8 +273,28 @@ public static class Planner
         return stock;
     }
 
-    static long Actions(long missing, Maker maker) =>
-        (long)Math.Ceiling(missing / maker.PerAction * (maker.Certain ? 1 : LuckMargin));
+    /// <summary>
+    /// How many actions to plan for. When the yield is a matter of chance, a little more than the average, and for
+    /// small numbers clearly more: one Rabbit Fur from traps that catch 40% of the time needs 2.5 tries on average,
+    /// but 2 or 3 traps leave the plan short far too often (9 are planned: short about 1 time in 100). The step
+    /// itself still ends at its goal, so what is left over is only spare material (a few traps more).
+    /// </summary>
+    static long Actions(long missing, Maker maker)
+    {
+        if (maker.Chance < 1)
+        {
+            // Tries that each succeed with a chance: so many successes are needed, each giving a few of the item.
+            // (a hunt's catch gives its quantity times the animal's size, 0.5 to 1.3 at first: count a little under it)
+            double p = maker.Chance;
+            double perSuccess = Math.Max(1, Math.Floor(maker.PerAction / p * 0.8));
+            double successes = Math.Ceiling(missing / perSuccess - 1e-9);
+            double tries = successes / p + 3 * Math.Sqrt(successes * (1 - p)) / p;   // short only about 1 time in 100
+            return (long)Math.Ceiling(Math.Max(tries, successes / p * LuckMargin) - 1e-9);
+        }
+        double average = missing / maker.PerAction;
+        if (!maker.Certain) average = average * LuckMargin + 2 * Math.Sqrt(average);
+        return (long)Math.Ceiling(average - 1e-9);
+    }
 
     // ---------------------------------------------------------------- the plan
 
@@ -287,7 +320,7 @@ public static class Planner
     {
         if (!problems.TryGetValue(maker, out string? problem))
         {
-            Targets.CanStart(maker.Action, maker.Target, out problem);
+            Targets.Unlocked(maker.Action, maker.Target, out problem);
             problems[maker] = problem;
         }
         return problem;

@@ -7,6 +7,7 @@ using GamesByMalcs.Melvor2.Data.Currencies;
 using GamesByMalcs.Melvor2.Data.Items;
 using GamesByMalcs.Melvor2.Entities;
 using GamesByMalcs.Melvor2.Entities.Bank;
+using GamesByMalcs.Melvor2.Entities.Quests;
 
 namespace CheatMenu;
 
@@ -59,5 +60,53 @@ public static class Actions
 
     public static void RunOfflineHours(Game game, double hours) => game.RequestOfflineHours(hours);
 
-    public static void CompleteAllQuests(Game game) => game.Quests?.Quests.CompleteAllQuests();
+    /// <summary>What <see cref="CompleteAllQuests"/> did.</summary>
+    public readonly record struct QuestResult(int Done, int Waiting, int Failed);
+
+    /// <summary>
+    /// Every quest of the character completed and its rewards claimed, the way a player does it. The game's own
+    /// "complete all" (its debug menu's) marks quests as claimed without ever giving the rewards, so it is not used.
+    /// Per quest: started if not yet (the quest page's Start button), each step finished in turn (the game then
+    /// starts the next and finally calls the quest completed), then the rewards claimed with the game's own claim
+    /// (items and currency into the bank). Steps' item costs are not taken. A quest whose rewards do not fit in the
+    /// bank stays completed with its rewards waiting: the quest page's Claim button gives them later.
+    /// </summary>
+    public static QuestResult CompleteAllQuests(Game game)
+    {
+        QuestsComponent? quests = game.Quests?.Quests;
+        if (quests == null) return default;
+        int done = 0, waiting = 0, failed = 0;
+        foreach (Quest data in quests.Config.Quests)
+        {
+            if (!quests.ActiveQuests.TryGetValue(data, out ActiveQuest? quest) || quest.State == QuestState.Claimed) continue;
+            try
+            {
+                if (quest.State == QuestState.Unstarted) quest.Start();
+                foreach (ActiveQuestStep step in quest.ActiveSteps)
+                    if (quest.State == QuestState.InProgress && step.State != QuestStepState.Complete) step.SetCompleted();
+            }
+            catch (Exception e) { Engine.Log($"Quest {data.Id} could not be finished step by step: {e.Message}"); }
+            if (quest.State != QuestState.Completed)
+            {
+                // Something in the quest did not go the usual way: the game's own debug completion, rewards by hand.
+                try
+                {
+                    if (quest.State != QuestState.Claimed) quest.SetCompleted();
+                    GiveRewards(quests, quest);
+                    done++;
+                }
+                catch (Exception e) { failed++; Engine.Log($"Quest {data.Id} could not be completed: {e.Message}"); }
+                continue;
+            }
+            if (quests.ClaimRewards(quest)) done++;
+            else waiting++;
+        }
+        return new QuestResult(done, waiting, failed);
+    }
+
+    static void GiveRewards(QuestsComponent quests, ActiveQuest quest)
+    {
+        foreach (ItemQuantity item in quest.Rewards.Items) quests.Inventory.AddQuantity(item.Item, item.Quantity);
+        foreach (CurrencyQuantity currency in quest.Rewards.Currency) quests.Wallet.AddQuantity(currency.Currency, currency.Quantity);
+    }
 }

@@ -331,6 +331,7 @@ public static class Targets
         CookingActionComponent c => Batches(game, c, target.Id),
         FiremakingActionComponent c => Batches(game, c, target.Id),
         HerbloreActionComponent c => Batches(game, c, target.Id),
+        HuntingActionComponent c => TrapBatches(c, target.Id),
         _ => long.MaxValue,
     };
 
@@ -399,6 +400,7 @@ public static class Targets
         CookingActionComponent c => Ingredients(c, target.Id),
         FiremakingActionComponent c => Ingredients(c, target.Id),
         HerbloreActionComponent c => Ingredients(c, target.Id),
+        HuntingActionComponent c => TrapIds(c, target.Id),
         _ => new HashSet<string>(),
     };
 
@@ -416,8 +418,14 @@ public static class Targets
     /// <summary>Whether the game would let this target be started now (materials aside). Nothing is started.</summary>
     public static bool CanStart(ActionComponent action, Target target, out string problem) => Allowed(action, target, out problem);
 
+    /// <summary>
+    /// Like <see cref="CanStart"/>, but what a step can be given (a hunt's trap) does not count: only what the character
+    /// has not unlocked yet. Used by the planner, which plans those things too.
+    /// </summary>
+    public static bool Unlocked(ActionComponent action, Target target, out string problem) => Allowed(action, target, out problem, materials: false);
+
     /// <summary>The game's own requirement check for a target; nothing is started here.</summary>
-    static bool Allowed(ActionComponent action, Target target, out string problem)
+    static bool Allowed(ActionComponent action, Target target, out string problem, bool materials = true)
     {
         const string locked = "its requirements are not met yet";
         problem = "it no longer exists in the game";
@@ -427,8 +435,10 @@ public static class Targets
         {
             ActiveHuntingAnimal? animal = hunting.Locations.Values.SelectMany(l => l.Animals).FirstOrDefault(a => a.Animal.Id == target.Id);
             if (animal == null) return false;
+            // A trap is needed unless the animal is hunted without one; the queue picks one the bank holds itself.
             problem = !animal.Animal.Requirements.AreMet ? Missing(animal.Animal.Requirements)
-                : !hunting.CanTrackAnimal(animal) ? "choose a trap for it on the Hunting page first (and keep that trap in the bank)" : "";
+                : materials && !animal.TraplessEnabled && HeldTrap(hunting, animal) == null
+                    ? $"no trap for it in the bank (it needs {TrapNames(animal)})" : "";
             return problem == "";
         }
         if (action is CombatActionComponent && target.Extra == Slayer)
@@ -555,6 +565,11 @@ public static class Targets
                 ActiveHuntingAnimal animal = c.Locations.Values.SelectMany(l => l.Animals).First(a => a.Animal.Id == target.Id);
                 c.SelectLocation(animal.Location);
                 c.SelectAnimal(animal);
+                // No trap chosen for it, or the chosen one is used up: take one the bank holds, as the game's own
+                // "swap to the next trap" does (a plan made the traps in an earlier step).
+                if (!animal.TraplessEnabled && (animal.SelectedTrap == null || c.Inventory.GetQuantity(animal.SelectedTrap) <= 0)
+                    && HeldTrap(c, animal) is { } held)
+                    animal.SelectTrap(held);
                 c.StartTracking();
                 break;
             }
@@ -577,6 +592,47 @@ public static class Targets
                 break;
             }
         }
+    }
+
+    // ---------------------------------------------------------------- hunting traps
+
+    /// <summary>
+    /// The trap a hunt for this animal uses: the one chosen for it on the Hunting page, else the best one the bank
+    /// holds, else the first one it can use (what a plan would make). Null for an animal hunted without a trap.
+    /// </summary>
+    public static Item? TrapFor(HuntingActionComponent hunting, ActiveHuntingAnimal animal)
+    {
+        if (animal.TraplessEnabled) return null;
+        return animal.SelectedTrap ?? HeldTrap(hunting, animal) ?? animal.CompatibleTraps.FirstOrDefault();
+    }
+
+    /// <summary>A trap for this animal that the bank holds: the chosen one if there are any left, else the best one (the game's own order).</summary>
+    static Item? HeldTrap(HuntingActionComponent hunting, ActiveHuntingAnimal animal)
+    {
+        if (animal.SelectedTrap is { } chosen && hunting.Inventory.GetQuantity(chosen) > 0) return chosen;
+        for (int i = animal.CompatibleTraps.Count - 1; i >= 0; i--)
+            if (hunting.Inventory.GetQuantity(animal.CompatibleTraps[i]) > 0) return animal.CompatibleTraps[i];
+        return null;
+    }
+
+    static string TrapNames(ActiveHuntingAnimal animal) =>
+        animal.CompatibleTraps.Count == 0 ? "a trap" : string.Join(" or ", animal.CompatibleTraps.Select(t => t.DisplayName.GetPluralText(1)));
+
+    static ActiveHuntingAnimal? Animal(HuntingActionComponent hunting, string id) =>
+        hunting.Locations.Values.SelectMany(l => l.Animals).FirstOrDefault(a => a.Animal.Id == id);
+
+    /// <summary>How many tries the traps in the bank give a hunt (every try can use one up); very large without a trap.</summary>
+    static long TrapBatches(HuntingActionComponent hunting, string id)
+    {
+        ActiveHuntingAnimal? animal = Animal(hunting, id);
+        if (animal == null || animal.TraplessEnabled) return long.MaxValue;
+        return animal.CompatibleTraps.Sum(t => (long)hunting.Inventory.GetQuantity(t));
+    }
+
+    static HashSet<string> TrapIds(HuntingActionComponent hunting, string id)
+    {
+        ActiveHuntingAnimal? animal = Animal(hunting, id);
+        return animal == null || animal.TraplessEnabled ? new HashSet<string>() : animal.CompatibleTraps.Select(t => t.Id).ToHashSet();
     }
 
     static void StartRecipe<TRecipe, TActive>(CraftingActionComponent<TRecipe, TActive> c, string id)

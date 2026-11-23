@@ -1,4 +1,4 @@
-Action Queue 0.9.0  -  a mod for Melvor Idle 2
+Action Queue 0.9.1  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -180,7 +180,8 @@ GOOD TO KNOW
   time you were away and the queue moves on through its steps in that time, as if you had
   watched. After the game is closed and opened again, a running queue carries on where it
   was at the game's last save. Fights are neither started nor ended in that time: such a
-  step waits until the game is open.
+  step waits until the game is open. The other steps go on, also while a fight runs beside
+  them with the Multitask mod (until 0.9.0 the whole queue stood still while any fight ran).
 - It never bypasses the game's requirements. A step you are not allowed to do yet, or have
   no materials for, is marked "skipped" and the next one starts.
 - If you start something else by hand, the queue pauses instead of fighting you.
@@ -194,11 +195,21 @@ GOOD TO KNOW
   kind equipped, or you cast spells and the bank lacks the runes (or no spell is picked).
   The game itself would keep the fight going while the monster hits you. The step reads
   "done: out of ammo" (or "out of runes") and the queue goes on with the next step.
+  A fight you cannot attack in is not started at all ("skipped: out of ammo"), so with
+  "start over at the end" on it is not started again and again; and a fight as the idle
+  action is stopped (or not started) the same way.
+- With the Multitask mod and a free slot, what you keep running yourself (a fight next to
+  the queue's smithing) goes on while the queue moves from one step to the next; it is no
+  longer stopped and started again from the beginning.
 - Sacrificial Anvil: when the recipe you pick has the game's anvil switch (and you have it
   unlocked), a "Sacrificial Anvil" box shows next to it. Ticked, that step switches the
   anvil on when it starts; unticked, it switches it off. So one step can smith with the
   anvil and the next without. Steps show "(Sacrificial Anvil)" in their name.
-- Hunting needs a trap and Agility needs a path chosen on the skill's own page first.
+- Hunting: the step uses the trap chosen on the Hunting page; when none is chosen, or it is
+  used up, it takes a trap the bank holds by itself. A plan counts the traps a hunt uses
+  up and adds a step that makes them first (Fur Camo Hat: make the traps, hunt the fur,
+  craft the hat).
+- Agility needs a path chosen on the skill's own page first.
 - The queue is remembered per character in "queue.json" next to the mod.
 - With side by side switched off, the Multitask mod keeps what you were doing before
   running beside the queue instead.

@@ -1,4 +1,4 @@
-Cheat Menu 0.7.0  -  a mod for Melvor Idle 2
+Cheat Menu 0.8.0  -  a mod for Melvor Idle 2
 ============================================
 
 One window with more than 60 settings and tools: bank slots, XP, game speed, skill bonuses,
@@ -67,6 +67,13 @@ GOOD TO KNOW
   New and rerolled tasks get it at once; a task already running is shortened (one already past it
   ends with its next kill). "Extend task" still adds the master's usual kills. 0 = the game's own
   lengths, which grow by 3 kills per Slayer level.
+- "Infinite ammo" (Combat page): arrows, bolts, javelins, boomerangs and throwing hammers are
+  never used up. One is enough to shoot for ever.
+- "Ranching: animals never die" (Skills page): your ranch animals stop aging. Their lifetime
+  stands still while it is on (also while the game is closed); switched off, they age on from there.
+- "Complete all quests" (Tools page) finishes every quest and gives its rewards, as if you had
+  pressed Claim on each. Rewards that do not fit in the bank wait on the Quests page. This is
+  written into your save and cannot be undone.
 - This mod changes the balance of the game. Use it the way you enjoy playing.
 
 

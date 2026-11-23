@@ -142,6 +142,8 @@ public static class Engine
         AutoSell.Bind(Character);
         LootFilter.Bind(game, Character);
         Unneeded.Bind(game, Character);
+        InfiniteAmmo.Bind(game);
+        RanchingForever.Bind(game);
         foreach (Feature f in Features.All) Apply(f);
         Rebalance();
         Log($"'{Character}': {ActiveCount()} setting(s) applied.");

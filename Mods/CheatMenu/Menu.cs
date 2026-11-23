@@ -962,8 +962,12 @@ public sealed class Menu
         page.AddChild(ToolRow("Quests", MakeButton("Complete all quests", () =>
         {
             if (_game == null) return;
-            Actions.CompleteAllQuests(_game);
-            Say(T("All quests completed."));
+            Actions.QuestResult r = Actions.CompleteAllQuests(_game);
+            string said = F("{0} quest(s) completed, rewards given.", r.Done);
+            if (r.Waiting > 0) said += " " + F("{0} reward(s) did not fit in the bank: claim them on the Quests page.", r.Waiting);
+            if (r.Failed > 0) said += " " + F("{0} quest(s) could not be completed (see the log).", r.Failed);
+            if (r.Done + r.Waiting + r.Failed == 0) said = T("All quests are already completed.");
+            Say(said);
         })));
     }
 

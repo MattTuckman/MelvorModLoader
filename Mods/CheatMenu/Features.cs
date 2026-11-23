@@ -132,6 +132,8 @@ public static class Features
                 Stats = { new("Agility", "KeepObstacleRewardOnFail", "Agility", "Action", 1) } },
         new() { Id = "skills.astroKnowledge", Tab = TabSkills, En = "Astrology: knowledge per study", Suffix = "x",
                 Min = 1, Max = 1000, Off = 1, ToMultiplier = Times, Stats = { new("AstrologyAction", "PercentKnowledge", "Astrology", "Action", 1) } },
+        // The game's own "a minute of life went by" message is answered before its death check (see RanchingForever).
+        new() { Id = RanchingForever.Setting, Tab = TabSkills, En = "Ranching: animals never die", Kind = FeatureKind.Toggle, Custom = true },
 
         // ---------------- Combat ----------------
         new() { Id = "combat.god", Tab = TabCombat, En = "God mode", Kind = FeatureKind.Toggle,
@@ -154,6 +156,10 @@ public static class Features
                 Max = 100, Step = 5, ToMultiplier = Percent,
                 Stats = { Combat("CombatFood", "FoodPreservationChance", "Food", 1), Combat("AmmoConsumption", "AmmoPreservationChance", "Player", 1),
                           Combat("MagicSpell", "RunePreservationChance", "MagicSpells", 1), Combat("Prayer", "CostPreservationChance", "Prayer", 1) } },
+        // +10000%: the game keeps the ammo without rolling at 100% or more, and no other bonus can pull this back
+        // under 100%. The game's "ammo used" event is watched as well (see InfiniteAmmo).
+        new() { Id = InfiniteAmmo.Setting, Tab = TabCombat, En = "Infinite ammo", Kind = FeatureKind.Toggle,
+                Stats = { Combat("AmmoConsumption", "AmmoPreservationChance", "Player", 100) } },
         new() { Id = "combat.slayerReward", Tab = TabCombat, En = "Slayer coin reward", Suffix = "x",
                 Min = 1, Max = 100, Off = 1, ToMultiplier = Times, Stats = { new("SlayerTasks", "PercentRewardCurrency", "Slayer", "Tasks", 1) } },
         new() { Id = "combat.slayerFreeReroll", Tab = TabCombat, En = "Cheap slayer task rerolls", Kind = FeatureKind.Toggle,
@@ -259,6 +265,8 @@ public static class Features
         ["combat.noDeathPenalty"] = "Dying no longer costs you an item.",
         ["combat.lootDouble"] = "Chance that a kill drops double items, coins and bones.",
         ["combat.keepSupplies"] = "Chance not to use up food, ammo, runes or prayer points.",
+        [InfiniteAmmo.Setting] = "Arrows, bolts, javelins, boomerangs and throwing hammers are never used up: one is enough.",
+        [RanchingForever.Setting] = "Ranch animals stop aging: their lifetime stands still, so they never die of old age.",
         ["combat.slayerReward"] = "Multiplies the slayer coins earned per task kill.",
         ["combat.slayerFreeReroll"] = "Changing your slayer task costs 1 coin (the game's minimum).",
         [SlayerLength.Setting] = "No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills.",

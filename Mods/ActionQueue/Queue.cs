@@ -14,6 +14,7 @@ using GamesByMalcs.Melvor2.Entities.Bank;
 using GamesByMalcs.Melvor2.Entities.Combat;
 using GamesByMalcs.Melvor2.Components.ArtisanAction;
 using GamesByMalcs.Melvor2.Entities.Agility;
+using GamesByMalcs.Melvor2.Entities.Hunting;
 using GamesByMalcs.Melvor2.EventBus;
 using GamesByMalcs.Melvor2.Saves;
 using GamesByMalcs.Melvor2.Components.ItemSales;
@@ -173,7 +174,7 @@ public static class Queue
     /// <summary>Run steps side by side when the Multitask mod has room for it (the player can switch this off).</summary>
     public static bool SideBySide { get; private set; } = true;
     /// <summary>How many steps may run at once right now.</summary>
-    public static int Lanes => SideBySide || LaneMode ? Targets.MultitaskCapacity() : 1;
+    public static int Lanes => SideBySide || LaneMode ? Capacity() : 1;
 
     /// <summary>How many lanes a queue can have.</summary>
     public const int MaxLanes = Targets.MostActions;   // as many lanes as Multitask can run actions at once (was 5)
@@ -222,14 +223,37 @@ public static class Queue
     /// The queue's turn while the game computes offline progress: called on the game's own thread, once a game
     /// second, between two of its ticks (so nothing else touches the game at that moment).
     /// </summary>
+    static bool s_toldFightOffline;
+
+    /// <summary>How many actions ran at once at the last look (online), or the most seen (offline).</summary>
+    static int s_running;
+
+    /// <summary>
+    /// How many actions may run at once. Multitask tells it on the scene root, but only from its first frame on: while
+    /// the game computes the time a character was closed (right after opening it), that note is still the one from
+    /// before. The game itself has then loaded what ran (a fight and the queue's mining: two), which is proof enough.
+    /// </summary>
+    static int Capacity() => Math.Max(Targets.MultitaskCapacity(), Targets.OnMainThread ? 1 : s_running);
+
+    /// <summary>True for a fight while the game computes offline progress: the queue must neither start nor end it then.</summary>
+    static bool HandsOff(ActionComponent action) => action.Entity.Id == CombatId && !Targets.OnMainThread;
+
+    /// <summary>Offline, with a fight running: a step may only start next to it (with a free Multitask slot), never in its place.</summary>
+    static bool FightKeptOffline(Game game) => !Targets.OnMainThread && game.ActionManager.ActiveActions.Any(a => a.Entity.Id == CombatId);
+
     public static void OfflineTick(Game game, double seconds)
     {
         if (!ReferenceEquals(game, s_game)) return;
         OfflineSeconds += seconds;
         if (!Running) return;
-        // A fight going on: the queue does not touch it offline (ending it would wake the game's music player on
-        // this thread). The queue takes over again when the game is back.
-        if (game.ActionManager.ActiveActions.Any(a => a.Entity.Id == CombatId)) return;
+        // A fight going on (a fight step, or the player's own fight Multitask keeps beside the queue): the queue does
+        // not touch the fight offline - starting or ending one would wake the game's music player on this thread -
+        // but its other steps go on (until 0.9.0 the whole queue stood still while any fight ran).
+        if (game.ActionManager.ActiveActions.Any(a => a.Entity.Id == CombatId))
+        {
+            if (!s_toldFightOffline) Trace("offline: a fight is running; it is left alone, the other steps go on beside it");
+            s_toldFightOffline = true;
+        }
         string before = string.Join(",", Steps.Select(s => s.Run));
         Tick(game, seconds);
         string after = string.Join(",", Steps.Select(s => s.Run));
@@ -304,6 +328,7 @@ public static class Queue
             };
         Running = false;
         s_resume = false;
+        s_running = 0;
         Index = 0;
         Note = "";
         // A death must never turn into "walk straight back in": remember it, the runner pauses on it.
@@ -888,7 +913,8 @@ public static class Queue
     public static void Tick(Game game, double seconds)
     {
         if (!ReferenceEquals(game, s_game)) return;
-        if (Targets.OnMainThread) Targets.PrimeMeta();
+        if (Targets.OnMainThread) { Targets.PrimeMeta(); s_toldFightOffline = false; s_running = game.ActionManager.ActiveActions.Count; }
+        else s_running = Math.Max(s_running, game.ActionManager.ActiveActions.Count);
         if (s_changedLater && Targets.OnMainThread) RaiseChanged();
         s_clock += seconds;
         if (!Running)
@@ -1054,7 +1080,11 @@ public static class Queue
 
     static Target IdleTarget(Step idle) => new(idle.TargetId, idle.Name, idle.Extra);
 
-    static void StopAction(ActionComponent action) { if (!action.TryStop()) action.TryStop(force: true); }
+    static void StopAction(ActionComponent action)
+    {
+        if (HandsOff(action)) return;   // a fight is never ended offline (see OfflineTick)
+        if (!action.TryStop()) action.TryStop(force: true);
+    }
 
     /// <summary>Stops the idle action if the queue started it and it still runs.</summary>
     static void StopIdle()
@@ -1077,7 +1107,7 @@ public static class Queue
         string idle = s_idleOwned && Idle != null ? Idle.Entity : "";
         IEnumerable<string> player = Targets.PlayerKept() ?? game.ActionManager.ActiveActions.Select(a => a.Entity.Id).ToHashSet();
         int used = queue.Count + (idle != "" ? 1 : 0) + player.Count(e => !queue.Contains(e) && e != idle);
-        return Targets.MultitaskCapacity() - used;
+        return Capacity() - used;
     }
 
     /// <summary>Why the idle action may not run right now while the queue runs, or "" when it may.</summary>
@@ -1107,6 +1137,7 @@ public static class Queue
         if (action == null) { IdleState = "this skill is not in the game"; return; }
         Target target = IdleTarget(Idle);
         bool doing = Targets.IsDoing(action, target);
+        StopIdleFightWithoutAmmo(game, action, ref doing);
         if (s_idleOwned && !doing)
         {
             s_idleOwned = false;
@@ -1136,7 +1167,7 @@ public static class Queue
         string why = IdleBlocker(game, action, target, doing);
         if (why != "ok")
         {
-            if (s_idleOwned && doing)
+            if (s_idleOwned && doing && !HandsOff(action))
             {
                 StopAction(action);
                 s_idleOwned = false;
@@ -1149,11 +1180,41 @@ public static class Queue
         TryStartIdle(game, action, target);
     }
 
+    static double s_idleNoAttackSince = -1;
+
+    /// <summary>
+    /// The idle action is a fight the queue started and the player can no longer attack in it (out of ammo, out of
+    /// runes): after two seconds of it (not a moment's gear change) it is stopped, instead of standing there while the
+    /// monster hits. It is not started again until the player can fight (see <see cref="TryStartIdle"/>).
+    /// </summary>
+    static void StopIdleFightWithoutAmmo(Game game, ActionComponent action, ref bool doing)
+    {
+        if (!doing || !s_idleOwned || action is not CombatActionComponent || HandsOff(action) || CannotAttack(game) is not { Length: > 0 } why)
+        {
+            s_idleNoAttackSince = -1;
+            return;
+        }
+        if (s_idleNoAttackSince < 0) s_idleNoAttackSince = s_clock;
+        if (s_clock - s_idleNoAttackSince < 2) return;
+        s_idleNoAttackSince = -1;
+        StopAction(action);
+        s_idleOwned = false;
+        doing = false;
+        IdleState = $"stopped: {why}";
+        Trace($"while idle: stopped {Idle?.Name} ({why})");
+    }
+
     static void TryStartIdle(Game game, ActionComponent action, Target target)
     {
         if (s_clock < s_idleRetryAt) return;
         s_idleRetryAt = s_clock + RetrySeconds;
         if (!Targets.CanStart(action, target, out string problem)) { IdleState = "cannot start: " + problem; return; }
+        if (HandsOff(action)) { IdleState = "waits for the game to be open (a fight)"; return; }
+        if (action is CombatActionComponent && CannotAttack(game) is { Length: > 0 } cannot)
+        {
+            IdleState = $"not started: {cannot} (it starts once you can fight again)";
+            return;
+        }
         long batches = Targets.Batches(game, action, target);
         if (batches == 0)
         {
@@ -1203,6 +1264,7 @@ public static class Queue
         if (action == null) { IdleState = "this skill is not in the game"; return; }
         Target target = IdleTarget(Idle);
         bool doing = Targets.IsDoing(action, target);
+        StopIdleFightWithoutAmmo(game, action, ref doing);
         string idleKey = $"{Idle.Entity}|{target.Id}";
 
         // Something the player stopped with a game button: hands off until they start something themselves.
@@ -1260,8 +1322,9 @@ public static class Queue
     {
         if (!s_idleOwned || Idle == null) return;
         if (beside && Idle.Entity != step.Entity && FreeSlots(game) > 0) return;   // there is room for both
-        s_idleOwned = false;
         ActionComponent? action = Targets.Find(game, Idle.Entity);
+        if (action != null && HandsOff(action)) return;   // an idle fight is not ended offline
+        s_idleOwned = false;
         if (action != null && Targets.IsDoing(action, IdleTarget(Idle))) StopAction(action);
         IdleState = "made room for a step";
         Trace($"while idle: stopped {Idle.Name} to make room for {Number(step)}");
@@ -1280,6 +1343,8 @@ public static class Queue
         if (action.IsStarted) { Tell($"{Idle.Name} was not started: that skill is doing something else."); return; }
         if (FreeSlots(game) <= 0) { Tell($"{Idle.Name} was not started: there is no free slot for it."); return; }
         if (!Targets.CanStart(action, target, out string problem)) { Tell($"{Idle.Name} was not started: {problem}."); return; }
+        if (HandsOff(action)) { Tell($"{Idle.Name} was not started while the game was closed (a fight waits for the game to be open)."); return; }
+        if (action is CombatActionComponent && CannotAttack(game) is { Length: > 0 } cannot) { Tell($"{Idle.Name} was not started: {cannot}."); return; }
         if (Targets.Batches(game, action, target) == 0) { Tell($"{Idle.Name} was not started: its materials have run out."); return; }
         bool others = game.ActionManager.ActiveActions.Count > 0;
         if (others ? Targets.StartBeside(game, action, target, out problem) : Targets.Start(game, action, target, out problem))
@@ -1309,6 +1374,14 @@ public static class Queue
         }
         ActionComponent? action = Targets.Find(game, step.Entity);
         if (action == null) { End(step, "skipped: this skill is not in the game"); return; }
+        // A fight the player could not take part in (no ammo for the weapon, no runes for the spell) is not started:
+        // the character would only stand there while the monster hits. With "start over" on, the fight that ended
+        // for that reason is not started again and again either: a round where nothing could start ends the queue.
+        if (action is CombatActionComponent && CannotAttack(game) is { Length: > 0 } cannot)
+        {
+            End(step, "skipped: " + cannot);
+            return;
+        }
         if (!step.Ran && step.Until is Until.Item or Until.Level or Until.ItemLeft && Reached(game, step))
         {
             // Not needed: say what was found, so "it never mined" explains itself.
@@ -1339,6 +1412,22 @@ public static class Queue
         }
 
         bool othersAtWork = Steps.Any(s => s != step && s.Run == RunState.Running);
+        // Offline next to a fight: starting in its place would end the fight on the game's thread. Without a free
+        // Multitask slot the step waits until the game is back.
+        if (FightKeptOffline(game) && !(Capacity() > 1 && FreeSlots(game) > 0))
+        {
+            Wait(step, "waits for the game to be open (a fight is running)");
+            return;
+        }
+        // With Multitask's room, what the player keeps running in another skill (a fight beside the queue's smithing)
+        // stays running: starting in place of everything would stop it, and Multitask would start it again from the
+        // beginning (a fight against a new monster). Without a free slot it is the plain game: the step takes over.
+        if (!othersAtWork && Capacity() > 1 && FreeSlots(game) > 0
+            && game.ActionManager.ActiveActions.Any(a => a.Entity.Id != step.Entity && (!(s_idleOwned && Idle?.Entity == a.Entity.Id) || HandsOff(a))))
+        {
+            othersAtWork = true;
+            if (action.IsStarted) StopAction(action);   // the step's own skill does one thing at a time
+        }
         MakeRoomFor(game, step, othersAtWork);
         // The step's own choice of the recipe's other way of making (the Sacrificial Anvil switch), as the game's switch sets it.
         if (step.Mode != null && !Targets.SetMode(action, target.Id, step.Mode))
@@ -1401,6 +1490,7 @@ public static class Queue
     {
         ActionComponent? action = Targets.Find(game, step.Entity);
         if (action == null) { End(step, "skipped: this skill is not in the game"); return; }
+        if (HandsOff(action)) return;   // a fight step is looked at again when the game is back
         var wanted = new Target(step.TargetId, step.Name, step.Extra);
         Target? now = Targets.Current(action);
         if (now == null)
@@ -1429,7 +1519,8 @@ public static class Queue
                 Wait(step, WaitingText(step));
                 return;
             }
-            End(step, $"done (it stopped by itself)");
+            End(step, action is HuntingActionComponent && Targets.Batches(game, action, wanted) == 0
+                ? "done: out of traps (it stopped by itself)" : "done (it stopped by itself)");
             return;
         }
         if (!Targets.IsDoing(action, wanted))

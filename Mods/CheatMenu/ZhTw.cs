@@ -56,6 +56,8 @@ static class ZhTw
         ["No death penalty"] = "死亡無懲罰",
         ["Double loot chance"] = "雙倍掉落機率",
         ["Keep supplies chance"] = "補給保留機率",
+        ["Infinite ammo"] = "無限彈藥",
+        ["Ranching: animals never die"] = "畜牧：動物永不死亡",
         ["Slayer coin reward"] = "屠殺者硬幣獎勵",
         ["Cheap slayer task rerolls"] = "低價重抽屠殺者任務",
         ["Slayer task: most kills"] = "屠殺者任務：最多擊殺數",
@@ -89,6 +91,8 @@ static class ZhTw
         ["Dying no longer costs you an item."] = "死亡不再損失物品。",
         ["Chance that a kill drops double items, coins and bones."] = "擊殺後雙倍掉落物品、金錢與骨頭的機率。",
         ["Chance not to use up food, ammo, runes or prayer points."] = "不消耗食物、彈藥、符文或祝祭點的機率。",   // (changed: the game says 祝祭)
+        ["Arrows, bolts, javelins, boomerangs and throwing hammers are never used up: one is enough."] = "箭矢、弩矢、標槍、迴旋鏢和投擲錘永不消耗：一個就夠。",
+        ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "牧場動物不再衰老：壽命保持不變，永遠不會老死。",
         ["Multiplies the slayer coins earned per task kill."] = "依倍率提高擊殺屠殺者任務目標所得的硬幣。",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "重抽屠殺者任務只需 1 枚硬幣（遊戲的最低費用）。",
         ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "屠殺者任務要求的擊殺數不會超過此值（0 表示保留遊戲原本的任務長度）。延長任務時仍會加上大師通常的擊殺數。",
@@ -206,7 +210,10 @@ static class ZhTw
         ["Run"] = "執行",   // (added)
         ["Quests"] = "任務",
         ["Complete all quests"] = "完成所有任務",
-        ["All quests completed."] = "所有任務已完成。",
+        ["{0} quest(s) completed, rewards given."] = "已完成 {0} 個任務，獎勵已發放。",
+        ["{0} reward(s) did not fit in the bank: claim them on the Quests page."] = "有 {0} 份獎勵放不進銀行：請在任務頁面領取。",
+        ["{0} quest(s) could not be completed (see the log)."] = "有 {0} 個任務無法完成（見日誌）。",
+        ["All quests are already completed."] = "所有任務皆已完成。",
 
         // ---- the searchable lists
         ["Type to search..."] = "輸入文字搜尋...",
