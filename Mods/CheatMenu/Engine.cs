@@ -146,6 +146,7 @@ public static class Engine
         RanchingForever.Bind(game);
         foreach (Feature f in Features.All) Apply(f);
         Rebalance();
+        SlayerLength.Check(game);   // before offline progress, so tasks rolled while the game was closed are short too
         Log($"'{Character}': {ActiveCount()} setting(s) applied.");
     }
 

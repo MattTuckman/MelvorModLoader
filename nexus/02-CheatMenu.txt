@@ -15,12 +15,17 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\CheatMenu-0.8.0.zip   (name: Cheat Menu, version 0.8.0)  -  0.7.0 dosyasini Archived yap
+MAIN FILE:  dist\CheatMenu-0.8.1.zip   (name: Cheat Menu, version 0.8.1)  -  0.8.0 dosyasini Archived yap
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\menu-5-combat.png (main image), menu-1-bank.png, menu-3-speed.png, menu-4-skills.png, menu-6-per-skill.png, menu-7-loot-filter.png, menu-8-materials.png, menu-9-tools.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.8.1
+- Fixed: "Slayer task: most kills" did not hold for extended tasks: they kept the master's own kills on top (with 25, up to 150 kills at the last masters). Now no task asks for more than the cap, at every master, extended or not
+- Fixed: a new task could slip past the cap for a moment when its length happened to look like an extension
+- Tasks rolled while the game was closed are capped too
+
 0.8.0
 - New (asked for on Nexus, thank you!): "Ranching: animals never die" on the Skills page. While it is on, your ranch animals stop aging, also while the game is closed; switched off, they age on from where they stood
 - New: "Infinite ammo" on the Combat page. Arrows, bolts, javelins, boomerangs and throwing hammers are never used up, one is enough. The ammo the death penalty takes is put back too
@@ -75,7 +80,7 @@ Every setting applies the moment you change it and is remembered per character.[
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Cheat Menu [b]0.8.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F8[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed or switched off).
+This is Cheat Menu [b]0.8.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F8[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed or switched off).
 
 [b]Languages:[/b] English, 简体中文 (Simplified Chinese), 繁體中文 (Traditional Chinese), Español, Français, العربية (Arabic) and हिन्दी (Hindi). Pick one in the list at the top of the window; "Auto" follows the game's own language. Traditional Chinese was first made by a player of the community.
 
@@ -112,7 +117,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [*]Keep food, ammo, runes and prayer points
 [*]Infinite ammo: one arrow (or javelin, boomerang...) is enough
 [*]Slayer coin multiplier, cheap slayer task rerolls
-[*]Shorter slayer tasks: set the most kills a task may ask for (10, for example)
+[*]Shorter slayer tasks: set the most kills any task may ask for (10, for example), extended ones too
 [/list]
 [b]Per skill[/b]
 [list]
@@ -153,7 +158,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [list=1]
 [*]Install [b]Melvor Mod Loader[/b] first (see Requirements).
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]CheatMenu-0.8.0.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
+[*]Extract [b]CheatMenu-0.8.1.zip[/b] there. The mod ends up in [b]mods\CheatMenu[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

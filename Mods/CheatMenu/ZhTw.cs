@@ -95,7 +95,7 @@ static class ZhTw
         ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "牧場動物不再衰老：壽命保持不變，永遠不會老死。",
         ["Multiplies the slayer coins earned per task kill."] = "依倍率提高擊殺屠殺者任務目標所得的硬幣。",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "重抽屠殺者任務只需 1 枚硬幣（遊戲的最低費用）。",
-        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "屠殺者任務要求的擊殺數不會超過此值（0 表示保留遊戲原本的任務長度）。延長任務時仍會加上大師通常的擊殺數。",
+        ["No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths)."] = "屠殺者任務要求的擊殺數不會超過此值，所有大師都一樣，延長後也是（0 表示保留遊戲原本的任務長度）。",
 
         // ---- the window
         ["CHEAT MENU"] = "修改器選單",

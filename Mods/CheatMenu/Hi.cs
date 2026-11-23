@@ -93,7 +93,7 @@ static class Hi
         ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "फार्म के जानवर बूढ़े होना बंद कर देते हैं: उनकी उम्र वहीं रुक जाती है, इसलिए वे बुढ़ापे से कभी नहीं मरते।",
         ["Multiplies the slayer coins earned per task kill."] = "कार्य में हर राक्षस मारने पर मिलने वाले संहारक सिक्कों को गुणा करता है।",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "संहारक कार्य बदलने में 1 सिक्का लगता है (गेम का न्यूनतम)।",
-        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "कोई भी संहारक कार्य इससे ज़्यादा राक्षस मारने को नहीं कहेगा (0 पर गेम की अपनी लंबाई रहती है)। कार्य बढ़ाने पर मास्टर के सामान्य शिकार अब भी जुड़ते हैं।",
+        ["No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths)."] = "कोई भी संहारक कार्य इससे ज़्यादा राक्षस मारने को नहीं कहेगा, हर मास्टर पर और बढ़ाने के बाद भी (0 पर गेम की अपनी लंबाई रहती है)।",
 
         // ---- the window
         ["CHEAT MENU"] = "चीट मेनू",

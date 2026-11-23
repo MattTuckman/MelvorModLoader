@@ -90,7 +90,7 @@ static class Es
         ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "Los animales de la granja dejan de envejecer: su vida se queda congelada y nunca mueren de viejos.",
         ["Multiplies the slayer coins earned per task kill."] = "Multiplica las monedas de exterminio obtenidas por cada enemigo de la tarea derrotado.",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "Cambiar tu tarea de exterminio cuesta 1 moneda (el mínimo del juego).",
-        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "Ninguna tarea de exterminio pide más enemigos que esto (0 deja la duración normal del juego). Ampliar una tarea sigue añadiendo los enemigos habituales del maestro.",
+        ["No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths)."] = "Ninguna tarea de exterminio pide más enemigos que esto, con cualquier maestro y también al ampliarla (0 deja la duración normal del juego).",
 
         // ---- the window
         ["CHEAT MENU"] = "MENÚ DE TRUCOS",

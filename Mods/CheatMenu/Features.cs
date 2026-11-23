@@ -269,7 +269,7 @@ public static class Features
         [RanchingForever.Setting] = "Ranch animals stop aging: their lifetime stands still, so they never die of old age.",
         ["combat.slayerReward"] = "Multiplies the slayer coins earned per task kill.",
         ["combat.slayerFreeReroll"] = "Changing your slayer task costs 1 coin (the game's minimum).",
-        [SlayerLength.Setting] = "No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills.",
+        [SlayerLength.Setting] = "No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths).",
     };
 
     static readonly Dictionary<string, Feature> ById = All.ToDictionary(f => f.Id);

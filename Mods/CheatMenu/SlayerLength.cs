@@ -12,8 +12,8 @@ namespace CheatMenu;
 /// <summary>
 /// "Slayer task: most kills": no slayer task asks for more kills than this (0 = the game's own lengths).
 /// The game rolls a task's length between the master's base length and base + 3 per Slayer level, so tasks
-/// grow with the level. A new, rerolled or already running task is shortened to the setting; one already
-/// further along than that ends with its next kill. "Extend task" still adds the master's usual kills on top.
+/// grow with the level. A new, rerolled, extended or already running task is shortened to the setting; one already
+/// further along than that ends with its next kill. Every master counts, the last ones as well.
 /// Nothing is written into the save except the shorter task the game itself keeps.
 /// </summary>
 public static class SlayerLength
@@ -58,11 +58,9 @@ public static class SlayerLength
     static void Rolled(ActiveSlayerMaster master, ValueChangedEventArgs<int> e)
     {
         if (s_setting) return;
-        // "Extend task" raises the length by the master's base length before it marks the task as extended:
-        // that one is left to the regular check, which by then sees the task as extended.
-        if (!master.IsTaskExtended && e.NewValue == e.OldValue + master.Data.BaseTaskLength && master.TaskProgress < e.OldValue) return;
-        // A new task: the game sets its length first and only then puts the progress and "extended" back to
-        // zero, so those still belong to the task before.
+        // A new or rerolled task, or "Extend task": none may ask for more than the cap. (For a new task the game
+        // sets the length before it puts the progress back to zero, so the progress here may still be the old
+        // task's: it is not looked at.)
         int cap = Cap;
         if (cap <= 0 || master.CurrentTask == null || e.NewValue <= cap) return;
         SetLength(master, cap);
@@ -72,7 +70,9 @@ public static class SlayerLength
     {
         int cap = Cap;
         if (cap <= 0 || master.CurrentTask == null) return;
-        int most = cap + (master.IsTaskExtended ? master.Data.BaseTaskLength : 0);
+        // Extended tasks too: the cap is the most kills any task asks for (until 0.8.0 an extended task kept the
+        // master's base length on top, 150 kills at the last masters with a cap of 25).
+        int most = cap;
         if (master.TaskLength <= most) return;
         // A task already further along than that ends with its next kill.
         SetLength(master, Math.Max(most, master.TaskProgress + 1));

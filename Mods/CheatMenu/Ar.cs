@@ -96,7 +96,7 @@ static class Ar
         ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "تتوقف حيوانات المزرعة عن التقدم في العمر: يبقى عمرها ثابتًا فلا تموت من الشيخوخة أبدًا.",
         ["Multiplies the slayer coins earned per task kill."] = "يضاعف عملات صائد الوحوش المكتسبة عن كل وحش يُقتل في المهمة.",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "تغيير مهمة صائد الوحوش يكلّف عملة واحدة (الحد الأدنى في اللعبة).",
-        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "لا تطلب أي مهمة لصائد الوحوش قتل وحوش أكثر من هذا العدد (0 يُبقي أطوال المهام كما في اللعبة). تمديد المهمة ما زال يضيف العدد المعتاد للمعلّم.",
+        ["No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths)."] = "لا تطلب أي مهمة لصائد الوحوش قتل وحوش أكثر من هذا العدد، عند كل معلّم وحتى بعد التمديد (0 يُبقي أطوال المهام كما في اللعبة).",
 
         // ---- the window
         ["CHEAT MENU"] = "قائمة الغش",

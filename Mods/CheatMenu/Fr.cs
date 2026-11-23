@@ -93,7 +93,7 @@ static class Fr
         ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "Les animaux de l'élevage ne vieillissent plus : leur durée de vie reste figée, ils ne meurent jamais de vieillesse.",
         ["Multiplies the slayer coins earned per task kill."] = "Multiplie les pièces de pourfendeur gagnées pour chaque cible de tâche tuée.",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "Changer de tâche de pourfendeur coûte 1 pièce (le minimum du jeu).",
-        ["No slayer task asks for more kills than this (0 keeps the game's own lengths). Extending a task still adds the master's usual kills."] = "Aucune tâche de pourfendeur ne demande plus de cibles que ce nombre (0 garde les longueurs du jeu). Prolonger une tâche ajoute toujours le nombre habituel du maître.",
+        ["No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths)."] = "Aucune tâche de pourfendeur ne demande plus de cibles que ce nombre, chez chaque maître et même prolongée (0 garde les longueurs du jeu).",
 
         // ---- the window
         ["CHEAT MENU"] = "MENU DE TRICHE",
