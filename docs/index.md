@@ -13,7 +13,8 @@ Mods for Melvor Idle 2: how to install them, and how to make your own.
 {: .fs-6 .fw-300 }
 
 [I want to play with mods](players/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[I want to make a mod](modding/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[I want to make a mod](modding/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Item database](db/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
