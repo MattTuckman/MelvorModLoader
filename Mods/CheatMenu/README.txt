@@ -69,6 +69,8 @@ GOOD TO KNOW
   by 3 kills per Slayer level.
 - "Infinite ammo" (Combat page): arrows, bolts, javelins, boomerangs and throwing hammers are
   never used up. One is enough to shoot for ever.
+- "Ignore immunity" (Combat page): any attack style hits monsters that are immune to it, such as
+  Wind Drifter ("Immune to Melee / Immune to Magic"). Poison and bleeding stick to them too.
 - "Ranching: animals never die" (Skills page): your ranch animals stop aging. Their lifetime
   stands still while it is on (also while the game is closed); switched off, they age on from there.
 - "Complete all quests" (Tools page) finishes every quest and gives its rewards, as if you had

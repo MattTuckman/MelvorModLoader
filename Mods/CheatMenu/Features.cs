@@ -160,6 +160,11 @@ public static class Features
         // under 100%. The game's "ammo used" event is watched as well (see InfiniteAmmo).
         new() { Id = InfiniteAmmo.Setting, Tab = TabCombat, En = "Infinite ammo", Kind = FeatureKind.Toggle,
                 Stats = { Combat("AmmoConsumption", "AmmoPreservationChance", "Player", 100) } },
+        // A monster's "Immune to Melee/Ranged/Magic" passive gives it ImmunityFrom = 1 for that style; the game lets
+        // every such attack miss and keeps poison and bleeding off it while the total is above 0. -100 on the enemy
+        // brings any total back under 0, whatever style is used.
+        new() { Id = "combat.ignoreImmunity", Tab = TabCombat, En = "Ignore immunity", Kind = FeatureKind.Toggle,
+                Stats = { Combat("Target", "ImmunityFrom", "Enemy", -100) } },
         new() { Id = "combat.slayerReward", Tab = TabCombat, En = "Slayer coin reward", Suffix = "x",
                 Min = 1, Max = 100, Off = 1, ToMultiplier = Times, Stats = { new("SlayerTasks", "PercentRewardCurrency", "Slayer", "Tasks", 1) } },
         new() { Id = "combat.slayerFreeReroll", Tab = TabCombat, En = "Cheap slayer task rerolls", Kind = FeatureKind.Toggle,
@@ -267,6 +272,7 @@ public static class Features
         ["combat.keepSupplies"] = "Chance not to use up food, ammo, runes or prayer points.",
         [InfiniteAmmo.Setting] = "Arrows, bolts, javelins, boomerangs and throwing hammers are never used up: one is enough.",
         [RanchingForever.Setting] = "Ranch animals stop aging: their lifetime stands still, so they never die of old age.",
+        ["combat.ignoreImmunity"] = "Any attack style hits monsters that are immune to it (Wind Drifter, for example). Poison and bleeding stick to them too.",
         ["combat.slayerReward"] = "Multiplies the slayer coins earned per task kill.",
         ["combat.slayerFreeReroll"] = "Changing your slayer task costs 1 coin (the game's minimum).",
         [SlayerLength.Setting] = "No slayer task asks for more kills than this, at every master and also when extended (0 keeps the game's own lengths).",
