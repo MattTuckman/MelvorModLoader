@@ -58,6 +58,7 @@ static class ZhTw
         ["Keep supplies chance"] = "補給保留機率",
         ["Infinite ammo"] = "無限彈藥",
         ["Ignore immunity"] = "無視免疫",
+        ["Infinite lanterns"] = "無限燈籠",
         ["Ranching: animals never die"] = "畜牧：動物永不死亡",
         ["Slayer coin reward"] = "屠殺者硬幣獎勵",
         ["Cheap slayer task rerolls"] = "低價重抽屠殺者任務",
@@ -94,6 +95,7 @@ static class ZhTw
         ["Chance not to use up food, ammo, runes or prayer points."] = "不消耗食物、彈藥、符文或祝祭點的機率。",   // (changed: the game says 祝祭)
         ["Arrows, bolts, javelins, boomerangs and throwing hammers are never used up: one is enough."] = "箭矢、弩矢、標槍、迴旋鏢和投擲錘永不消耗：一個就夠。",
         ["Any attack style hits monsters that are immune to it (Wind Drifter, for example). Poison and bleeding stick to them too."] = "任何戰鬥風格都能擊中對其免疫的怪物（例如 Wind Drifter）。中毒和流血也會對牠們生效。",
+        ["Lit lanterns are never used up in dark areas: one is enough."] = "點亮的燈籠在黑暗區域永不消耗：一個就夠了。",
         ["Ranch animals stop aging: their lifetime stands still, so they never die of old age."] = "牧場動物不再衰老：壽命保持不變，永遠不會老死。",
         ["Multiplies the slayer coins earned per task kill."] = "依倍率提高擊殺屠殺者任務目標所得的硬幣。",
         ["Changing your slayer task costs 1 coin (the game's minimum)."] = "重抽屠殺者任務只需 1 枚硬幣（遊戲的最低費用）。",

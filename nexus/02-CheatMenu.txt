@@ -22,6 +22,7 @@ Dev\shots\menu-5-combat.png (main image), menu-1-bank.png, menu-3-speed.png, men
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
 0.8.1
+- New: "Infinite lanterns" on the Combat page. Lit lanterns are never used up in dark areas, one is enough
 - New: "Ignore immunity" on the Combat page. Any attack style hits monsters that are immune to it (Wind Drifter, the Amalgamations); poison and bleeding stick to them too
 - Fixed: "Slayer task: most kills" did not hold for extended tasks: they kept the master's own kills on top (with 25, up to 150 kills at the last masters). Now no task asks for more than the cap, at every master, extended or not
 - Fixed: a new task could slip past the cap for a moment when its length happened to look like an extension
@@ -117,6 +118,7 @@ Your settings are [b]not written into your save file[/b]. They live in a small f
 [*]No death penalty, double loot chance
 [*]Keep food, ammo, runes and prayer points
 [*]Infinite ammo: one arrow (or javelin, boomerang...) is enough
+[*]Infinite lanterns: one lit lantern lasts for ever in dark areas
 [*]Ignore immunity: melee, ranged or magic hits monsters immune to it (Wind Drifter, for example)
 [*]Slayer coin multiplier, cheap slayer task rerolls
 [*]Shorter slayer tasks: set the most kills any task may ask for (10, for example), extended ones too

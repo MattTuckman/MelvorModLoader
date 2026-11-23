@@ -165,6 +165,11 @@ public static class Features
         // brings any total back under 0, whatever style is used.
         new() { Id = "combat.ignoreImmunity", Tab = TabCombat, En = "Ignore immunity", Kind = FeatureKind.Toggle,
                 Stats = { Combat("Target", "ImmunityFrom", "Enemy", -100) } },
+        // A lit lantern is used up each time the player is hit in a dark area: the equipment slot rolls its
+        // PreservationChance first. The lit lanterns are the only worn items the game uses up this way (ammo has its
+        // own stat), so +10000% on the combat equipment keeps exactly them.
+        new() { Id = "combat.infiniteLanterns", Tab = TabCombat, En = "Infinite lanterns", Kind = FeatureKind.Toggle,
+                Stats = { Combat("Equipment", "PreservationChance", "Equipment", 100) } },
         new() { Id = "combat.slayerReward", Tab = TabCombat, En = "Slayer coin reward", Suffix = "x",
                 Min = 1, Max = 100, Off = 1, ToMultiplier = Times, Stats = { new("SlayerTasks", "PercentRewardCurrency", "Slayer", "Tasks", 1) } },
         new() { Id = "combat.slayerFreeReroll", Tab = TabCombat, En = "Cheap slayer task rerolls", Kind = FeatureKind.Toggle,
@@ -272,6 +277,7 @@ public static class Features
         ["combat.keepSupplies"] = "Chance not to use up food, ammo, runes or prayer points.",
         [InfiniteAmmo.Setting] = "Arrows, bolts, javelins, boomerangs and throwing hammers are never used up: one is enough.",
         [RanchingForever.Setting] = "Ranch animals stop aging: their lifetime stands still, so they never die of old age.",
+        ["combat.infiniteLanterns"] = "Lit lanterns are never used up in dark areas: one is enough.",
         ["combat.ignoreImmunity"] = "Any attack style hits monsters that are immune to it (Wind Drifter, for example). Poison and bleeding stick to them too.",
         ["combat.slayerReward"] = "Multiplies the slayer coins earned per task kill.",
         ["combat.slayerFreeReroll"] = "Changing your slayer task costs 1 coin (the game's minimum).",
