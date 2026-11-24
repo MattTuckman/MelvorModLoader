@@ -42,7 +42,9 @@ internal static class Bootstrap
 {
     const string GameAssemblyName = "GamesByMalcs.Melvor2";
 
-    public static string LoaderDir = "", GameRoot = "", GameDataDir = "", ModsDir = "";
+    /// <summary>GameRoot holds the game's and the loader's data folders; UserRoot holds "mods" and the log.
+    /// They are the same folder except on macOS (see <see cref="FindUserRoot"/>).</summary>
+    public static string LoaderDir = "", GameRoot = "", UserRoot = "", GameDataDir = "", ModsDir = "";
     public static AssemblyLoadContext Alc = null!;
     static readonly List<string> ProbeDirs = new();
 
@@ -55,8 +57,9 @@ internal static class Bootstrap
         Assembly self = typeof(Bootstrap).Assembly;
         LoaderDir = Path.GetDirectoryName(Path.GetFullPath(self.Location))!;
         GameRoot = Path.GetDirectoryName(LoaderDir)!;
-        ModsDir = Path.Combine(GameRoot, "mods");
-        Log.StartNewSession(GameRoot);
+        UserRoot = FindUserRoot();
+        ModsDir = Path.Combine(UserRoot, "mods");
+        Log.StartNewSession(UserRoot);
         Log.Write($"Melvor Mod Loader {Version} starting (.NET {System.Environment.Version})");
 
         GameDataDir = FindGameDataDir();
@@ -86,6 +89,18 @@ internal static class Bootstrap
     [MethodImpl(MethodImplOptions.NoInlining)]
     static void StartLoader() => Loader.ScheduleStart();
 
+    // On macOS the data folders sit inside the app bundle (Melvor2.app/Contents/Resources), and Steam may replace
+    // the bundle on a game update. Mods, their settings and the log therefore live in the folder that holds the
+    // bundle ("Melvor Idle 2", as on Windows), where an update leaves them alone.
+    static string FindUserRoot()
+    {
+        var resources = new DirectoryInfo(GameRoot);
+        if (resources is { Name: "Resources", Parent: { Name: "Contents", Parent: { Parent: { } outside } app } }
+            && app.Name.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+            return outside.FullName;
+        return GameRoot;
+    }
+
     static string FindGameDataDir()
     {
         string expected = Path.Combine(GameRoot, "data_GamesByMalcs.Melvor2_windows_x86_64");
@@ -105,7 +120,8 @@ internal static class Bootstrap
         IEnumerable<string> dirs = Directory.GetDirectories(GameRoot, "data_*");
         if (arch.Length > 0)
         {
-            string? match = dirs.FirstOrDefault(d => d.Contains(arch, StringComparison.OrdinalIgnoreCase)
+            // the folder's own name, not the path: a user or library folder may have "arm64" in its name
+            string? match = dirs.FirstOrDefault(d => Path.GetFileName(d).EndsWith("_" + arch, StringComparison.OrdinalIgnoreCase)
                 && File.Exists(Path.Combine(d, GameAssemblyName + ".dll")));
             if (match != null)
                 return match;
