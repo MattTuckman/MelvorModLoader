@@ -17,7 +17,8 @@ public sealed class QueueWindow
     {
         "it stops by itself", "I own this many of an item", "a skill reaches this level", "this many minutes have passed",
         "only this many of an item are left", "I make this many more of an item", "it has been done this many times",
-        "it has used up this many of an item",
+        "it has used up this many of an item", "node unlocks of this constellation are earned",
+        "an astrology event has been seen this many times",
     };
 
     /// <summary>One theme for the window and for the popups of its pick lists (a popup is a window of its own).</summary>
@@ -31,6 +32,20 @@ public sealed class QueueWindow
     readonly SpinBox _amount = new() { MinValue = 1, MaxValue = 100_000_000, Step = 1, Value = 1000, CustomMinimumSize = new Vector2(120, 0), SelectAllOnFocus = true };
     readonly PickList<Item> _item = new("Choose an item", s_theme);
     readonly OptionButton _levelPick = new() { CustomMinimumSize = new Vector2(170, 0) };
+    // Astrology goals: minor or major node unlocks, and the event to wait for.
+    readonly OptionButton _nodePick = new() { CustomMinimumSize = new Vector2(110, 0) };
+    readonly OptionButton _eventPick = new() { CustomMinimumSize = new Vector2(250, 0), FitToLongestItem = false, ClipText = true };
+    // The second goal: "... or until ...". The step is over when either one is reached.
+    readonly CheckBox _orBox = new() { Text = "or" };
+    readonly HBoxContainer _orRow = new() { Visible = false };
+    readonly OptionButton _orPick = new() { CustomMinimumSize = new Vector2(250, 0) };
+    readonly SpinBox _orAmount = new() { MinValue = 1, MaxValue = 100_000_000, Step = 1, Value = 100, CustomMinimumSize = new Vector2(120, 0), SelectAllOnFocus = true };
+    readonly PickList<Item> _orItem = new("Choose an item", s_theme);
+    readonly OptionButton _orLevel = new() { CustomMinimumSize = new Vector2(170, 0) };
+    readonly OptionButton _orNode = new() { CustomMinimumSize = new Vector2(110, 0) };
+    readonly OptionButton _orEvent = new() { CustomMinimumSize = new Vector2(250, 0), FitToLongestItem = false, ClipText = true };
+    /// <summary>One line in the goal row for the steps that are not actions (equip a loadout, go to a saved queue).</summary>
+    readonly Label _pseudoNote = Style.Label("", Style.Muted, 12);
     readonly Tree _table;
     readonly Button _run = new() { CustomMinimumSize = new Vector2(150, 0) };
     readonly Button _repeat = new() { ToggleMode = true, CustomMinimumSize = new Vector2(205, 0) };
@@ -186,8 +201,16 @@ public sealed class QueueWindow
         var what = new HBoxContainer();
         what.AddThemeConstantOverride("separation", 10);
         what.AddChild(Fixed("Do", 50));
-        _skillPick.ItemSelected += _ => { FillTargets(null); UntilChanged(); };
-        _target.Picked += _ => { if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem(); ShowMode(); };
+        _skillPick.ItemSelected += _ => { FillKinds(_untilPick, Astrology, withStops: true); FillKinds(_orPick, Astrology, withStops: false); FillTargets(null); UntilChanged(); };
+        _target.Picked += _ =>
+        {
+            if (Pseudo) { UntilChanged(); return; }
+            if (Kind == Until.ItemLeft) SuggestFood(); else SuggestItem();
+            ShowMode();
+            FillEvents();
+            CapNodes(_amount, _nodePick, Kind);
+            CapNodes(_orAmount, _orNode, OrKind);
+        };
         _target.Control.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
         _target.Control.CustomMinimumSize = new Vector2(300, 0);
         _target.Control.TooltipText = "Click and type to search. The groups are the ones of the skill's own page.";
@@ -205,13 +228,28 @@ public sealed class QueueWindow
         until.AddThemeConstantOverride("separation", 10);
         _untilLabel.CustomMinimumSize = new Vector2(50, 0);
         until.AddChild(_untilLabel);
-        foreach (string name in UntilNames) _untilPick.AddItem(name);
+        FillKinds(_untilPick, false, withStops: true);
         _untilPick.ItemSelected += _ => UntilChanged();
         until.AddChild(_untilPick);
         until.AddChild(_amount);
         _item.Control.CustomMinimumSize = new Vector2(280, 0);
         until.AddChild(_item.Control);
         until.AddChild(_levelPick);
+        foreach (OptionButton nodes in new[] { _nodePick, _orNode })
+        {
+            nodes.AddItem("minor");
+            nodes.AddItem("major");
+            nodes.ItemSelected += _ => { CapNodes(_amount, _nodePick, Kind); CapNodes(_orAmount, _orNode, OrKind); };
+            nodes.TooltipText = "Minor: the node unlocks the constellation's Knowledge has earned (the ones you already clicked count too).\n"
+                + "Major: one for every few minor ones, as the game gives them; you do not have to click the minor nodes for it.";
+        }
+        until.AddChild(_nodePick);
+        _eventPick.TooltipText = _orEvent.TooltipText = "The events this constellation can show while it is studied. The step counts the ones seen after it starts.";
+        until.AddChild(_eventPick);
+        until.AddChild(_pseudoNote);
+        _orBox.TooltipText = "Give the step a second goal: it is over when either one is reached\n(e.g. until a Gold Topaz Ring is in the bank, or until 780 Salmon are used up).";
+        _orBox.Toggled += _ => UntilChanged();
+        until.AddChild(_orBox);
         until.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
         OfferLanes(LanesOffered());
         _lanePick.TooltipText = _planLanePick.TooltipText =
@@ -223,6 +261,21 @@ public sealed class QueueWindow
         until.AddChild(_lanePick);
         until.AddChild(MakeButton("Add step", AddStep));
         _stepForm.AddChild(until);
+        // -- the second goal, under the first
+        _orRow.AddThemeConstantOverride("separation", 10);
+        Label orLabel = Style.Label("or until", Style.Text);
+        orLabel.CustomMinimumSize = new Vector2(50, 0);
+        _orRow.AddChild(orLabel);
+        FillKinds(_orPick, false, withStops: false);
+        _orPick.ItemSelected += _ => OrChanged();
+        _orRow.AddChild(_orPick);
+        _orRow.AddChild(_orAmount);
+        _orItem.Control.CustomMinimumSize = new Vector2(280, 0);
+        _orRow.AddChild(_orItem.Control);
+        _orRow.AddChild(_orLevel);
+        _orRow.AddChild(_orNode);
+        _orRow.AddChild(_orEvent);
+        _stepForm.AddChild(_orRow);
         _stepForm.AddChild(_now);
         form.AddChild(_stepForm);
         BuildPlanForm(form);
@@ -466,9 +519,10 @@ public sealed class QueueWindow
             _items = game.Data.GetDataRegistryOutput<Item>().GetAllObjects()
                 .OrderBy(i => i.DisplayName.GetPluralText(1), StringComparer.OrdinalIgnoreCase).ToList();
             _levelSkills = game.LeveledEntities.Select(s => s.DisplayName.Text).ToList();
-            Fill(_skillPick, _skills.Select(s => s.Entity.DisplayName.Text).Append(SellChoice));
+            Fill(_skillPick, _skills.Select(s => s.Entity.DisplayName.Text).Append(SellChoice).Append(EquipChoice).Append(SwitchChoice));
             Fill(_idleSkill, _skills.Select(s => s.Entity.DisplayName.Text).Prepend("Nothing"));
             Fill(_levelPick, _levelSkills);
+            Fill(_orLevel, _levelSkills);
             _makeable = Planner.Makeable(game);
             _target.SetEntries(new List<PickEntry<Target>>());
             FillTargets(null);
@@ -476,6 +530,7 @@ public sealed class QueueWindow
         else FillTargets(_target.SelectedKey, suggest: false);   // what is locked or shown may have changed since
         // The bank counts in the item lists are those of the moment the window opens.
         _item.SetEntries(Catalog.Items(game, _items));
+        _orItem.SetEntries(Catalog.Items(game, _items), _orItem.SelectedKey);
         _planPick.SetEntries(Catalog.Items(game, _makeable));
         UntilChanged();
         Repaint();
@@ -485,7 +540,7 @@ public sealed class QueueWindow
 
     public void Hide()
     {
-        foreach (var pick in new Action[] { _target.Close, _item.Close, _idleTarget.Close, _planPick.Close }) pick();
+        foreach (var pick in new Action[] { _target.Close, _item.Close, _orItem.Close, _idleTarget.Close, _planPick.Close }) pick();
         _layer.Visible = false;
     }
 
@@ -861,16 +916,19 @@ public sealed class QueueWindow
     /// </summary>
     void FillTargets(string? select, bool suggest = true)
     {
+        if (_game != null && Equipping) { List<PickEntry<Target>> gear = EquipEntries(_game); _target.SetEntries(gear, KeyIn(gear, select) ?? gear.FirstOrDefault(e => !e.Muted && e.Enabled)?.Key); return; }
+        if (_game != null && Switching) { List<PickEntry<Target>> queues = SavedQueueEntries(); _target.SetEntries(queues, KeyIn(queues, select) ?? queues.FirstOrDefault(e => e.Enabled)?.Key); return; }
         if (_game == null || _skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count) return;
         var (entity, action) = _skills[_skillPick.Selected];
         List<PickEntry<Target>> entries = Catalog.For(_game, entity, action, select);
         _target.SetEntries(entries, KeyIn(entries, select) ?? entries.FirstOrDefault(e => !e.Muted)?.Key ?? entries.FirstOrDefault()?.Key);
         ShowMode();
+        FillEvents();
         if (!suggest) return;
         // A level goal is usually about the skill being trained.
         int level = _levelSkills.IndexOf(entity.DisplayName.Text);
         if (level >= 0) _levelPick.Select(level);
-        if ((Until)_untilPick.Selected == Until.ItemLeft) SuggestFood(); else SuggestItem();
+        if (Kind == Until.ItemLeft) SuggestFood(); else SuggestItem();
     }
 
     /// <summary>The list key meant by <paramref name="select"/>: a key, or a target id (the first entry with it).</summary>
@@ -888,8 +946,8 @@ public sealed class QueueWindow
     void SuggestItem()
     {
         if (_skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _target.Selected is not { } chosen) return;
-        if ((Until)_untilPick.Selected == Until.ItemLeft) return;   // counting down: the item was chosen on purpose
-        if ((Until)_untilPick.Selected == Until.Spent)
+        if (Kind == Until.ItemLeft) return;   // counting down: the item was chosen on purpose
+        if (Kind == Until.Spent)
         {
             // Using up: what the recipe eats (the first of its materials the list knows).
             foreach (string id in Targets.Ingredients(_skills[_skillPick.Selected].Action, chosen.Value).OrderBy(i => i))
@@ -906,7 +964,7 @@ public sealed class QueueWindow
     /// </summary>
     void ShowMode()
     {
-        List<(string Id, string Name)> modes = Selling || _skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _target.Selected is not { } chosen
+        List<(string Id, string Name)> modes = Pseudo || _skillPick.Selected < 0 || _skillPick.Selected >= _skills.Count || _target.Selected is not { } chosen
             ? new() : Targets.Modes(_skills[_skillPick.Selected].Action, chosen.Value.Id);
         _mode.Visible = modes.Count > 0;
         if (modes.Count == 0) { _modeId = ""; return; }
@@ -931,7 +989,7 @@ public sealed class QueueWindow
     }
 
     /// <summary>For tests: pick how a step ends, the way the list does.</summary>
-    public void ChooseUntil(Until kind) { _untilPick.Select((int)kind); UntilChanged(); }
+    public void ChooseUntil(Until kind) { _untilPick.Select(_untilPick.GetItemIndex((int)kind)); UntilChanged(); }
     public double AmountShown => _amount.Value;
     public void SetAmount(double value) => _amount.Value = value;
 
@@ -941,6 +999,8 @@ public sealed class QueueWindow
         int skill = _skills.FindIndex(s => s.Entity.Id == entityId);
         if (skill < 0) return false;
         _skillPick.Select(skill);
+        FillKinds(_untilPick, Astrology, withStops: true);
+        FillKinds(_orPick, Astrology, withStops: false);
         FillTargets(targetId);
         UntilChanged();
         return _target.Selected is { } chosen && (chosen.Value.Id == targetId || chosen.Key == targetId);
@@ -968,6 +1028,8 @@ public sealed class QueueWindow
         int skill = active == null ? -1 : _skills.FindIndex(s => ReferenceEquals(s.Action, active));
         if (target == null || skill < 0) { Say("Start an action in the game first, then press this."); return; }
         _skillPick.Select(skill);
+        FillKinds(_untilPick, Astrology, withStops: true);
+        FillKinds(_orPick, Astrology, withStops: false);
         FillTargets(Catalog.Key(target));
         UntilChanged();
         Say($"Filled in: {_skills[skill].Entity.DisplayName.Text}: {target.Name}");
@@ -1068,6 +1130,39 @@ public sealed class QueueWindow
         return _item.Select(itemId);
     }
     public bool SellFaceShown => Selling && _item.Control.Visible && !_target.Control.Visible && _untilLabel.Text == "keep";
+    /// <summary>For tests: the Equip and "go to a saved queue" faces, the "or until" row and the astrology goals, as clicks do them.</summary>
+    public bool ChooseEquip(string targetId, double keep)
+    {
+        _skillPick.Select(_skills.Count + 1);
+        _skillPick.EmitSignal(OptionButton.SignalName.ItemSelected, _skills.Count + 1);
+        bool picked = _target.Pick(targetId);
+        _amount.Value = keep;
+        return picked && _target.SelectedKey == targetId;
+    }
+    public bool ChooseSwitch(string name)
+    {
+        _skillPick.Select(_skills.Count + 2);
+        _skillPick.EmitSignal(OptionButton.SignalName.ItemSelected, _skills.Count + 2);
+        return name == "" || _target.Pick(name);
+    }
+    public List<string> TargetKeys => _target.VisibleKeys;
+    public string PseudoNoteShown => _pseudoNote.Visible ? _pseudoNote.Text : "";
+    public bool KeepShown => _amount.Visible && _untilLabel.Text == "keep";
+    public bool OrShown => _orBox.Visible;
+    public void PressOr(bool on) => _orBox.ButtonPressed = on;
+    public bool OrRowShown => _orRow.Visible;
+    public void ChooseOrUntil(Until kind) { _orPick.Select(_orPick.GetItemIndex((int)kind)); OrChanged(); }
+    public void SetOrAmount(double value) => _orAmount.Value = value;
+    public bool ChooseOrItem(string itemId) => _orItem.Select(itemId);
+    public List<string> UntilKinds => Enumerable.Range(0, _untilPick.ItemCount).Select(i => ((Until)_untilPick.GetItemId(i)).ToString()).ToList();
+    public void ChooseNodes(bool major) => _nodePick.Select(major ? 1 : 0);
+    public List<string> EventsShown => Enumerable.Range(0, _eventPick.ItemCount).Select(i => _eventPick.GetItemText(i)).ToList();
+    public bool ChooseEvent(string eventId)
+    {
+        for (int i = 0; i < _eventPick.ItemCount; i++)
+            if (_eventPick.GetItemMetadata(i).AsString() == eventId) { _eventPick.Select(i); return true; }
+        return false;
+    }
     public bool LanePickShown => _lanePick.Visible;
     /// <summary>For tests: how many lanes the Lane lists offer (and the next lane the Lane button moves a step to).</summary>
     public int LanesInList => _lanePick.ItemCount;
@@ -1101,21 +1196,52 @@ public sealed class QueueWindow
     public void PressIdleAlways(bool on) { _idleAlways.ButtonPressed = on; }
     public void PressGameCreate(bool on) { _gameCreate.ButtonPressed = on; }
 
-    const string SellChoice = "Sell from the bank";
+    const string SellChoice = "Sell from the bank", EquipChoice = "Equip", SwitchChoice = "Go to a saved queue";
     bool Selling => _skillPick.Selected >= 0 && _skillPick.Selected == _skills.Count;
+    bool Equipping => _skillPick.Selected >= 0 && _skillPick.Selected == _skills.Count + 1;
+    bool Switching => _skillPick.Selected >= 0 && _skillPick.Selected == _skills.Count + 2;
+    /// <summary>A step that is not an action: sell, equip, go to a saved queue.</summary>
+    bool Pseudo => Selling || Equipping || Switching;
+    bool Astrology => !Pseudo && _skillPick.Selected >= 0 && _skillPick.Selected < _skills.Count
+        && _skills[_skillPick.Selected].Action is GamesByMalcs.Melvor2.Entities.Astrology.AstrologyActionComponent;
+    bool EquipIsLoadout => _target.Selected?.Value.Id.StartsWith(Step.LoadoutPrefix, StringComparison.Ordinal) == true;
     bool _wasSelling;
+
+    /// <summary>The goal kinds are list entries whose id is the <see cref="Until"/> number (Astrology has two more).</summary>
+    Until Kind => _untilPick.Selected < 0 ? Until.Stops : (Until)_untilPick.GetSelectedId();
+    Until OrKind => _orPick.Selected < 0 ? Until.Item : (Until)_orPick.GetSelectedId();
+
+    static void FillKinds(OptionButton pick, bool astrology, bool withStops)
+    {
+        int keep = pick.Selected >= 0 ? pick.GetSelectedId() : -1;
+        pick.Clear();
+        for (int i = 0; i < UntilNames.Length; i++)
+        {
+            var kind = (Until)i;
+            if (kind == Until.Stops && !withStops) continue;
+            if (kind is Until.Nodes or Until.Event && !astrology) continue;
+            pick.AddItem(UntilNames[i], i);
+        }
+        int index = keep >= 0 ? pick.GetItemIndex(keep) : -1;
+        pick.Select(index >= 0 ? index : 0);
+    }
 
     void UntilChanged()
     {
-        bool selling = Selling;
-        _target.Control.Visible = _useNow.Visible = _untilPick.Visible = !selling;
+        bool selling = Selling, equipping = Equipping, switching = Switching, pseudo = selling || equipping || switching;
+        _target.Control.Visible = !selling;
+        _useNow.Visible = _untilPick.Visible = !pseudo;
         ShowMode();
-        if (selling)
+        _nodePick.Visible = _eventPick.Visible = false;
+        if (pseudo)
         {
-            // Sell: which item, and how many to keep in the bank.
-            _untilLabel.Text = "keep";
-            _item.Control.Visible = _amount.Visible = true;
-            _levelPick.Visible = false;
+            // Sell: which item, and how many to keep in the bank. Equip: what to put on (and for a stack, how many to
+            // keep). Go to a saved queue: which one.
+            bool keep = selling || equipping && !EquipIsLoadout;
+            _untilLabel.Text = keep ? "keep" : "";
+            _item.Control.Visible = selling;
+            _amount.Visible = keep;
+            _levelPick.Visible = _orBox.Visible = _orRow.Visible = false;
             _amount.MinValue = 0;
             _amount.MaxValue = 100_000_000;
             _amount.Suffix = "";
@@ -1124,10 +1250,16 @@ public sealed class QueueWindow
                 if (_lastKind == Until.ItemLeft) _amountLeft = _amount.Value; else _amountOther = Math.Max(1, _amount.Value);
                 _amount.Value = 0;
             }
-            _amount.TooltipText = "How many to keep in the bank: 0 sells all of them.";
+            _amount.TooltipText = selling ? "How many to keep in the bank: 0 sells all of them."
+                : "For arrows, bolts, javelins and other stacks: how many to keep in the bank (0 puts all of them on).\nOther gear is simply put on.";
+            _pseudoNote.Text = switching ? "the queue goes on with this saved queue once every step before it is over (in every lane)"
+                : equipping && EquipIsLoadout ? "switches to this loadout (gear, food, prayers and spells) while the game is open"
+                : equipping ? "puts it on from the bank while the game is open" : "";
+            _pseudoNote.Visible = _pseudoNote.Text != "";
             _wasSelling = true;
             return;
         }
+        _pseudoNote.Visible = false;
         _untilLabel.Text = "until";
         _amount.TooltipText = "";
         if (_wasSelling)
@@ -1136,7 +1268,7 @@ public sealed class QueueWindow
             _amount.MinValue = _lastKind == Until.ItemLeft ? 0 : 1;
             _amount.Value = _lastKind == Until.ItemLeft ? _amountLeft : Math.Max(1, _amountOther);
         }
-        var kind = (Until)_untilPick.Selected;
+        var kind = Kind;
         _amount.Visible = kind != Until.Stops;
         _item.Control.Visible = kind is Until.Item or Until.ItemLeft or Until.Made or Until.Spent;
         _amount.MinValue = kind == Until.ItemLeft ? 0 : 1;
@@ -1154,11 +1286,122 @@ public sealed class QueueWindow
             if (kind is Until.Item or Until.Made or Until.Spent) SuggestItem();
         }
         else if (kind != _lastKind && (kind == Until.Spent || _lastKind == Until.Spent)) SuggestItem();
+        if (kind is Until.Nodes or Until.Event && _lastKind is not (Until.Nodes or Until.Event) && _amount.Value > 99) _amount.Value = kind == Until.Event ? 1 : 5;
         _lastKind = kind;
         _levelPick.Visible = kind == Until.Level;
+        _nodePick.Visible = kind == Until.Nodes;
+        _eventPick.Visible = kind == Until.Event;
         _amount.Suffix = kind == Until.Minutes ? " min" : "";
         _amount.MaxValue = kind == Until.Level ? 999 : 100_000_000;
         if (kind == Until.Level && _amount.Value > 999) _amount.Value = 99;
+        if (kind != Until.Nodes) _amount.TooltipText = "";
+        CapNodes(_amount, _nodePick, kind);
+        _orBox.Visible = true;
+        _orRow.Visible = _orBox.ButtonPressed;
+        OrChanged();
+    }
+
+    void OrChanged()
+    {
+        var kind = OrKind;
+        _orAmount.Visible = kind != Until.Stops;
+        _orItem.Control.Visible = kind is Until.Item or Until.ItemLeft or Until.Made or Until.Spent;
+        _orLevel.Visible = kind == Until.Level;
+        _orNode.Visible = kind == Until.Nodes;
+        _orEvent.Visible = kind == Until.Event;
+        _orAmount.MinValue = kind == Until.ItemLeft ? 0 : 1;
+        _orAmount.Suffix = kind == Until.Minutes ? " min" : "";
+        _orAmount.MaxValue = kind == Until.Level ? 999 : 100_000_000;
+        if (kind == Until.Level && _orAmount.Value > 999) _orAmount.Value = 99;
+        _orAmount.TooltipText = "";
+        CapNodes(_orAmount, _orNode, kind);
+    }
+
+    /// <summary>A node goal: the number goes no higher than the chosen constellation's minor (or major) unlocks.</summary>
+    void CapNodes(SpinBox amount, OptionButton node, Until kind)
+    {
+        if (kind != Until.Nodes || _game == null || _target.Selected is not { } chosen) return;
+        int most = Queue.MostNodes(_game, chosen.Value.Id, node.Selected == 1);
+        if (most <= 0) return;
+        amount.MaxValue = most;
+        if (amount.Value > most) amount.Value = most;
+        amount.TooltipText = $"This constellation has {most} {(node.Selected == 1 ? "major" : "minor")} node unlocks in all.";
+    }
+
+    /// <summary>The events the chosen constellation can show, in both event lists (kept when still there).</summary>
+    void FillEvents()
+    {
+        List<(string Id, string Name)> events = _game != null && Astrology && _target.Selected is { } chosen
+            ? Queue.AstrologyEvents(_game, chosen.Value.Id) : new();
+        foreach (OptionButton pick in new[] { _eventPick, _orEvent })
+        {
+            string keep = pick.Selected >= 0 ? pick.GetItemMetadata(pick.Selected).AsString() : "";
+            pick.Clear();
+            for (int i = 0; i < events.Count; i++) { pick.AddItem(events[i].Name); pick.SetItemMetadata(i, events[i].Id); }
+            int at = events.FindIndex(e => e.Id == keep);
+            if (pick.ItemCount > 0) pick.Select(at >= 0 ? at : 0);
+        }
+    }
+
+    /// <summary>For the Equip step: the game's loadouts first, then every piece of gear, grouped by kind (bank count as hint).</summary>
+    static List<PickEntry<Target>> EquipEntries(Game game)
+    {
+        var entries = new List<PickEntry<Target>>();
+        if (game.Entities.TryGetObjectById("MelvorBase:Combat", out GameEntity? e) && e is GamesByMalcs.Melvor2.Entities.Combat.CombatEntity combat)
+            foreach (var loadout in combat.Loadouts.LoadoutDisplayOrder)
+            {
+                string id = Step.LoadoutPrefix + loadout.Data.Id;
+                string hint = !loadout.IsUnlocked ? "locked" : combat.Loadouts.CurrentLoadout == loadout ? "in use" : "";
+                entries.Add(new PickEntry<Target>(id, loadout.Name, new Target(id, loadout.Name, ""), "Loadouts", Hint: hint, Muted: !loadout.IsUnlocked));
+            }
+        GamesByMalcs.Melvor2.Entities.Bank.BankEntity? bank = game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? b) ? b as GamesByMalcs.Melvor2.Entities.Bank.BankEntity : null;
+        var gear = new List<PickEntry<Target>>();
+        foreach (Item item in game.Data.GetDataRegistryOutput<Item>().GetAllObjects())
+        {
+            if (!item.Capabilities.TryGet<GamesByMalcs.Melvor2.Components.Equipment.EquipmentCapability>(out var equip)) continue;
+            string name = item.DisplayName.GetPluralText(1);
+            int owned = bank?.Inventory.GetQuantity(item) ?? 0;
+            gear.Add(new PickEntry<Target>(item.Id, name, new Target(item.Id, name, ""), equip.Type.DisplayName.Text, "", item.Icon, equip.Type.Icon,
+                owned > 0 ? $"{owned:N0} in bank" : "", Muted: owned <= 0));
+        }
+        entries.AddRange(gear.OrderBy(g => g.Group, StringComparer.OrdinalIgnoreCase).ThenBy(g => g.Text, StringComparer.OrdinalIgnoreCase));
+        return entries;
+    }
+
+    /// <summary>For the "go to a saved queue" step: the saved queues (not the automatic copy of unsaved steps).</summary>
+    static List<PickEntry<Target>> SavedQueueEntries()
+    {
+        var entries = Queue.PresetNames.Where(n => !string.Equals(n, Queue.AutoName, StringComparison.OrdinalIgnoreCase))
+            .Select(n => new PickEntry<Target>(n, n, new Target(n, n, ""), "Saved queues", Hint: $"{Queue.GetPreset(n)!.Steps.Count} step(s)")).ToList();
+        if (entries.Count == 0)
+            entries.Add(new PickEntry<Target>("", "No saved queues yet: save one under \"Saved queues\" first", new Target("", "", ""), Enabled: false, Muted: true));
+        return entries;
+    }
+
+    /// <summary>Reads one goal from its controls (the step's own row, or the "or until" row).</summary>
+    bool ReadGoal(Until kind, double amount, PickList<Item> item, OptionButton level, OptionButton node, OptionButton ev, out Goal goal)
+    {
+        goal = new Goal { Until = kind, Amount = amount };
+        if (kind is Until.Item or Until.ItemLeft or Until.Made or Until.Spent)
+        {
+            if (item.Selected is not { } counted) { Say("Pick the item to count first."); return false; }
+            goal.Subject = counted.Value.Id;
+            goal.SubjectName = counted.Value.DisplayName.GetPluralText(1);
+        }
+        else if (kind == Until.Level)
+        {
+            if (level.Selected < 0) return false;
+            goal.Subject = goal.SubjectName = _levelSkills[level.Selected];
+        }
+        else if (kind == Until.Nodes)
+            goal.Subject = goal.SubjectName = node.Selected == 1 ? "major" : "minor";
+        else if (kind == Until.Event)
+        {
+            if (ev.Selected < 0) { Say("This constellation has no events to wait for."); return false; }
+            goal.Subject = ev.GetItemMetadata(ev.Selected).AsString();
+            goal.SubjectName = ev.GetItemText(ev.Selected);
+        }
+        return true;
     }
 
     /// <summary>The lane new steps go to (1 when lanes are not shown).</summary>
@@ -1174,6 +1417,29 @@ public sealed class QueueWindow
             Say($"Added: {sale.Name}, {sale.Goal}.");
             return;
         }
+        if (Equipping)
+        {
+            if (_target.Selected is not { Enabled: true } gear || gear.Key == "") { Say("Choose what to equip first."); return; }
+            bool loadout = EquipIsLoadout;
+            bool stack = !loadout && _game != null && _game.Data.GetDataRegistryOutput<Item>().GetAllObjects().FirstOrDefault(i => i.Id == gear.Value.Id) is { } it
+                && it.Capabilities.TryGet<GamesByMalcs.Melvor2.Components.Equipment.EquipmentCapability>(out var cap) && cap.CanEquipQuantity;
+            var equip = new Step
+            {
+                Entity = Step.EquipEntity, TargetId = gear.Value.Id, Name = loadout ? $"Loadout: {gear.Text}" : $"Equip: {gear.Text}",
+                Amount = stack ? _amount.Value : 0, Subject = stack ? "stack" : "", Lane = NewLane,
+            };
+            Queue.Add(equip);
+            Say($"Added: {equip.Name}, {equip.Goal}.");
+            return;
+        }
+        if (Switching)
+        {
+            if (_target.Selected is not { Enabled: true } saved || saved.Key == "") { Say("Save a queue under \"Saved queues\" first, then choose it here."); return; }
+            var go = new Step { Entity = Step.SwitchEntity, TargetId = saved.Value.Id, Name = $"Go to saved queue: {saved.Value.Id}", Lane = NewLane };
+            Queue.Add(go);
+            Say($"Added: {go.Name}. When every step before it is over, the queue goes on with '{saved.Value.Id}'.");
+            return;
+        }
         if (_skillPick.Selected < 0 || _target.Selected is not { } chosen) { Say("Choose what to do first."); return; }
         GameEntity entity = _skills[_skillPick.Selected].Entity;
         Target target = chosen.Value;
@@ -1181,23 +1447,20 @@ public sealed class QueueWindow
         {
             Entity = entity.Id, TargetId = target.Id, Extra = target.Extra,
             Name = $"{entity.DisplayName.Text}: {target.Name}",
-            Until = (Until)_untilPick.Selected, Amount = _amount.Value, Lane = NewLane,
+            Until = Kind, Amount = _amount.Value, Lane = NewLane,
         };
         if (_mode.Visible && _modeId != "")
         {
             step.Mode = _mode.ButtonPressed ? _modeId : "";
             if (_mode.ButtonPressed) step.Name += $" ({_mode.Text})";
         }
-        if (step.Until is Until.Item or Until.ItemLeft or Until.Made or Until.Spent)
+        if (!ReadGoal(step.Until, step.Amount, _item, _levelPick, _nodePick, _eventPick, out Goal main)) return;
+        step.Subject = main.Subject;
+        step.SubjectName = main.SubjectName;
+        if (_orBox.Visible && _orBox.ButtonPressed)
         {
-            if (_item.Selected is not { } counted) { Say("Pick the item to count first."); return; }
-            step.Subject = counted.Value.Id;
-            step.SubjectName = counted.Value.DisplayName.GetPluralText(1);
-        }
-        else if (step.Until == Until.Level)
-        {
-            if (_levelPick.Selected < 0) return;
-            step.Subject = step.SubjectName = _levelSkills[_levelPick.Selected];
+            if (!ReadGoal(OrKind, _orAmount.Value, _orItem, _orLevel, _orNode, _orEvent, out Goal or)) return;
+            step.Or = or;
         }
         Queue.Add(step);
         Say($"Added: {step.Name}, {step.Goal}.");

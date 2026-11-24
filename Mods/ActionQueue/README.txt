@@ -1,4 +1,4 @@
-Action Queue 0.9.1  -  a mod for Melvor Idle 2
+Action Queue 0.10.0  -  a mod for Melvor Idle 2
 ==============================================
 
 Chains actions: do one thing until a goal is reached, then start the next. For example:
@@ -46,8 +46,19 @@ Open a character and press F6 (or pick it from the Mods button in the top bar; t
      (Smithing: Gold Bar -> Gold Bar). Type in the search box to count another item.
      "It has used up this many of an item" counts only what the step's own skill used
      (the game's "Ingredients Spent"); the item is filled in with what the recipe uses.
+     It also counts the food the step's food slot ate (Thieving, Agility, a fight) and, in a
+     fight, the runes your spells used and the arrows, bolts or other ammo you shot. Food
+     your preservation chance kept is not counted: only what really left the bank.
+     Astrology has two more goals (see ASTROLOGY).
+  2b. Tick "or" to give the step a second goal: a second row "or until ..." appears. The
+     step is over when either goal is reached, and its state says which one ended it.
+     For example: thieve the Bandit Chief until a Gold Topaz Ring is in the bank, or until
+     780 Salmon are used up. Both goals keep counting through pauses, "start over" and
+     closing the game.
   3. "Add step". Repeat for the next steps, then "Start the queue".
-  A step can also sell: choose "Sell from the bank" at the end of the skill list (see SELLING).
+  A step can also sell, equip, or go on with a saved queue: choose "Sell from the bank",
+  "Equip" or "Go to a saved queue" at the end of the skill list (see SELLING, EQUIP and
+  GO TO A SAVED QUEUE).
 While the queue runs, one line at the top of the screen shows the current step.
 Steps can be moved up and down at any time, also while the queue runs: a running step
 is not interrupted, and the new order decides what comes next.
@@ -137,6 +148,56 @@ Choose "Sell from the bank" at the end of the skill list, pick the item and how 
   - It also sells while the game computes the time you were away.
 
 
+EQUIP
+-----
+Choose "Equip" at the end of the skill list, then what to put on:
+  - The game's loadouts are at the top of the list: the step switches to that loadout
+    (its gear, food, prayers and spells), as the game's own loadout buttons do. A locked
+    loadout is skipped.
+  - Below them is every piece of gear, grouped by kind, with how many your bank holds.
+    You can also pick something you do not have yet: arrows an earlier step makes, say.
+  - A stack (arrows, bolts, javelins...) goes on whole, but for "keep": that many stay in
+    the bank (0 puts all of them on). It is added to what you already wear. Any other
+    piece of gear is simply put on, in a free slot of its kind if there is one.
+  - Nothing to put on (none in the bank, or it is already worn) simply ends the step.
+    Requirements you do not meet skip it with the reason; if the game does not put it on
+    (a bank too full to take back what comes off), it is skipped as well and says so.
+  - Like a sale, it waits for the steps before it, and nothing after it starts before it
+    is done. Gear is only changed while the game is open: while the game works out the
+    time you were away, the step waits ("waits for the game to be open").
+Example (start over at the end ON): fight the Golbins (the step ends when the arrows run
+out) -> Fletching: Bronze Arrows, make 500 more -> Equip: Bronze Arrows, keep 0 -> again.
+
+
+GO TO A SAVED QUEUE
+-------------------
+Choose "Go to a saved queue" at the end of the skill list and pick one of your saved
+queues. When every step before it is over (with lanes: every lane), the queue goes on
+with that saved queue, from its first step, as if you had loaded it. Put it last to chain
+queues: "Smithing day" -> "Fishing evening" -> back to "Smithing day".
+  - The steps on screen are kept the way loading always keeps them (a changed or unsaved
+    queue as "Unsaved queue (auto)").
+  - A name that no longer exists skips the step. Queues that only send each other back
+    and forth without anything being done stop after a few rounds, and say so.
+  - It also works while the game is closed. Share codes keep it (as a name: the other
+    player needs a saved queue with that name).
+
+
+ASTROLOGY
+---------
+With Astrology chosen, the goal list has two more entries:
+  - "node unlocks of this constellation are earned" [number] [minor/major]: minor counts
+    the node unlocks the constellation's Knowledge has earned (the ones you have already
+    clicked count too). Major counts the major unlocks those minor ones are worth, one
+    for every few, as the game gives them; you do not have to click the minor nodes for it.
+    Already earned: the step ends at once ("nothing to do").
+  - "an astrology event has been seen this many times" [number] [event]: the list holds
+    the events that constellation can show (also the ones inside its event tables). Only
+    the events seen after the step starts count. Tip: while one bonus event of the game is
+    waiting or active, the game does not roll another bonus event.
+  Both work with "or" too: "until 10 minor node unlocks are earned, or for 30 minutes".
+
+
 WHEN THE QUEUE WAITS OR ENDS
 ----------------------------
 At the bottom of the window: "When the queue waits or ends, do" [skill] [action].
@@ -168,7 +229,9 @@ Press "Saved queues" at the top of the window.
     of the new one.
   - If the queue on screen was never saved, or was changed, it is kept as
     "Unsaved queue (auto)" when you load another one. Nothing is lost by switching.
-  - "Copy share code" turns a queue into a short text (AQ1:...). Paste it in a chat.
+  - "Copy share code" turns a queue into a short text (AQ1:... or, when it uses an "or"
+    goal, an astrology goal, an Equip or a "Go to a saved queue" step, AQ2:...). Paste it in
+    a chat. A version older than 0.10 cannot read an AQ2 code and says so.
   - To use somebody's code: paste it into the box and press Import, then Load it.
     A code only holds names and numbers. Steps for things your game does not have are
     skipped, and so are steps you have not unlocked yet.
@@ -182,6 +245,14 @@ GOOD TO KNOW
   was at the game's last save. Fights are neither started nor ended in that time: such a
   step waits until the game is open. The other steps go on, also while a fight runs beside
   them with the Multitask mod (until 0.9.0 the whole queue stood still while any fight ran).
+  Good to know about that time:
+    - The game itself works out at most 24 hours (more with bonuses that raise the limit),
+      and only after a normal close (the game saves then).
+    - If the steps were changed after the game last saved, the queue does not carry on
+      after a restart: it waits for Start. The reason is written in queue-log.txt.
+    - With "start over at the end" ON, prefer "make this many more" / "this many times" /
+      "minutes" for steps that should take turns. "I own this many" is reached once, and a
+      round in which every step was already reached ends the queue.
 - It never bypasses the game's requirements. A step you are not allowed to do yet, or have
   no materials for, is marked "skipped" and the next one starts.
 - If you start something else by hand, the queue pauses instead of fighting you.

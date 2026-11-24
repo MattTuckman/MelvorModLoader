@@ -15,12 +15,22 @@ GEREKSINIM (Requirements):
 Melvor Mod Loader (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\ActionQueue-0.9.1.zip   (name: Action Queue, version 0.9.1)  -  0.9.0 dosyasini Archived yap
+MAIN FILE:  dist\ActionQueue-0.10.0.zip   (name: Action Queue, version 0.10.0)  -  0.9.1 dosyasini Archived yap (0.9.1 hic yayinlanmadiysa 0.9.0)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\sira-2-pencere.png (main image), sira-5-yan-yana.png, sira-3-plan.png, sira-4-kayitli.png, sira-1-ekran-seridi.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.10.0
+- New: a second goal for any step. Tick "or" and a row "or until ..." appears; the step ends when either goal is reached, and its state says which one did (asked for on Nexus, thank you!)
+- New: "Use up N" also counts the food the step's food slot ate (Thieving, Agility, a fight) and, in a fight, the runes and ammo used. Food your preservation chance kept is not counted. So "thieve until a Gold Topaz Ring is in the bank, or until 780 Salmon are used up" works
+- New: Astrology goals: "until N minor (or major) node unlocks are earned in this constellation" and "until an astrology event has been seen N times" (asked for on Nexus, thank you!)
+- New: "Go to a saved queue" step: when every step before it is over, the queue goes on with that saved queue. Chain queues, or loop between two (asked for on Nexus, thank you!)
+- New: "Equip" step: put on gear from the bank (arrows, bolts and other stacks with "keep N in the bank"), or switch to one of the game's loadouts. E.g. fight until out of arrows, fletch 500, equip them, fight again (asked for on Nexus, thank you!)
+- Safer while the game is closed: the queue never pauses itself with "you started something else" while the game works out the time you were away (right after a restart Multitask has not yet said which running action is its own), and it remembers how many actions Multitask runs at once. Together with 0.9.1's fix this answers "it stopped after the stone" (reported on Nexus, thank you!)
+- The queue diary (queue-log.txt) now says why a queue did not carry on after a restart (another save, or steps changed after the game last saved)
+- Share codes that use the new things start with AQ2: (older versions refuse them with a clear message instead of dropping parts)
+
 0.9.1
 - Fixed: out of ammo with "start over at the end" on, the fight step was started again and again, so the character stood in the fight taking hits. A fight you cannot attack in is no longer started ("skipped: out of ammo"); a fight as the idle action is stopped or not started either (reported on Nexus, thank you!)
 - Fixed: with Multitask, the queue going from one step to the next stopped everything, and Multitask started your own fight again from the beginning. With a free slot your fight now keeps going (reported on Nexus, thank you!)
@@ -102,14 +112,23 @@ Not a cheat: it only presses the buttons you would press, at the moment you woul
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Action Queue [b]0.9.1[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F6[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed).
+This is Action Queue [b]0.10.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character and press [b]F6[/b] (or use the [b]Mods[/b] button in the top bar, where the key can be changed).
+
+[size=5][b]New in 0.10.0[/b][/size]
+[list]
+[*][b]"Or" goals:[/b] tick "or" and give a step a second goal. It ends when either is reached: thieve the Bandit Chief until a Gold Topaz Ring is in the bank, [i]or[/i] until 780 Salmon are used up. "Use up N" now also counts food eaten (only what really left the bank), runes and ammo.
+[*][b]Astrology goals:[/b] until N minor or major node unlocks are earned in the constellation, or until an astrology event has been seen N times.
+[*][b]Equip step:[/b] put on arrows (keep N in the bank), a ring, a weapon, or switch to one of the game's loadouts. Fight until out of arrows, fletch 500, equip them, fight again, with "start over" on. Gear is only changed while the game is open.
+[*][b]Go to a saved queue:[/b] the last step of "Smithing day" can be "go to Fishing evening", and that one can go back. Works while the game is closed too.
+[*][b]Safer while the game is closed:[/b] with a fight beside the queue (Multitask) the queue keeps going through the time you were away, also right after a restart.
+[/list]
 
 [size=5][b]New in 0.8.0[/b][/size]
 [list]
 [*][b]Lanes:[/b] with Multitask's slots on, give each step a lane. Every lane does its own steps in order, and the lanes run side by side: cut and burn logs in lane 1, fish and cook in lane 2. With "start over" on, a short lane starts again by itself instead of waiting for the long one. A step still waits for what another lane is making.
 [*][b]Sell step:[/b] "Sell from the bank" at the bottom of the skill list. Pick the item and how many to keep; when the queue gets there it sells the rest. The planner adds one for you with "then sell them". Locked stacks are never sold.
 [*][b]No impossible plans:[/b] the planner picks a recipe whose whole chain you can make (Ruby Bolts via Iron Bars while Ironsteel Bars are locked). A material you cannot make yet goes to the "bring yourself" list, and an item you cannot make at all says why ("needs Fletching Level 45").
-[*][b]Works while the game is closed:[/b] the queue moves on to its next steps during offline progress, and after a restart it carries on where it was.
+[*][b]Works while the game is closed:[/b] the queue moves on to its next steps during offline progress, and after a restart it carries on where it was. The game itself works out at most 24 hours. With "start over" on, use "make N more", "N times" or minutes for steps that should take turns: "until I own N" is reached once.
 [/list]
 
 [size=5][b]An example[/b][/size]
@@ -163,7 +182,7 @@ Plans cover Woodcutting, Mining, Fishing, Hunting, Smithing, Cooking, Crafting, 
 [*][b]Keep several queues.[/b] "Smithing day", "Fishing loop", "Combat grind": save each under a name.
 [*][b]Switch in one click.[/b] The list at the top of the window loads a saved queue. A running queue keeps running, from the first step of the new one.
 [*][b]Nothing is lost by switching.[/b] A queue you never saved, or changed, is kept as "Unsaved queue (auto)".
-[*][b]Share a queue.[/b] "Copy share code" turns it into a short text like [font=Courier New]AQ1:q1byU7JSc...[/font]. Paste it in Discord. Anyone can paste it into the box and press Import.
+[*][b]Share a queue.[/b] "Copy share code" turns it into a short text like [font=Courier New]AQ1:q1byU7JSc...[/font] (AQ2:... when it uses 0.10 things). Paste it in Discord. Anyone can paste it into the box and press Import.
 [*][b]Codes are safe to take.[/b] A code holds only names and numbers. Steps for things your game does not have, or that you have not unlocked, are simply skipped.
 [/list]
 

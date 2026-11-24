@@ -18,17 +18,57 @@ using GamesByMalcs.Melvor2.Entities.Hunting;
 using GamesByMalcs.Melvor2.EventBus;
 using GamesByMalcs.Melvor2.Saves;
 using GamesByMalcs.Melvor2.Components.ItemSales;
+using GamesByMalcs.Melvor2.Components.CombatFood;
+using GamesByMalcs.Melvor2.Entities.Astrology;
 
 namespace ActionQueue;
 
 /// <summary>When a step is over.</summary>
-public enum Until { Stops, Item, Level, Minutes, ItemLeft, Made, Times, Spent }   // new kinds go at the end: saved queues store the number
+public enum Until { Stops, Item, Level, Minutes, ItemLeft, Made, Times, Spent, Nodes, Event }   // new kinds go at the end: saved queues store the number
+
+/// <summary>
+/// One goal of a step and what it counts from. A step is a goal itself; <see cref="Step.Or"/> is its second one.
+/// (Internal: the counters are the runner's business, not the window's or the saved file's.)
+/// </summary>
+internal interface IGoal
+{
+    Until Until { get; }
+    double Amount { get; }
+    string Subject { get; }
+    string SubjectName { get; }
+    /// <summary>"Make N more" / "N times" / "use up N" / "seen N times": what was counted before a pause.</summary>
+    long CountBefore { get; set; }
+    long GainedAtStart { get; set; }
+    long DoneAtStart { get; set; }
+    long SpentAtStart { get; set; }
+    long SeenAtStart { get; set; }
+    int OwnedAtStart { get; set; }
+}
+
+/// <summary>A step's second goal ("... or until ..."): the step is over when either one is reached.</summary>
+public sealed class Goal : IGoal
+{
+    public Until Until { get; set; }
+    public double Amount { get; set; }
+    public string Subject { get; set; } = "";
+    public string SubjectName { get; set; } = "";
+    long IGoal.CountBefore { get; set; }
+    long IGoal.GainedAtStart { get; set; }
+    long IGoal.DoneAtStart { get; set; }
+    long IGoal.SpentAtStart { get; set; }
+    long IGoal.SeenAtStart { get; set; }
+    int IGoal.OwnedAtStart { get; set; }
+
+    public Goal Copy() => new() { Until = Until, Amount = Amount, Subject = Subject, SubjectName = SubjectName };
+    public bool SameAs(Goal? other) => other != null && other.Until == Until && other.Amount == Amount && other.Subject == Subject;
+    public string Text => Step.GoalText(Until, Amount, SubjectName);
+}
 
 /// <summary>Idle: not started yet. Waiting: its turn has come but it cannot run right now. Done: over (also when skipped).</summary>
 public enum RunState { Idle, Running, Waiting, Done }
 
 /// <summary>One line of the queue: do this, until that.</summary>
-public sealed class Step
+public sealed class Step : IGoal
 {
     public string Entity { get; set; } = "";      // the skill, e.g. MelvorBase:Woodcutting
     public string TargetId { get; set; } = "";    // the tree, recipe, monster...
@@ -45,31 +85,60 @@ public sealed class Step
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Mode { get; set; }
 
+    /// <summary>A second goal: the step is also over when this one is reached (null: only the goal above).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Goal? Or { get; set; }
+
     /// <summary>A "sell" step is not an action: TargetId is the item, Amount how many to keep in the bank (0: sell all).</summary>
     public const string SellEntity = "ActionQueue:Sell";
     [JsonIgnore] public bool IsSell => Entity == SellEntity;
+    /// <summary>An "equip" step: TargetId is an item from the bank (Amount: how many of a stack to keep in the bank), or
+    /// <see cref="LoadoutPrefix"/> + a loadout id to switch to that loadout.</summary>
+    public const string EquipEntity = "ActionQueue:Equip";
+    public const string LoadoutPrefix = "loadout:";
+    [JsonIgnore] public bool IsEquip => Entity == EquipEntity;
+    /// <summary>A "go to a saved queue" step: TargetId is the saved queue's name. The queue goes on with that one.</summary>
+    public const string SwitchEntity = "ActionQueue:Switch";
+    [JsonIgnore] public bool IsSwitch => Entity == SwitchEntity;
+    /// <summary>A step that is not an action: it takes no place, is over at once, and waits for the steps before it.</summary>
+    [JsonIgnore] public bool IsInstant => IsSell || IsEquip || IsSwitch;
 
     /// <summary>What happened to this step in the current run (not saved).</summary>
     public string State = "";
     /// <summary>Where the step stands in the current run (not saved).</summary>
     public RunState Run;
     internal double Seconds, RetryAt, GrewAt;
-    internal long Pile, GainedAtStart, DoneAtStart, SpentAtStart;
+    internal long Pile, GainedAtStart, DoneAtStart, SpentAtStart, SeenAtStart;
     /// <summary>"Make N more" / "N times" / "use up N": what was counted before a pause, so carrying on does not start from zero.</summary>
     internal long CountBefore;
     internal int OwnedAtStart;
     internal bool Ran, CountGains;
     internal string Following = "";   // a slayer step: the task monster it is fighting at the moment
 
-    public string Goal => IsSell ? (Amount <= 0 ? "sell all of them" : $"sell all but {Amount:N0}") : Until switch
+    long IGoal.CountBefore { get => CountBefore; set => CountBefore = value; }
+    long IGoal.GainedAtStart { get => GainedAtStart; set => GainedAtStart = value; }
+    long IGoal.DoneAtStart { get => DoneAtStart; set => DoneAtStart = value; }
+    long IGoal.SpentAtStart { get => SpentAtStart; set => SpentAtStart = value; }
+    long IGoal.SeenAtStart { get => SeenAtStart; set => SeenAtStart = value; }
+    int IGoal.OwnedAtStart { get => OwnedAtStart; set => OwnedAtStart = value; }
+
+    public string Goal => IsSell ? (Amount <= 0 ? "sell all of them" : $"sell all but {Amount:N0}")
+        : IsSwitch ? "and go on with it"
+        : IsEquip ? (TargetId.StartsWith(LoadoutPrefix, StringComparison.Ordinal) ? "switch to this loadout" : Subject != "stack" ? "put it on"
+                     : Amount <= 0 ? "put all of them on" : $"put them on, keep {Amount:N0} in the bank")
+        : GoalText(Until, Amount, SubjectName) + (Or == null ? "" : ", or " + Or.Text);
+
+    public static string GoalText(Until until, double amount, string subjectName) => until switch
     {
-        Until.Item => $"until {Amount:N0} {SubjectName} in the bank",
-        Until.Made => $"until {Amount:N0} more {SubjectName} are made",
-        Until.ItemLeft => Amount <= 0 ? $"until no {SubjectName} is left in the bank" : $"until only {Amount:N0} {SubjectName} are left in the bank",
-        Until.Level => $"until {SubjectName} level {Amount:0}",
-        Until.Minutes => $"for {Amount:0.#} minute(s)",
-        Until.Times => Amount == 1 ? "once" : $"{Amount:N0} times",
-        Until.Spent => $"until {Amount:N0} {SubjectName} are used up",
+        Until.Item => $"until {amount:N0} {subjectName} in the bank",
+        Until.Made => $"until {amount:N0} more {subjectName} are made",
+        Until.ItemLeft => amount <= 0 ? $"until no {subjectName} is left in the bank" : $"until only {amount:N0} {subjectName} are left in the bank",
+        Until.Level => $"until {subjectName} level {amount:0}",
+        Until.Minutes => $"for {amount:0.#} minute(s)",
+        Until.Times => amount == 1 ? "once" : $"{amount:N0} times",
+        Until.Spent => $"until {amount:N0} {subjectName} are used up",
+        Until.Nodes => $"until {amount:N0} {subjectName} node unlocks are earned",
+        Until.Event => amount == 1 ? $"until {subjectName} is seen" : $"until {subjectName} is seen {amount:N0} times",
         _ => "until it stops by itself",
     };
 }
@@ -124,6 +193,9 @@ public static class Queue
         public bool Resume { get; set; }
         public bool RanThisRound { get; set; }
         public bool IdleOwned { get; set; }
+        /// <summary>How many actions Multitask let run at once when the game saved (it has not said so yet while the
+        /// game computes the closed time right after a restart).</summary>
+        public int Capacity { get; set; }
         public List<StepSnapshot> Progress { get; set; } = new();
     }
 
@@ -139,6 +211,9 @@ public static class Queue
         public long OwnedBase { get; set; }
         public bool CountGains { get; set; }
         public string Following { get; set; } = "";
+        /// <summary>The same two numbers for the step's second goal ("or until ...").</summary>
+        public long OrCount { get; set; }
+        public long OrOwnedBase { get; set; }
     }
 
     /// <summary>Where the queue that was on screen goes when another one is loaded over unsaved changes.</summary>
@@ -207,6 +282,8 @@ public static class Queue
     /// touched: it is told later, on the main thread.
     /// </summary>
     static volatile bool s_changedLater;
+    /// <summary>The steps changed while the game computed offline progress: written to the file on the main thread.</summary>
+    static volatile bool s_saveLater;
     static void RaiseChanged()
     {
         if (!Targets.OnMainThread) { s_changedLater = true; return; }
@@ -233,7 +310,10 @@ public static class Queue
     /// the game computes the time a character was closed (right after opening it), that note is still the one from
     /// before. The game itself has then loaded what ran (a fight and the queue's mining: two), which is proof enough.
     /// </summary>
-    static int Capacity() => Math.Max(Targets.MultitaskCapacity(), Targets.OnMainThread ? 1 : s_running);
+    static int Capacity() => Math.Max(Targets.MultitaskCapacity(), Targets.OnMainThread ? 1 : Math.Max(s_running, s_savedCapacity));
+
+    /// <summary>Multitask's room as it was when the game last saved (see <see cref="Snapshot.Capacity"/>).</summary>
+    static int s_savedCapacity;
 
     /// <summary>True for a fight while the game computes offline progress: the queue must neither start nor end it then.</summary>
     static bool HandsOff(ActionComponent action) => action.Entity.Id == CombatId && !Targets.OnMainThread;
@@ -359,7 +439,8 @@ public static class Queue
         catch { return ""; }
     }
 
-    static string Signature(bool lanes = true) => string.Join("\n", Steps.Select(s => $"{s.Entity}|{s.TargetId}|{s.Extra}|{s.Until}|{s.Amount}|{s.Subject}" + (lanes ? $"|{LaneOf(s)}" : "")));
+    static string Signature(bool lanes = true) => string.Join("\n", Steps.Select(s => $"{s.Entity}|{s.TargetId}|{s.Extra}|{s.Until}|{s.Amount}|{s.Subject}"
+        + (s.Or == null ? "" : $"|or {s.Or.Until}|{s.Or.Amount}|{s.Or.Subject}") + (lanes ? $"|{LaneOf(s)}" : "")));
 
     static Snapshot TakeSnapshot() => new()
     {
@@ -369,6 +450,7 @@ public static class Queue
         Resume = s_resume,
         RanThisRound = s_ranThisRound,
         IdleOwned = s_idleOwned,
+        Capacity = Targets.MultitaskCapacity(),
         Progress = Steps.Select(s => new StepSnapshot
         {
             Run = s.Run, State = s.State, Ran = s.Ran, Seconds = s.Seconds,
@@ -376,6 +458,8 @@ public static class Queue
             Count = Running && s.Ran && s.Run is RunState.Running or RunState.Waiting ? Counter(s) : s.CountBefore,
             OwnedBase = s.OwnedAtStart + (s.CountGains && s.Ran ? Gained(s) - s.GainedAtStart : 0),
             CountGains = s.CountGains, Following = s.Following,
+            OrCount = s.Or is IGoal o ? (Running && s.Ran && s.Run is RunState.Running or RunState.Waiting ? Counter(s, o) : o.CountBefore) : 0,
+            OrOwnedBase = s.Or is IGoal og ? og.OwnedAtStart + (s.CountGains && s.Ran ? Gained(og) - og.GainedAtStart : 0) : 0,
         }).ToList(),
     };
 
@@ -387,7 +471,17 @@ public static class Queue
     {
         Restored = "";
         if (snap == null || !snap.Running && !snap.Resume) return;
-        if (snap.SaveId != s_saveId || s_saveId == "" || snap.Steps != Signature() && (LaneMode || snap.Steps != Signature(lanes: false)) || snap.Progress.Count != Steps.Count) return;
+        // Not this save, or the steps were edited after the game last saved: nothing to carry on (said in the diary,
+        // so "it did not go on while closed" can be answered).
+        string? why = s_saveId == "" ? "the game did not say which save is open"
+            : snap.SaveId != s_saveId ? "the queue was last running in another save"
+            : snap.Progress.Count != Steps.Count || snap.Steps != Signature() && (LaneMode || snap.Steps != Signature(lanes: false)) ? "the steps were changed after the game last saved"
+            : null;
+        if (why != null)
+        {
+            Trace($"opened again: does not carry on ({why}); the queue waits for Start");
+            return;
+        }
         for (int i = 0; i < Steps.Count; i++)
         {
             Step s = Steps[i];
@@ -398,12 +492,21 @@ public static class Queue
             s.Seconds = p.Seconds;
             s.CountBefore = p.Count;
             s.OwnedAtStart = (int)Math.Min(int.MaxValue, p.OwnedBase);
+            if (s.Or is IGoal or)
+            {
+                or.CountBefore = p.OrCount;
+                or.OwnedAtStart = (int)Math.Min(int.MaxValue, p.OrOwnedBase);
+            }
             s.CountGains = p.CountGains;
             s.Following = p.Following;
             // the counters start from nothing in a new session: what came before is in CountBefore / OwnedAtStart
-            s.GainedAtStart = Gained(s);
-            s.DoneAtStart = DoneBy(s.Entity);
-            s.SpentAtStart = SpentOf(s);
+            foreach (IGoal g in Goals(s))
+            {
+                g.GainedAtStart = Gained(g);
+                g.DoneAtStart = DoneBy(s.Entity);
+                g.SpentAtStart = SpentOf(s, g);
+                g.SeenAtStart = SeenOf(s, g);
+            }
             s.RetryAt = 0;
             s.GrewAt = s_clock;
             s.Pile = 0;
@@ -414,6 +517,7 @@ public static class Queue
         }
         Running = snap.Running;
         s_resume = snap.Resume;
+        s_savedCapacity = snap.Capacity;
         s_ranThisRound = snap.RanThisRound;
         s_laneRan.Clear();
         foreach (Step s in Steps.Where(s => s.Ran)) s_laneRan.Add(LaneOf(s));
@@ -428,6 +532,9 @@ public static class Queue
     static void Save(bool withRun = false)
     {
         if (s_character == "") return;
+        // On the game's own thread (offline progress) the file is written later, on the main thread.
+        if (!Targets.OnMainThread && !withRun) { s_saveLater = true; return; }
+        s_saveLater = false;
         try
         {
             // Only this character's entry is replaced in what is on disk right now.
@@ -709,11 +816,12 @@ public static class Queue
     static Step Copy(Step s) => new()
     {
         Entity = s.Entity, TargetId = s.TargetId, Extra = s.Extra, Name = s.Name,
-        Until = s.Until, Amount = s.Amount, Subject = s.Subject, SubjectName = s.SubjectName, Lane = s.Lane, Mode = s.Mode,
+        Until = s.Until, Amount = s.Amount, Subject = s.Subject, SubjectName = s.SubjectName, Lane = s.Lane, Mode = s.Mode, Or = s.Or?.Copy(),
     };
 
     static bool Same(Step a, Step b) => a.Entity == b.Entity && a.TargetId == b.TargetId && a.Extra == b.Extra
-        && a.Until == b.Until && a.Amount == b.Amount && a.Subject == b.Subject && LaneOf(a) == LaneOf(b) && a.Mode == b.Mode;
+        && a.Until == b.Until && a.Amount == b.Amount && a.Subject == b.Subject && LaneOf(a) == LaneOf(b) && a.Mode == b.Mode
+        && (a.Or == null ? b.Or == null : a.Or.SameAs(b.Or));
 
     /// <summary>True when the steps on screen differ from the saved queue they came from.</summary>
     public static bool Modified =>
@@ -801,6 +909,8 @@ public static class Queue
             foreach (Step step in steps)
             {
                 if (step.IsSell) { if (s_items.ContainsKey(step.TargetId)) known++; continue; }
+                if (step.IsSwitch) { known++; continue; }   // (a name: checked when its turn comes)
+                if (step.IsEquip) { if (step.TargetId.StartsWith(Step.LoadoutPrefix, StringComparison.Ordinal) || s_items.ContainsKey(step.TargetId)) known++; continue; }
                 ActionComponent? action = Targets.Find(s_game, step.Entity);
                 if (action != null && Targets.All(action).Any(t => t.Id == step.TargetId && t.Extra == step.Extra)) known++;
             }
@@ -822,7 +932,7 @@ public static class Queue
         foreach (Step s in Steps)
         {
             if (resume && s.Run == RunState.Done) continue;
-            if (s.State != "paused") s.CountBefore = 0;           // "make N more" / "N times" carry on after a pause, else count afresh
+            if (s.State != "paused") ClearCounts(s);              // "make N more" / "N times" carry on after a pause, else count afresh
             s.State = "";
             s.Run = RunState.Idle;
             s.Ran = false;
@@ -877,7 +987,7 @@ public static class Queue
         foreach (Step s in Steps.Where(s => s.Run is RunState.Running or RunState.Waiting))
         {
             s.State = "paused";
-            if (s.Ran) s.CountBefore = Counter(s);   // keep what "make N more" / "N times" has already counted
+            if (s.Ran) KeepCounts(s);   // keep what "make N more" / "N times" has already counted
         }
         // Like the steps' own actions, an idle action that runs keeps running: the player decides from here.
         // With "also when the queue is not running" it stays the queue's own, and goes on as such.
@@ -916,6 +1026,7 @@ public static class Queue
         if (Targets.OnMainThread) { Targets.PrimeMeta(); s_toldFightOffline = false; s_running = game.ActionManager.ActiveActions.Count; }
         else s_running = Math.Max(s_running, game.ActionManager.ActiveActions.Count);
         if (s_changedLater && Targets.OnMainThread) RaiseChanged();
+        if (s_saveLater && Targets.OnMainThread) Save();
         s_clock += seconds;
         if (!Running)
         {
@@ -951,12 +1062,13 @@ public static class Queue
         // In lanes, with "start over" on, every lane starts over by itself as soon as it is through (a short lane
         // does not wait for a long one); a lane that did nothing in its round stays finished. Done before the
         // scheduling, so a lane that makes what another lane uses is never seen "finished" for a moment.
-        if (Running && Repeat && LaneMode)
+        // (Not while a "go to a saved queue" step waits for the other lanes to get through: it would wait for ever.)
+        if (Running && Repeat && LaneMode && !Steps.Any(s => s.IsSwitch && s.Run != RunState.Done && Head(LaneOf(s)) == s))
             foreach (int lane in Steps.Select(LaneOf).Distinct().ToList())
             {
                 var mine = Steps.Where(s => LaneOf(s) == lane).ToList();
                 if (!mine.All(s => s.Run == RunState.Done) || !s_laneRan.Remove(lane)) continue;
-                foreach (Step s in mine) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = s.CountBefore = 0; }
+                foreach (Step s in mine) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = 0; ClearCounts(s); }
                 Trace($"lane {lane} starts over");
             }
 
@@ -967,15 +1079,21 @@ public static class Queue
             int lanes = Lanes;
             bool laneMode = LaneMode;
             int Busy() => laneMode ? Steps.Count(s => s.Run == RunState.Running)
-                                   : Steps.Count(s => !s.IsSell && s.Run is RunState.Running or RunState.Waiting);
+                                   : Steps.Count(s => !s.IsInstant && s.Run is RunState.Running or RunState.Waiting);
             foreach (Step step in Steps.ToList())
             {
                 if (!Running) break;
                 if (step.Run == RunState.Done || step.Run == RunState.Running) continue;
                 if (laneMode && Head(LaneOf(step)) != step) continue;   // a lane does its steps one after another
-                // Selling takes no place and is over at once; it only waits for what comes before it.
-                if (step.IsSell) { Guard(step, () => Begin(game, step)); continue; }
-                if (!laneMode && Steps.TakeWhile(s => s != step).Any(s => s.IsSell && s.Run != RunState.Done)) continue;   // nothing passes a sale
+                // Selling, equipping and going to another saved queue take no place and are over at once; they only
+                // wait for what comes before them.
+                if (step.IsInstant)
+                {
+                    Guard(step, () => Begin(game, step));
+                    if (s_switchTo != null) break;   // the queue is being replaced: nothing else of the old one starts
+                    continue;
+                }
+                if (!laneMode && Steps.TakeWhile(s => s != step).Any(s => s.IsInstant && s.Run != RunState.Done)) continue;   // nothing passes them
                 // A skill does one thing at a time. In lanes only a running step holds its skill (starting would stop it).
                 bool skillTaken = laneMode && Steps.Any(s => s != step && s.Run == RunState.Running && s.Entity == step.Entity);
                 if (step.Run == RunState.Waiting)
@@ -990,13 +1108,24 @@ public static class Queue
             }
         }
 
+        // A "go to a saved queue" step came up: the queue is replaced now, between two rounds of looking at it.
+        if (s_switchTo != null)
+        {
+            string to = s_switchTo;
+            s_switchTo = null;
+            SwitchNow(to);
+            Publish();
+            RaiseChanged();
+            return;
+        }
+
         // 3. All done?
         if (Running && Steps.All(s => s.Run == RunState.Done))
         {
             if (Repeat && s_ranThisRound && !LaneMode)
             {
                 s_ranThisRound = false;
-                foreach (Step s in Steps) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = s.CountBefore = 0; }
+                foreach (Step s in Steps) { s.State = ""; s.Run = RunState.Idle; s.Ran = false; s.Seconds = s.RetryAt = s.GrewAt = 0; s.Pile = 0; ClearCounts(s); }
             }
             else
             {
@@ -1051,7 +1180,7 @@ public static class Queue
         if (needs.Count == 0) return false;
         foreach (Step other in Steps)
         {
-            if (other.Run == RunState.Done || other.IsSell || LaneOf(other) == LaneOf(step)) continue;
+            if (other.Run == RunState.Done || other.IsInstant || LaneOf(other) == LaneOf(step)) continue;
             if (Targets.Find(game, other.Entity) is { } a && Targets.Product(a, new Target(other.TargetId, other.Name, other.Extra)) is { } made && needs.Contains(made.Id))
                 return true;
         }
@@ -1365,6 +1494,8 @@ public static class Queue
     static void Begin(Game game, Step step)
     {
         if (step.IsSell) { Sell(game, step); return; }
+        if (step.IsEquip) { Equip(game, step); return; }
+        if (step.IsSwitch) { SwitchTo(game, step); return; }
         // Off the main thread (offline progress) a fight is neither started nor ended by the queue: the game's music
         // player and its notice would react to it right there. Such a step waits until the game is back.
         if (!Targets.OnMainThread && step.Entity == CombatId)
@@ -1382,14 +1513,15 @@ public static class Queue
             End(step, "skipped: " + cannot);
             return;
         }
-        if (!step.Ran && step.Until is Until.Item or Until.Level or Until.ItemLeft && Reached(game, step))
+        if (!step.Ran && Goals(step).FirstOrDefault(g => ReadsTheGame(g) && Reached(game, step, g)) is { } already)
         {
             // Not needed: say what was found, so "it never mined" explains itself.
-            End(step, step.Until switch
+            End(step, already.Until switch
             {
-                Until.Item => $"done: the bank already holds {Owned(game, step):N0} {step.SubjectName}, nothing to do",
-                Until.ItemLeft => $"done: already only {Owned(game, step):N0} {step.SubjectName} left, nothing to do",
-                _ => $"done: {step.SubjectName} is already level {Level(game, step)}, nothing to do",
+                Until.Item => $"done: the bank already holds {Owned(game, already):N0} {already.SubjectName}, nothing to do",
+                Until.ItemLeft => $"done: already only {Owned(game, already):N0} {already.SubjectName} left, nothing to do",
+                Until.Nodes => $"done: {Nodes(game, step, already):N0} {already.SubjectName} node unlocks are already earned (of {MostNodes(game, step.TargetId, already.Subject == "major"):N0}), nothing to do",
+                _ => $"done: {already.SubjectName} is already level {Level(game, already)}, nothing to do",
             });
             return;
         }
@@ -1442,10 +1574,7 @@ public static class Queue
         if (!step.Ran)
         {
             step.Seconds = 0;
-            step.OwnedAtStart = Owned(game, step);
-            step.GainedAtStart = Gained(step);
-            step.DoneAtStart = DoneBy(step.Entity);
-            step.SpentAtStart = SpentOf(step);
+            MarkStart(game, step);
             step.CountGains = Lanes > 1;
         }
         step.Ran = true;
@@ -1486,6 +1615,100 @@ public static class Queue
         End(step, sold > 0 ? $"done: sold {sold:N0} for {paid:N0} {currency}" : "done: the game sold nothing");
     }
 
+    /// <summary>
+    /// An "equip" step: once what comes before it is over, puts an item from the bank on (through the game's own
+    /// equip code, as the bank's Equip button does) or switches to one of the game's loadouts. A stack (arrows,
+    /// bolts...) goes on whole, but for the number to keep in the bank.
+    /// </summary>
+    static void Equip(Game game, Step step)
+    {
+        if (EarlierAtWork(step)) { Wait(step, "waiting: for the steps before it to finish"); return; }
+        // Gear (and a loadout's food, prayers and spells) is only changed while the game is open, like a fight.
+        if (!Targets.OnMainThread)
+        {
+            const string later = "waits for the game to be open (equipment)";
+            if (step.State != later) { step.Run = RunState.Waiting; step.State = later; Trace($"{Number(step)}: {later}"); }
+            return;
+        }
+        if (!game.Entities.TryGetObjectById(CombatId, out GameEntity? e) || e is not CombatEntity combat) { End(step, "skipped: this game has no equipment"); return; }
+        if (step.TargetId.StartsWith(Step.LoadoutPrefix, StringComparison.Ordinal))
+        {
+            string id = step.TargetId[Step.LoadoutPrefix.Length..];
+            var loadout = combat.Loadouts.ActiveLoadouts.Values.FirstOrDefault(l => l.Data.Id == id);
+            if (loadout == null) { End(step, "skipped: this loadout is not in the game"); return; }
+            if (!loadout.IsUnlocked) { End(step, $"skipped: the loadout '{loadout.Name}' is locked"); return; }
+            if (combat.Loadouts.CurrentLoadout == loadout) { End(step, $"done: '{loadout.Name}' is already in use"); return; }
+            combat.Loadouts.SwapToLoadout(loadout.Data);
+            bool swapped = combat.Loadouts.CurrentLoadout == loadout;
+            if (swapped) { step.Ran = true; s_ranThisRound = true; s_laneRan.Add(LaneOf(step)); }
+            End(step, swapped ? $"done: switched to '{loadout.Name}'" : "skipped: the game did not switch the loadout");
+            return;
+        }
+        if (!s_items.TryGetValue(step.TargetId, out Item? item)) { End(step, "skipped: this item is not in the game"); return; }
+        string name = item.DisplayName.GetPluralText(2);
+        if (!item.Capabilities.TryGet<GamesByMalcs.Melvor2.Components.Equipment.EquipmentCapability>(out var equip)) { End(step, $"skipped: {name} cannot be equipped"); return; }
+        int have = Bank(game)?.Inventory.GetQuantity(item) ?? 0;
+        bool stack = equip.CanEquipQuantity;
+        if (!stack && combat.Equipment.IsItemEquipped(item)) { End(step, $"done: {item.DisplayName.GetPluralText(1)} is already equipped"); return; }
+        long keep = (long)Math.Max(0, Math.Floor(step.Amount));
+        int quantity = stack ? (int)Math.Max(0, have - keep) : Math.Min(1, have);
+        if (quantity <= 0) { End(step, have <= 0 ? $"skipped: no {name} in the bank" : $"done: nothing to equip (the bank holds {have:N0}, {keep:N0} are kept)"); return; }
+        if (!equip.Requirements.AreMet) { End(step, $"skipped: {name} need {Targets.Missing(equip.Requirements)}"); return; }
+        var slots = combat.Equipment.GetAvailableSlotsForItem(item);
+        if (slots.Count == 0) { End(step, $"skipped: there is no free slot for {name}"); return; }
+        // A stack that is already on is topped up in its own slot; otherwise an empty slot of its kind first (a second ring).
+        var slot = slots.FirstOrDefault(a => !a.Slot.IsEmpty && a.Slot.Equipped.Item == item) ?? slots.FirstOrDefault(a => a.Slot.IsEmpty) ?? slots[0];
+        int before = combat.Equipment.GetEquippedQuantity(item);
+        combat.ItemEquipping.EquipItem(item, quantity, slot.Slot.Slot);
+        int after = combat.Equipment.GetEquippedQuantity(item);
+        if (after > before) { step.Ran = true; s_ranThisRound = true; s_laneRan.Add(LaneOf(step)); }
+        End(step, after > before ? (stack ? $"done: equipped {after - before:N0} {name} ({after:N0} on now)" : $"done: equipped {item.DisplayName.GetPluralText(1)}")
+                                 : $"skipped: the game did not equip {name}");
+    }
+
+    /// <summary>The saved queue a "go to a saved queue" step chose this round (carried out after the round, see Tick).</summary>
+    static string? s_switchTo;
+    /// <summary>Switches in a row in which the queue did nothing at all: queues that only send each other back and forth.</summary>
+    static int s_emptySwitches;
+
+    /// <summary>
+    /// A "go to a saved queue" step: once every step before it is over (in lanes: every other lane is through), the
+    /// queue goes on with the saved queue it names, from that queue's first step.
+    /// </summary>
+    static void SwitchTo(Game game, Step step)
+    {
+        if (EarlierAtWork(step)) { Wait(step, "waiting: for the steps before it to finish"); return; }
+        // In lanes: every other lane is through first (also a lane whose steps have not started yet).
+        if (LaneMode && Steps.Any(s => s != step && s.Run != RunState.Done))
+        {
+            Wait(step, "waiting: for the other lanes to finish");
+            return;
+        }
+        if (GetPreset(step.TargetId) == null || string.Equals(step.TargetId, AutoName, StringComparison.OrdinalIgnoreCase))
+        {
+            End(step, $"skipped: there is no saved queue called '{step.TargetId}'");
+            return;
+        }
+        End(step, $"done: going on with '{step.TargetId}'");
+        s_switchTo = step.TargetId;
+    }
+
+    static void SwitchNow(string name)
+    {
+        // Saved queues that only send each other round (A goes to B, B goes back to A) with nothing done in between.
+        s_emptySwitches = s_ranThisRound ? 0 : s_emptySwitches + 1;
+        if (s_emptySwitches >= 3)
+        {
+            s_emptySwitches = 0;
+            Finish($"The queue stopped: the saved queues go to each other without doing anything ('{name}').");
+            return;
+        }
+        string from = Name == "" ? "the queue" : $"'{Name}'";
+        if (!LoadPreset(name, out string message)) { Finish(message); return; }
+        Note = $"{from} went on with the saved queue '{Name}'.";
+        Trace($"went on with the saved queue '{Name}' ({Steps.Count} step(s)): {message}");
+    }
+
     static void Watch(Game game, Step step, double seconds)
     {
         ActionComponent? action = Targets.Find(game, step.Entity);
@@ -1497,12 +1720,14 @@ public static class Queue
         {
             if (s_died) { s_died = false; Pause("Your character died, so the queue is paused."); return; }
             // It stopped just as the goal was reached (the last materials made the last of it): that is a finish.
-            if (Reached(game, step)) { End(step, "done"); return; }
+            if (Reached(game, step)) { End(step, DoneText(game, step)); return; }
             // Did the player start something else? Actions kept running by Multitask, and the queue's own
             // other steps, do not count.
             ActionComponent? main = Targets.Main(game);
             bool idleOfOurs = main != null && s_idleOwned && Idle != null && main.Entity.Id == Idle.Entity && Targets.IsDoing(main, IdleTarget(Idle));
-            if (main != null && !idleOfOurs && !Steps.Any(s => s.Run == RunState.Running && s.Entity == main.Entity.Id))
+            // (Only while the game is open: while it computes the time it was closed nobody starts anything by hand,
+            // and right after a restart Multitask has not said yet which of the running actions are its own.)
+            if (Targets.OnMainThread && main != null && !idleOfOurs && !Steps.Any(s => s.Run == RunState.Running && s.Entity == main.Entity.Id))
             {
                 Pause("You started something else, so the queue is paused.");
                 return;
@@ -1534,7 +1759,8 @@ public static class Queue
                 else End(step, "done: " + problem);
                 return;
             }
-            Pause("You changed what this skill is doing, so the queue is paused.");
+            // Offline it is not the player: the step is looked at again when the game is back.
+            if (Targets.OnMainThread) Pause("You changed what this skill is doing, so the queue is paused.");
             return;
         }
         step.Following = now.Id;
@@ -1543,8 +1769,9 @@ public static class Queue
         if (Reached(game, step))
         {
             // Only this step's own action is stopped: everything else that runs goes on.
+            string done = DoneText(game, step);   // (before the stop: the count it read is the one that ended it)
             if (!action.TryStop()) action.TryStop(force: true);
-            End(step, "done");
+            End(step, done);
             return;
         }
         // A fight the player can no longer take part in (no ammo left for the weapon, not enough runes for the spell)
@@ -1612,31 +1839,123 @@ public static class Queue
 
     static BankEntity? Bank(Game game) => game.Entities.TryGetObjectById("MelvorBase:Bank", out GameEntity? e) ? e as BankEntity : null;
 
-    static int Owned(Game game, Step step) =>
-        s_items.TryGetValue(step.Subject, out Item? item) ? Bank(game)?.Inventory.GetQuantity(item) ?? 0 : 0;
+    // Every count below exists for a step's own goal and for its second one ("or until ..."): g is the goal, the step
+    // gives the skill, the constellation and whether it has run. The one-argument forms are the step's own goal.
 
-    static long Gained(Step step) { lock (s_gained) return s_gained.GetValueOrDefault(step.Subject); }
+    /// <summary>The step's goals: its own, and the second one when it has one.</summary>
+    static IEnumerable<IGoal> Goals(Step step) => step.Or == null ? new IGoal[] { step } : new IGoal[] { step, step.Or };
 
-    static long SpentOf(Step step) { lock (s_gained) return s_spent.GetValueOrDefault($"{step.Entity}|{step.Subject}"); }
+    static int Owned(Game game, Step step) => Owned(game, (IGoal)step);
+    static int Owned(Game game, IGoal g) =>
+        s_items.TryGetValue(g.Subject, out Item? item) ? Bank(game)?.Inventory.GetQuantity(item) ?? 0 : 0;
+
+    static long Gained(IGoal g) { lock (s_gained) return s_gained.GetValueOrDefault(g.Subject); }
+
+    static long SpentOf(Step step, IGoal g) { lock (s_gained) return s_spent.GetValueOrDefault($"{step.Entity}|{g.Subject}"); }
+    static long SpentOf(Step step) => SpentOf(step, step);
 
     /// <summary>"Use up N": how many of the item the step's skill has used since the step first started (pauses included).</summary>
-    static long Spent(Step step) => step.CountBefore + (step.Ran ? SpentOf(step) - step.SpentAtStart : 0);
+    static long Spent(Step step, IGoal g) => g.CountBefore + (step.Ran ? SpentOf(step, g) - g.SpentAtStart : 0);
 
     /// <summary>
     /// What counts for "until I own N". One step at a time: what the bank holds. Side by side: what the bank
     /// held at the start plus what came in since - another step may be using the item up as fast as it comes.
     /// </summary>
-    static long Counted(Game game, Step step) =>
-        step.CountGains && step.Ran ? Math.Max(Owned(game, step), step.OwnedAtStart + (Gained(step) - step.GainedAtStart)) : Owned(game, step);
+    static long Counted(Game game, Step step) => Counted(game, step, step);
+    static long Counted(Game game, Step step, IGoal g) =>
+        step.CountGains && step.Ran ? Math.Max(Owned(game, g), g.OwnedAtStart + (Gained(g) - g.GainedAtStart)) : Owned(game, g);
 
     /// <summary>"Make N more": how many of the item came into the bank since the step first started (pauses included).</summary>
-    static long Made(Step step) => step.CountBefore + (step.Ran ? Gained(step) - step.GainedAtStart : 0);
+    static long Made(Step step, IGoal g) => g.CountBefore + (step.Ran ? Gained(g) - g.GainedAtStart : 0);
 
     /// <summary>"N times": how many actions the step's skill has finished since the step first started (pauses included).</summary>
-    static long Times(Step step) => step.CountBefore + (step.Ran ? DoneBy(step.Entity) - step.DoneAtStart : 0);
+    static long Times(Step step, IGoal g) => g.CountBefore + (step.Ran ? DoneBy(step.Entity) - g.DoneAtStart : 0);
 
-    /// <summary>What "make N more" or "N times" has counted so far (0 for the other goals).</summary>
-    static long Counter(Step step) => step.Until switch { Until.Made => Made(step), Until.Times => Times(step), Until.Spent => Spent(step), _ => 0 };
+    /// <summary>"Until an astrology event is seen N times": how often it came up in the step's constellation since the step first started.</summary>
+    static long Seen(Step step, IGoal g) => g.CountBefore + (step.Ran ? SeenOf(step, g) - g.SeenAtStart : 0);
+
+    static long SeenOf(Step step, IGoal g) { lock (s_seen) return s_seen.GetValueOrDefault($"{step.TargetId}|{g.Subject}"); }
+
+    /// <summary>What a counting goal has counted so far (0 for the goals that read a number off the game).</summary>
+    static long Counter(Step step) => Counter(step, step);
+    static long Counter(Step step, IGoal g) => g.Until switch
+    {
+        Until.Made => Made(step, g), Until.Times => Times(step, g), Until.Spent => Spent(step, g), Until.Event => Seen(step, g), _ => 0,
+    };
+
+    /// <summary>The step (re)starts counting now: every goal takes the game's numbers of this moment as its start.</summary>
+    static void MarkStart(Game game, Step step)
+    {
+        foreach (IGoal g in Goals(step))
+        {
+            g.OwnedAtStart = Owned(game, g);
+            g.GainedAtStart = Gained(g);
+            g.DoneAtStart = DoneBy(step.Entity);
+            g.SpentAtStart = SpentOf(step, g);
+            g.SeenAtStart = SeenOf(step, g);
+        }
+    }
+
+    /// <summary>Keeps what the counting goals have counted (a pause, or the game saving a snapshot).</summary>
+    static void KeepCounts(Step step) { foreach (IGoal g in Goals(step)) g.CountBefore = Counter(step, g); }
+
+    /// <summary>Counting starts from nothing (a fresh start, or a new round of "start over").</summary>
+    static void ClearCounts(Step step) { foreach (IGoal g in Goals(step)) g.CountBefore = 0; }
+
+    /// <summary>How many node unlocks the step's constellation has earned (minor or major, the game's own numbers).</summary>
+    /// <summary>The most node unlocks a constellation has (minor, or major), so a goal above it never waits for ever.</summary>
+    public static int MostNodes(Game game, string constellationId, bool major)
+    {
+        if (Targets.Find(game, "MelvorBase:Astrology") is not AstrologyActionComponent astrology) return 0;
+        AstrologyConstellation? c = astrology.ActiveConstellations.Keys.FirstOrDefault(k => k.Id == constellationId);
+        if (c == null) return 0;
+        int minor = c.MinorNodeUnlockKnowledge.Count;
+        return !major ? minor : c.MinorNodesPerMajorNode > 0 ? Math.Min(c.MajorNodes.Count, minor / c.MinorNodesPerMajorNode) : 0;
+    }
+
+    static int Nodes(Game game, Step step, IGoal g)
+    {
+        if (Targets.Find(game, step.Entity) is not AstrologyActionComponent astrology) return 0;
+        ActiveAstrologyConstellation? c = astrology.ActiveConstellations.Values.FirstOrDefault(a => a.Constellation.Id == step.TargetId);
+        if (c == null) return 0;
+        // Major: the unlocks the earned minor ones are worth (the game's own count only grows as minor nodes are
+        // clicked, which never happens while the character studies alone).
+        if (g.Subject == "major") return c.Constellation.MinorNodesPerMajorNode > 0 ? c.AvailableMinorNodeCount / c.Constellation.MinorNodesPerMajorNode : 0;
+        return c.AvailableMinorNodeCount;
+    }
+
+    /// <summary>
+    /// The events a constellation can show while it is studied, for the event list of a step: its own events, and the
+    /// events inside its event tables (a table itself is never shown; only what it rolls is). Each once, by name.
+    /// </summary>
+    public static List<(string Id, string Name)> AstrologyEvents(Game game, string constellationId)
+    {
+        if (Targets.Find(game, "MelvorBase:Astrology") is not AstrologyActionComponent astrology) return new();
+        AstrologyConstellation? c = astrology.ActiveConstellations.Keys.FirstOrDefault(k => k.Id == constellationId);
+        // One entry per name (the goal counts every event of that name); the name is also what the goal stores.
+        return c == null ? new() : EventsOf(c).Select(e => e.Name).Distinct().OrderBy(n => n, StringComparer.OrdinalIgnoreCase).Select(n => (n, n)).ToList();
+    }
+
+    /// <summary>Every event a constellation can show (its own, and those inside its event tables), with its name.</summary>
+    static List<(string Id, string Name)> EventsOf(AstrologyConstellation c)
+    {
+        var found = new List<(string Id, string Name)>();
+        var seen = new HashSet<string>();
+        void Walk(AstrologyEvent e, int depth)
+        {
+            if (depth > 8 || !seen.Add(e.Id)) return;
+            if (e is AstrologyTableEvent table) { foreach (WeightedAstrologyEvent w in table.Events) Walk(w.Event, depth + 1); return; }
+            if (!e.IsMeta) found.Add((e.Id, e.DisplayName.GetPluralText(1)));
+        }
+        foreach (AstrologyEvent e in c.Events) Walk(e, 0);
+        return found;
+    }
+
+    /// <summary>Event id -> name, worked out on the main thread (the counting can happen on the game's offline thread).</summary>
+    static readonly Dictionary<string, string> s_eventNames = new();
+
+    /// <summary>Astrology events seen, per "constellation|event", since the character was opened.</summary>
+    static readonly Dictionary<string, long> s_seen = new();
 
     static long DoneBy(string entityId) { lock (s_done) return s_done.GetValueOrDefault(entityId); }
 
@@ -1665,41 +1984,100 @@ public static class Queue
                     if (action is ArtisanActionComponent or AgilityActionComponent) return;   // counted below, as a whole
                     Count(game, action.Entity.Id);
                 });
+        lock (s_seen) s_seen.Clear();
         foreach ((GameEntity entity, ActionComponent action) in Targets.Skills(game))
         {
             string id = entity.Id;
             if (action is ArtisanActionComponent artisan) artisan.RecipeCreated += (_, _) => Count(game, id);
             else if (action is AgilityActionComponent agility) agility.CourseCompleted += (_, _) => Count(game, id);
             else if (action is CombatActionComponent && entity is CombatEntity combat) combat.Enemy.Killed += (_, _) => Count(game, id);
+            // "Until an event is seen N times": every event the game shows for a constellation (also while closed).
+            // Counted by the event's name: the game has several events of one name (one per reward size).
+            if (action is AstrologyActionComponent astrology)
+            {
+                s_eventNames.Clear();
+                foreach (AstrologyConstellation c in astrology.ActiveConstellations.Keys)
+                    foreach ((string eventId, string name) in EventsOf(c)) s_eventNames[eventId] = name;
+                astrology.EventObserved += (_, e) =>
+                {
+                    if (!ReferenceEquals(game, s_game) || e.Constellation == null) return;
+                    string key = $"{e.Constellation.Id}|{s_eventNames.GetValueOrDefault(e.Event.Id, e.Event.Id)}";
+                    lock (s_seen) s_seen[key] = s_seen.GetValueOrDefault(key) + 1;
+                };
+            }
+            // "Use up N" in a fight: the runes its spells took and the arrows (bolts, javelins...) it shot.
+            if (entity is CombatEntity fighter)
+            {
+                fighter.MagicSpells.Inventory.ItemAdded += (_, e) =>
+                {
+                    if (!ReferenceEquals(game, s_game) || e.Quantity >= 0 || e.Item == null) return;
+                    string key = $"{id}|{e.Item.Id}";
+                    lock (s_gained) s_spent[key] = s_spent.GetValueOrDefault(key) - e.Quantity;
+                };
+                fighter.Equipment.AmmoConsumed += (_, e) =>
+                {
+                    if (!ReferenceEquals(game, s_game) || e.Item == null) return;
+                    string key = $"{id}|{e.Item.Id}";
+                    lock (s_gained) s_spent[key] = s_spent.GetValueOrDefault(key) + 1;
+                };
+            }
+            // "Use up N" of a food: what the skill's own food slot ate counts too (Thieving, Agility, a fight). Counted
+            // from what really left the bank: the game also reports a meal that its preservation chance saved.
+            foreach (FoodComponent food in entity.Components.Values.OfType<FoodComponent>())
+                food.Inventory.ItemAdded += (_, e) =>
+                {
+                    if (!ReferenceEquals(game, s_game) || e.Quantity >= 0 || e.Item == null) return;
+                    string key = $"{id}|{e.Item.Id}";
+                    lock (s_gained) s_spent[key] = s_spent.GetValueOrDefault(key) - e.Quantity;
+                };
         }
     }
 
-    static int Level(Game game, Step step) =>
-        game.LeveledEntities.FirstOrDefault(s => s.DisplayName.Text == step.Subject)?.Experience.Level ?? 0;
+    static int Level(Game game, Step step) => Level(game, (IGoal)step);
+    static int Level(Game game, IGoal g) =>
+        game.LeveledEntities.FirstOrDefault(s => s.DisplayName.Text == g.Subject)?.Experience.Level ?? 0;
 
-    static bool Reached(Game game, Step step) => step.Until switch
+    /// <summary>True when either of the step's goals is reached.</summary>
+    static bool Reached(Game game, Step step) => Goals(step).Any(g => Reached(game, step, g));
+
+    static bool Reached(Game game, Step step, IGoal g) => g.Until switch
     {
-        Until.Item => Counted(game, step) >= step.Amount,
-        Until.ItemLeft => Owned(game, step) <= step.Amount,   // counts down: food being eaten, materials being used
-        Until.Level => Level(game, step) >= step.Amount,
-        Until.Minutes => step.Seconds >= step.Amount * 60,
-        Until.Made => Made(step) >= step.Amount,
-        Until.Times => Times(step) >= step.Amount,
-        Until.Spent => Spent(step) >= step.Amount,
+        Until.Item => Counted(game, step, g) >= g.Amount,
+        Until.ItemLeft => Owned(game, g) <= g.Amount,   // counts down: food being eaten, materials being used
+        Until.Level => Level(game, g) >= g.Amount,
+        Until.Minutes => step.Seconds >= g.Amount * 60,
+        Until.Made => Made(step, g) >= g.Amount,
+        Until.Times => Times(step, g) >= g.Amount,
+        Until.Spent => Spent(step, g) >= g.Amount,
+        // (all the constellation has also ends it: a number above that is never reached)
+        Until.Nodes => Nodes(game, step, g) >= Math.Min(g.Amount, Math.Max(1, MostNodes(game, step.TargetId, g.Subject == "major"))),
+        Until.Event => Seen(step, g) >= g.Amount,
         _ => false,
     };
 
+    /// <summary>Goals that read a number off the game (the bank, a level, a constellation): already reached before the step starts means nothing to do.</summary>
+    static bool ReadsTheGame(IGoal g) => g.Until is Until.Item or Until.Level or Until.ItemLeft or Until.Nodes;
+
+    /// <summary>"done" with the reason when the step's second goal ended it (the first one is the plain "done").</summary>
+    static string DoneText(Game game, Step step) =>
+        step.Or != null && !Reached(game, step, step) && Reached(game, step, step.Or) ? $"done: {Progress(game, step, step.Or)} ({step.Or.Text})" : "done";
+
     static string Clock(double seconds) => $"{(int)(seconds / 60)}:{(int)(seconds % 60):00}";
 
-    static string Progress(Game game, Step step) => step.Until switch
+    static string Progress(Game game, Step step) =>
+        step.Or == null ? Progress(game, step, step) : $"{Progress(game, step, step)}  |  or  {Progress(game, step, step.Or)}";
+
+    static string Progress(Game game, Step step, IGoal g) => g.Until switch
     {
-        Until.Item => $"{Counted(game, step):N0} / {step.Amount:N0}",
-        Until.ItemLeft => $"{Owned(game, step):N0} left, stops at {step.Amount:N0}",
-        Until.Level => $"level {Level(game, step)} / {step.Amount:0}",
-        Until.Minutes => $"{Clock(step.Seconds)} / {Clock(step.Amount * 60)}",
-        Until.Made => $"{Made(step):N0} / {step.Amount:N0} made",
-        Until.Times => $"{Times(step):N0} / {step.Amount:N0} times",
-        Until.Spent => $"{Spent(step):N0} / {step.Amount:N0} used up",
+        Until.Item => $"{Counted(game, step, g):N0} / {g.Amount:N0}" + (step.Or != null ? $" {g.SubjectName}" : ""),
+        Until.ItemLeft => $"{Owned(game, g):N0} {(step.Or != null ? g.SubjectName + " " : "")}left, stops at {g.Amount:N0}",
+        Until.Level => $"{(step.Or != null ? g.SubjectName + " " : "")}level {Level(game, g)} / {g.Amount:0}",
+        Until.Minutes => $"{Clock(step.Seconds)} / {Clock(g.Amount * 60)}",
+        Until.Made => $"{Made(step, g):N0} / {g.Amount:N0} {(step.Or != null ? g.SubjectName + " " : "")}made",
+        Until.Times => $"{Times(step, g):N0} / {g.Amount:N0} times",
+        Until.Spent => $"{Spent(step, g):N0} / {g.Amount:N0} {(step.Or != null ? g.SubjectName + " " : "")}used up",
+        Until.Nodes => $"{Nodes(game, step, g):N0} / {g.Amount:N0} {g.SubjectName} nodes",
+        Until.Event => $"{g.SubjectName} {Seen(step, g):N0} / {g.Amount:N0}",
         _ => Clock(step.Seconds),
     };
 

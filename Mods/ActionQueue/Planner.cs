@@ -258,7 +258,8 @@ public static class Planner
                 if (step.Run != RunState.Done && byId.TryGetValue(step.TargetId, out Item? sold)) stock[sold] = Math.Min(Now(sold), (long)Math.Max(0, step.Amount));
                 continue;
             }
-            if (step.Until is not (Until.Item or Until.Made) || !byId.TryGetValue(step.Subject, out Item? item)) continue;
+            // (A step with a second goal may end before it has made all of it: the plan does not count on it.)
+            if (step.Or != null || step.Until is not (Until.Item or Until.Made) || !byId.TryGetValue(step.Subject, out Item? item)) continue;
             Maker? maker = makers[item].FirstOrDefault(m => m.Entity.Id == step.Entity && m.Target.Id == step.TargetId);
             if (maker == null) continue;
             long before = Now(item), goal = (long)Math.Ceiling(step.Amount) + (step.Until == Until.Made ? before : 0);
