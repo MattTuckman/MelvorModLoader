@@ -15,6 +15,9 @@ Five minutes, once. After that, adding a mod is one unzip.
 
 ---
 
+{: .note }
+> **On a Mac?** The game is laid out differently there. Follow [Installing on macOS](install-macos) instead.
+
 ## 1. Find the game folder
 
 In Steam: right-click **Melvor Idle 2** in your library, then **Manage → Browse local files**. A folder opens
