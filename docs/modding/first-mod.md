@@ -74,6 +74,12 @@ create a file named **`HelloMelvor.csproj`** with exactly this content:
 </Project>
 ```
 
+{: .note }
+> **On a Mac** the folders are named and placed differently (the game's DLLs are inside `Melvor2.app`).
+> Copy the project file from
+> [`ModdersKit/ExampleMod`](https://github.com/falorfrozen-cmd/MelvorModLoader/tree/main/ModdersKit/ExampleMod)
+> instead: it finds the game on both systems. Everything else on this page is the same.
+
 What it does, in plain words:
 
 - **`net10.0`**: the game runs on .NET 10, so your mod targets it too.

@@ -10,9 +10,20 @@
 
     <!-- Where the game is installed. Change this line if your Steam library is somewhere else,
          or pass it on the command line:  dotnet build -p:GameDir="D:\SteamLibrary\steamapps\common\Melvor Idle 2" -->
-    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Melvor Idle 2</GameDir>
+    <IsMac>$([MSBuild]::IsOSPlatform('OSX'))</IsMac>
+    <GameDir Condition="'$(GameDir)' == '' And '$(IsMac)' != 'true'">C:\Program Files (x86)\Steam\steamapps\common\Melvor Idle 2</GameDir>
+    <GameDir Condition="'$(GameDir)' == '' And '$(IsMac)' == 'true'">$(HOME)/Library/Application Support/Steam/steamapps/common/Melvor Idle 2</GameDir>
 
-    <!-- Build straight into the game's mods folder: mods\ExampleMod\ExampleMod.dll -->
+    <!-- The folder that holds the game's and the loader's data folders, and their platform suffix.
+         On macOS they sit inside the app bundle; either architecture will do as a compile-time reference. -->
+    <DataRoot>$(GameDir)</DataRoot>
+    <DataSuffix>windows_x86_64</DataSuffix>
+    <DataRoot Condition="'$(IsMac)' == 'true'">$(GameDir)/Melvor2.app/Contents/Resources</DataRoot>
+    <DataSuffix Condition="'$(IsMac)' == 'true'">macos_arm64</DataSuffix>
+    <DataSuffix Condition="'$(IsMac)' == 'true' And !Exists('$(DataRoot)/data_GamesByMalcs.Melvor2_macos_arm64')">macos_x86_64</DataSuffix>
+
+    <!-- Build straight into the game's mods folder: mods\ExampleMod\ExampleMod.dll
+         (on macOS too: "mods" is next to Melvor2.app, not inside it) -->
     <OutputPath>$(GameDir)\mods\$(AssemblyName)\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
@@ -21,15 +32,15 @@
     <!-- Compile against the loader, Godot and the game itself. Private=false: these are not copied next to
          your mod, the running game already has them. -->
     <Reference Include="MelvorModLoader">
-      <HintPath>$(GameDir)\data_MelvorModLoader_windows_x86_64\MelvorModLoader.dll</HintPath>
+      <HintPath>$(DataRoot)\data_MelvorModLoader_$(DataSuffix)\MelvorModLoader.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="GodotSharp">
-      <HintPath>$(GameDir)\data_GamesByMalcs.Melvor2_windows_x86_64\GodotSharp.dll</HintPath>
+      <HintPath>$(DataRoot)\data_GamesByMalcs.Melvor2_$(DataSuffix)\GodotSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="GamesByMalcs.Melvor2">
-      <HintPath>$(GameDir)\data_GamesByMalcs.Melvor2_windows_x86_64\GamesByMalcs.Melvor2.dll</HintPath>
+      <HintPath>$(DataRoot)\data_GamesByMalcs.Melvor2_$(DataSuffix)\GamesByMalcs.Melvor2.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>
