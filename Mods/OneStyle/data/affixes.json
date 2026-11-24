@@ -1,0 +1,2268 @@
+[
+ {
+  "Id": "Keen",
+  "Kind": "P",
+  "Name": "Keen",
+  "Text": "+{v}% max hit",
+  "Tiers": [
+   3,
+   6,
+   9,
+   12,
+   16
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Ring",
+   "Amulet",
+   "Ammo",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Swift",
+  "Kind": "P",
+  "Name": "Swift",
+  "Text": "-{v}% attack interval",
+  "Tiers": [
+   2,
+   4,
+   5,
+   7,
+   9
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Boots",
+   "Legs",
+   "Cape"
+  ],
+  "Scale": -0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "True",
+  "Kind": "P",
+  "Name": "True",
+  "Text": "+{v}% accuracy",
+  "Tiers": [
+   5,
+   9,
+   13,
+   18,
+   24
+  ],
+  "Slots": [
+   "Weapon",
+   "Helmet",
+   "Gloves",
+   "Ring",
+   "Cape",
+   "Offhand"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Deadly",
+  "Kind": "P",
+  "Name": "Deadly",
+  "Text": "+{v}% critical hit chance",
+  "Tiers": [
+   2,
+   3,
+   4,
+   6,
+   8
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Ring",
+   "Amulet",
+   "Ammo"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Brutal",
+  "Kind": "P",
+  "Name": "Brutal",
+  "Text": "+{v}% critical hit damage",
+  "Tiers": [
+   10,
+   15,
+   22,
+   30,
+   40
+  ],
+  "Slots": [
+   "Weapon",
+   "Amulet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitMultiplier"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Steady",
+  "Kind": "P",
+  "Name": "Steady",
+  "Text": "+{v}% minimum hit (of the max hit)",
+  "Tiers": [
+   3,
+   5,
+   7,
+   9,
+   12
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Offhand",
+   "Boots"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "MinHitBasedOnMaxHit"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Slayers",
+  "Kind": "P",
+  "Name": "Slayer's",
+  "Text": "+{v}% max hit against Champions and Uniques",
+  "Tiers": [
+   6,
+   10,
+   14,
+   19,
+   25
+  ],
+  "Slots": [
+   "Weapon",
+   "Helmet",
+   "Ring",
+   "Torso",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "EliteDamage",
+  "Group": ""
+ },
+ {
+  "Id": "Leeching",
+  "Kind": "P",
+  "Name": "Leeching",
+  "Text": "{v}% lifesteal",
+  "Tiers": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Slots": [
+   "Weapon",
+   "Amulet",
+   "Ring"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCombatStatValue"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "CombatStat": "MelvorBase:Lifesteal"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Thorned",
+  "Kind": "P",
+  "Name": "Thorned",
+  "Text": "reflects {v}% of the damage taken",
+  "Tiers": [
+   3,
+   5,
+   8,
+   11,
+   15
+  ],
+  "Slots": [
+   "Torso",
+   "Offhand",
+   "Legs"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackReflect"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Serrated",
+  "Kind": "P",
+  "Name": "Serrated",
+  "Text": "{v}% chance on hit to cause Bleed",
+  "Tiers": [
+   5,
+   6,
+   8,
+   10,
+   12
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:DamageOverTime",
+       "Data": {
+        "Effect": "MelvorBase:Bleed",
+        "Configuration": {
+         "StacksToAdd": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": "OnHitDot"
+ },
+ {
+  "Id": "Venomous",
+  "Kind": "P",
+  "Name": "Venomous",
+  "Text": "{v}% chance on hit to Poison",
+  "Tiers": [
+   5,
+   6,
+   8,
+   10,
+   12
+  ],
+  "Slots": [
+   "Weapon",
+   "Ammo",
+   "Gloves"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:DamageOverTime",
+       "Data": {
+        "Effect": "MelvorBase:Poison",
+        "Configuration": {
+         "StacksToAdd": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": "OnHitDot"
+ },
+ {
+  "Id": "Searing",
+  "Kind": "P",
+  "Name": "Searing",
+  "Text": "{v}% chance on hit to Burn",
+  "Tiers": [
+   5,
+   6,
+   8,
+   10,
+   12
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:DamageOverTime",
+       "Data": {
+        "Effect": "MelvorBase:Burn",
+        "Configuration": {
+         "StacksToAdd": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": "OnHitDot"
+ },
+ {
+  "Id": "Stalwart",
+  "Kind": "P",
+  "Name": "Stalwart",
+  "Text": "-{v}% damage taken",
+  "Tiers": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Slots": [
+   "Torso",
+   "Offhand",
+   "Helmet"
+  ],
+  "Scale": -0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentDamageTaken"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Vicious",
+  "Kind": "P",
+  "Name": "Vicious",
+  "Text": "+{v}% max hit against a poisoned, bleeding or burning enemy",
+  "Tiers": [
+   5,
+   9,
+   14,
+   20,
+   28
+  ],
+  "Slots": [
+   "Gloves",
+   "Legs",
+   "Cape",
+   "Weapon"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Bleed"
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Poison"
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Burn"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Executing",
+  "Kind": "P",
+  "Name": "Executing",
+  "Text": "+{v}% max hit against an enemy below 35% hit points",
+  "Tiers": [
+   6,
+   11,
+   16,
+   22,
+   30
+  ],
+  "Slots": [
+   "Weapon",
+   "Boots",
+   "Cape",
+   "Ring"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "Execute",
+  "Group": ""
+ },
+ {
+  "Id": "Shattering",
+  "Kind": "P",
+  "Name": "Shattering",
+  "Text": "{v}% chance on hit to Fracture the enemy's armour",
+  "Tiers": [
+   5,
+   8,
+   11,
+   14,
+   18
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Ammo"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:TurnCounting",
+       "Data": {
+        "Effect": "MelvorBase:Fracture",
+        "Configuration": {
+         "Turns": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Raging",
+  "Kind": "P",
+  "Name": "Raging",
+  "Text": "{v}% chance on hit to gain a stack of Rage",
+  "Tiers": [
+   10,
+   15,
+   20,
+   25,
+   30
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Ring"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:Stacking",
+       "Data": {
+        "Effect": "MelvorBase:Rage",
+        "Configuration": {
+         "StacksToAdd": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Self"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Reinforced",
+  "Kind": "P",
+  "Name": "Reinforced",
+  "Text": "+{v} armour",
+  "Tiers": [
+   15,
+   30,
+   50,
+   75,
+   100
+  ],
+  "Slots": [
+   "Torso",
+   "Legs",
+   "Helmet",
+   "Boots",
+   "Offhand"
+  ],
+  "Scale": 1,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCombatStatValue"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "CombatStat": "MelvorBase:Armour"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Warding",
+  "Kind": "P",
+  "Name": "Warded",
+  "Text": "+{v} ward (hits it takes for you)",
+  "Tiers": [
+   1,
+   1,
+   2,
+   2,
+   3
+  ],
+  "Slots": [
+   "Offhand",
+   "Torso",
+   "Helmet",
+   "Amulet"
+  ],
+  "Scale": 1,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCombatStatValue"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "CombatStat": "MelvorBase:MaximumWard"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Bear",
+  "Kind": "S",
+  "Name": "of the Bear",
+  "Text": "+{v}% max hit points",
+  "Tiers": [
+   3,
+   5,
+   8,
+   11,
+   15
+  ],
+  "Slots": [
+   "Torso",
+   "Legs",
+   "Helmet",
+   "Amulet",
+   "Offhand"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Wall",
+  "Kind": "S",
+  "Name": "of the Wall",
+  "Text": "+{v}% protection",
+  "Tiers": [
+   4,
+   8,
+   12,
+   17,
+   22
+  ],
+  "Slots": [
+   "Torso",
+   "Legs",
+   "Helmet",
+   "Boots",
+   "Offhand"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentProtectionRating"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Fox",
+  "Kind": "S",
+  "Name": "of the Fox",
+  "Text": "+{v}% evasion",
+  "Tiers": [
+   5,
+   9,
+   13,
+   18,
+   24
+  ],
+  "Slots": [
+   "Boots",
+   "Cape",
+   "Legs",
+   "Gloves"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentEvasionRating"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Rock",
+  "Kind": "S",
+  "Name": "of the Rock",
+  "Text": "{v}% chance to shrug off a stun",
+  "Tiers": [
+   5,
+   9,
+   13,
+   18,
+   25
+  ],
+  "Slots": [
+   "Helmet",
+   "Boots"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatEffect",
+      "Name": "AvoidanceChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Stun"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Cleansing",
+  "Kind": "S",
+  "Name": "of Cleansing",
+  "Text": "{v}% chance to avoid Poison, Bleed and Burn",
+  "Tiers": [
+   5,
+   9,
+   13,
+   18,
+   25
+  ],
+  "Slots": [
+   "Cape",
+   "Amulet",
+   "Torso",
+   "Weapon"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatEffect",
+      "Name": "AvoidanceChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Poison"
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatEffect",
+      "Name": "AvoidanceChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Bleed"
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatEffect",
+      "Name": "AvoidanceChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Burn"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Warding2",
+  "Kind": "S",
+  "Name": "of Warding",
+  "Text": "{v}% chance to take no damage from a hit",
+  "Tiers": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Slots": [
+   "Offhand",
+   "Torso"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "AttackDamageNegationChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Mending",
+  "Kind": "S",
+  "Name": "of Mending",
+  "Text": "+{v}% healing from food",
+  "Tiers": [
+   3,
+   5,
+   8,
+   11,
+   15
+  ],
+  "Slots": [
+   "Amulet",
+   "Ring",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "PercentHealing"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Thrift",
+  "Kind": "S",
+  "Name": "of Thrift",
+  "Text": "{v}% chance to keep the food you eat",
+  "Tiers": [
+   2,
+   4,
+   6,
+   8,
+   10
+  ],
+  "Slots": [
+   "Cape",
+   "Gloves",
+   "Amulet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "FoodPreservationChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Runes",
+  "Kind": "S",
+  "Name": "of Runes",
+  "Text": "{v}% chance to keep runes",
+  "Tiers": [
+   6,
+   12,
+   18,
+   25,
+   35
+  ],
+  "Slots": [
+   "Weapon",
+   "Offhand",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Quiver",
+  "Kind": "S",
+  "Name": "of the Quiver",
+  "Text": "{v}% chance to keep ammo",
+  "Tiers": [
+   5,
+   10,
+   15,
+   20,
+   25
+  ],
+  "Slots": [
+   "Weapon",
+   "Ammo",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:AmmoConsumption",
+      "Name": "AmmoPreservationChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Devotion",
+  "Kind": "S",
+  "Name": "of Devotion",
+  "Text": "{v}% chance to keep prayer points",
+  "Tiers": [
+   3,
+   6,
+   9,
+   12,
+   15
+  ],
+  "Slots": [
+   "Helmet",
+   "Amulet",
+   "Weapon"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Prayer",
+      "Name": "CostPreservationChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Prayer"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Plenty",
+  "Kind": "S",
+  "Name": "of Plenty",
+  "Text": "{v}% chance to double combat loot",
+  "Tiers": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Slots": [
+   "Ring",
+   "Amulet",
+   "Helmet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatLoot",
+      "Name": "ItemDoublingChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Loot"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Coin",
+  "Kind": "S",
+  "Name": "of Coin",
+  "Text": "{v}% chance to double gold from monsters",
+  "Tiers": [
+   10,
+   18,
+   28,
+   40,
+   55
+  ],
+  "Slots": [
+   "Ring",
+   "Gloves"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatLoot",
+      "Name": "CurrencyDoublingChance"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Loot"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Wisdom",
+  "Kind": "S",
+  "Name": "of Wisdom",
+  "Text": "+{v}% combat XP",
+  "Tiers": [
+   2,
+   3,
+   4,
+   6,
+   8
+  ],
+  "Slots": [
+   "Amulet",
+   "Ring",
+   "Helmet",
+   "Weapon",
+   "Ammo"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Experience",
+      "Name": "PercentXPGained"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Attack",
+       "Component": "Experience"
+      }
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Experience",
+      "Name": "PercentXPGained"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Strength",
+       "Component": "Experience"
+      }
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Experience",
+      "Name": "PercentXPGained"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Defence",
+       "Component": "Experience"
+      }
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Experience",
+      "Name": "PercentXPGained"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Hitpoints",
+       "Component": "Experience"
+      }
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Experience",
+      "Name": "PercentXPGained"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Ranged",
+       "Component": "Experience"
+      }
+     }
+    },
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Experience",
+      "Name": "PercentXPGained"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Magic",
+       "Component": "Experience"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Haste",
+  "Kind": "S",
+  "Name": "of Haste",
+  "Text": "-{v}% time until the next monster",
+  "Tiers": [
+   5,
+   8,
+   11,
+   15,
+   20
+  ],
+  "Slots": [
+   "Boots",
+   "Cape",
+   "Weapon"
+  ],
+  "Scale": -0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatAction",
+      "Name": "PercentSpawnInterval"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Action"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Embers",
+  "Kind": "S",
+  "Name": "of Embers",
+  "Text": "+{v}% Ember from elites",
+  "Tiers": [
+   5,
+   10,
+   15,
+   20,
+   25
+  ],
+  "Slots": [
+   "Ring",
+   "Amulet",
+   "Cape",
+   "Weapon"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "Ember",
+  "Group": ""
+ },
+ {
+  "Id": "Calling",
+  "Kind": "S",
+  "Name": "of Calling",
+  "Text": "+{v}% chance of Champions and Uniques",
+  "Tiers": [
+   3,
+   5,
+   8,
+   11,
+   15
+  ],
+  "Slots": [
+   "Cape",
+   "Helmet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "Calling",
+  "Group": ""
+ },
+ {
+  "Id": "Mastery",
+  "Kind": "S",
+  "Name": "of Mastery",
+  "Text": "+{v}% power with {style}",
+  "Tiers": [
+   5,
+   10,
+   15,
+   22,
+   30
+  ],
+  "Slots": [
+   "Weapon",
+   "Offhand",
+   "Cape",
+   "Ammo"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentPowerRating"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "CombatStyle": "{style}"
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Momentum",
+  "Kind": "S",
+  "Name": "of Momentum",
+  "Text": "-{v}% attack interval for 4 s after a kill",
+  "Tiers": [
+   3,
+   5,
+   7,
+   10,
+   13
+  ],
+  "Slots": [
+   "Weapon",
+   "Boots",
+   "Gloves"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "Momentum",
+  "Group": ""
+ },
+ {
+  "Id": "Concussion",
+  "Kind": "S",
+  "Name": "of Concussion",
+  "Text": "{v}% chance on hit to Stun for a turn",
+  "Tiers": [
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "Slots": [
+   "Weapon",
+   "Gloves",
+   "Offhand"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:Stun",
+       "Data": {
+        "Effect": "MelvorBase:Stun",
+        "Configuration": {
+         "Turns": 1
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": "OnHitStun"
+ },
+ {
+  "Id": "Frost",
+  "Kind": "S",
+  "Name": "of Frost",
+  "Text": "{v}% chance on hit to Freeze for a turn",
+  "Tiers": [
+   1,
+   1.5,
+   2,
+   3,
+   4
+  ],
+  "Slots": [
+   "Weapon",
+   "Ammo",
+   "Amulet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:Stun",
+       "Data": {
+        "Effect": "MelvorBase:Freeze",
+        "Configuration": {
+         "Turns": 1
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": "OnHitStun"
+ },
+ {
+  "Id": "Blinding",
+  "Kind": "S",
+  "Name": "of Blinding",
+  "Text": "{v}% chance on hit to Blind for 2 turns",
+  "Tiers": [
+   6,
+   9,
+   12,
+   16,
+   20
+  ],
+  "Slots": [
+   "Gloves",
+   "Ammo",
+   "Offhand",
+   "Helmet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:RandomMagnitude",
+       "Data": {
+        "Effect": "MelvorBase:Blind",
+        "Configuration": {
+         "Turns": 2,
+         "MinStacks": null,
+         "MaxStacks": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Withering",
+  "Kind": "S",
+  "Name": "of Withering",
+  "Text": "{v}% chance on hit to Wither the enemy",
+  "Tiers": [
+   3,
+   5,
+   7,
+   9,
+   12
+  ],
+  "Slots": [
+   "Weapon",
+   "Amulet",
+   "Ring"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:TurnCounting",
+       "Data": {
+        "Effect": "MelvorBase:Wither",
+        "Configuration": {
+         "Turns": 3
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:OnAttack",
+       "Data": {
+        "Type": "OnHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Retaliation",
+  "Kind": "S",
+  "Name": "of Retaliation",
+  "Text": "{v}% chance when hit to make the attacker Bleed",
+  "Tiers": [
+   5,
+   8,
+   11,
+   14,
+   18
+  ],
+  "Slots": [
+   "Torso",
+   "Offhand",
+   "Helmet"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:DamageOverTime",
+       "Data": {
+        "Effect": "MelvorBase:Bleed",
+        "Configuration": {
+         "StacksToAdd": null
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:WhenAttacked",
+       "Data": {
+        "Type": "WhenHit"
+       }
+      },
+      "AppliesTo": "Target"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Bulwark",
+  "Kind": "S",
+  "Name": "of the Bulwark",
+  "Text": "{v}% chance to start a fight Protected (the first hit is blocked)",
+  "Tiers": [
+   20,
+   35,
+   50,
+   65,
+   85
+  ],
+  "Slots": [
+   "Offhand",
+   "Torso"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [],
+   "CombatEffect": [
+    {
+     "Character": {
+      "Entity": "MelvorBase:Combat",
+      "Component": "Player"
+     },
+     "Modifier": {
+      "Effect": {
+       "Type": "MelvorBase:AttackCounting",
+       "Data": {
+        "Effect": "MelvorBase:Protected",
+        "Configuration": {
+         "Attacks": 1
+        }
+       }
+      },
+      "Trigger": {
+       "Type": "MelvorBase:AtStartOfFight",
+       "Data": {}
+      },
+      "AppliesTo": "Self"
+     },
+     "Chance": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ]
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "SlayerTask",
+  "Kind": "S",
+  "Name": "of the Hunt",
+  "Text": "+{v}% max hit on your slayer task",
+  "Tiers": [
+   3,
+   5,
+   7,
+   9,
+   12
+  ],
+  "Slots": [
+   "Helmet",
+   "Amulet",
+   "Cape",
+   "Weapon"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": {
+      "Type": "MelvorBase:FightingSlayerTask",
+      "Data": {
+       "IsOr": false,
+       "Component": {
+        "Entity": "MelvorBase:Slayer",
+        "Component": "Tasks"
+       }
+      }
+     },
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Feasting",
+  "Kind": "S",
+  "Name": "of Feasting",
+  "Text": "+{v}% auto-eat efficiency",
+  "Tiers": [
+   3,
+   5,
+   7,
+   10,
+   14
+  ],
+  "Slots": [
+   "Legs",
+   "Amulet",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [],
+   "Component": [
+    {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "FlatAutoEatEfficiency"
+     },
+     "Value": "{v}",
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   ],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Learning",
+  "Kind": "S",
+  "Name": "of Learning",
+  "Text": "+{v}% XP in every skill",
+  "Tiers": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Slots": [
+   "Ring",
+   "Amulet",
+   "Cape"
+  ],
+  "Scale": 0.01,
+  "Bonuses": {
+   "Global": [
+    {
+     "StatGroup": "GlobalPercentXpGained",
+     "Value": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ },
+ {
+  "Id": "Diligence",
+  "Kind": "S",
+  "Name": "of Diligence",
+  "Text": "-{v}% action time in every skill",
+  "Tiers": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "Slots": [
+   "Ring",
+   "Amulet",
+   "Cape"
+  ],
+  "Scale": -0.01,
+  "Bonuses": {
+   "Global": [
+    {
+     "StatGroup": "GlobalPercentActionInterval",
+     "Value": "{v}",
+     "Condition": null,
+     "Scaling": null
+    }
+   ],
+   "Component": [],
+   "CombatEffect": []
+  },
+  "Custom": "",
+  "Group": ""
+ }
+]

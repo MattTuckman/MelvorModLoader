@@ -63,12 +63,34 @@ public static partial class Patches
     public static int PetsFollowing => s_pets.Count;
     public static double XpShared { get; private set; }
 
+    // ---- for Elites: the game's modifier system and the same way of writing a bonus
+    internal static ModifierSystem? Modifiers => s_mods;
+    internal static ComponentModifierValue Bonus(string statsType, string name, double value, string component, params (string Key, string Value)[] context) =>
+        Value(statsType, name, value, component, context);
+    internal static ModifierValues Bonuses(params ComponentModifierValue[] values) => Values(values);
+
+    /// <summary>A bonus on a component of another entity (for example a skill's Experience).</summary>
+    internal static ComponentModifierValue BonusOn(string entity, string component, string statsType, string name, double value)
+    {
+        var json = new Dictionary<string, object?>
+        {
+            ["Stat"] = new Dictionary<string, string> { ["StatsType"] = "MelvorBase:" + statsType, ["Name"] = name },
+            ["Value"] = value,
+            ["LocalContext"] = new Dictionary<string, object?> { ["Component"] = new Dictionary<string, string> { ["Entity"] = entity, ["Component"] = component } },
+            ["FromContext"] = null,
+            ["Condition"] = null,
+            ["Scaling"] = null,
+        };
+        using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(json));
+        return new ComponentModifierValue(s_game!.Data, doc.RootElement.Clone());
+    }
+
     static CombatEntity Combat() => (CombatEntity)s_game!.Entities.GetObjectById("MelvorBase:Combat");
 
     static void ApplyBalance(CombatStyle style)
     {
         Step("elemental edge", () => AddEdge());
-        Step("weak spot", () => WatchEnemy());
+        Step("weak spot", () => UpdateWeakSpot());
         Step("melee XP sharing", () => ShareXp());
         Step("guild and astrology equivalents", () => UpdateEquivalents());
         Step("class identity", () => AddIdentity());
@@ -77,7 +99,6 @@ public static partial class Patches
 
     static void RestoreBalance()
     {
-        UnwatchEnemy();
         UnshareXp();
         Try("elemental edge", () => { RemoveEdge(); return true; });
         foreach (var (trigger, original) in s_pets) Try("a pet", () => { Repoint(trigger, original); return true; });
@@ -85,12 +106,13 @@ public static partial class Patches
         if (s_mods != null)
             foreach (Source source in new[] { s_weakSpot, s_equivalents, s_identity })
                 try { s_mods.Remove(source); } catch { }
-        ForgetBalance();
+        ForgetBalance(unwatch: false);
     }
 
-    static void ForgetBalance()
+    /// <summary>Drops the records; <paramref name="unwatch"/> also stops watching monsters (the character is closed).</summary>
+    static void ForgetBalance(bool unwatch = true)
     {
-        UnwatchEnemy();
+        if (unwatch) UnwatchEnemy();
         UnshareXp();
         s_edgeAdded.Clear();
         s_edgeRowAdded = false;
@@ -155,11 +177,18 @@ public static partial class Patches
     {
         UnwatchEnemy();
         CombatEntity combat = Combat();
-        s_enemyHandler = (_, _) => { lock (s_lock) { try { UpdateWeakSpot(); } catch (Exception e) { Log("One Style: weak spot: " + e.Message); } } };
+        // One handler, in order: the elite first (its bonuses), then the weak spot (worked out on the final monster).
+        s_enemyHandler = (_, _) =>
+        {
+            lock (s_lock)
+            {
+                try { Elites.OnSpawned(); } catch (Exception e) { Log("One Style: elite: " + e); }
+                try { UpdateWeakSpot(); } catch (Exception e) { Log("One Style: weak spot: " + e.Message); }
+            }
+        };
         // Spawned, not EnemyChanged: the game sets the new monster first and its levels and stats after that.
         combat.Enemy.Spawned += s_enemyHandler;
         s_enemyWatched = combat;
-        UpdateWeakSpot();
     }
 
     static void UnwatchEnemy()

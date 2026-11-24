@@ -15,6 +15,7 @@ public static class Loader
     static readonly List<string> s_loaded = new();
     static readonly List<(ModContext Owner, Action Handler)> s_frame = new();
     static SceneTree s_tree = null!;
+    static int s_frames;
 
     // Deferred: runs on the first main-loop iteration, when the SceneTree exists.
     internal static void ScheduleStart() => Callable.From(Start).CallDeferred();
@@ -52,7 +53,11 @@ public static class Loader
             try
             {
                 Assembly asm = Bootstrap.Alc.LoadFromAssemblyPath(dll);
-                foreach (Type type in asm.GetTypes().Where(t => typeof(IMod).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false }))
+                // a mod that also works with another mod (when that one is installed) still loads without it
+                Type[] types;
+                try { types = asm.GetTypes(); }
+                catch (ReflectionTypeLoadException r) { types = r.Types.Where(t => t != null).ToArray()!; }
+                foreach (Type type in types.Where(t => typeof(IMod).IsAssignableFrom(t) && t is { IsAbstract: false, IsInterface: false }))
                 {
                     string name = asm.GetName().Name ?? file;
                     var mod = (IMod)Activator.CreateInstance(type)!;
@@ -80,6 +85,7 @@ public static class Loader
         if (s_tree.Paused) return;
         try { Hotkeys.OnFrame(s_tree); }
         catch (Exception e) { Log.Write("Hotkeys: " + e.Message); }
+        if (++s_frames % 30 == 0) Rescue.Check();
         for (int i = 0; i < s_frame.Count; i++)
         {
             var (owner, handler) = s_frame[i];

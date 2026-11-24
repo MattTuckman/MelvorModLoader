@@ -1,0 +1,2508 @@
+[
+ {
+  "Id": "MelvorBase:Golbin",
+  "File": "Golbin",
+  "UniqueName": "Grik, the Copper-Crowned",
+  "Story": "He stole a crown from a dead knight, and the forest has bowed to it ever since.",
+  "Affixes": [
+   "Enraging",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:ForwardStab",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.1,
+  "Passive": "MelvorBase:InnerFlame"
+ },
+ {
+  "Id": "MelvorBase:GolbinScout",
+  "File": "GolbinScout",
+  "UniqueName": "Snikt, the Thornshot Tracker",
+  "Story": "Follow his tracks into Golbin Forest, and his next arrow will find you first.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:DoubleShot",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:Ensnare"
+ },
+ {
+  "Id": "MelvorBase:MindGolbin",
+  "File": "MindGolbin",
+  "UniqueName": "Mizzik, the Third Eye",
+  "Story": "He reads your next move before you think of it.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:PsychicBlast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GolbinAmbusher",
+  "File": "GolbinAmbusher",
+  "UniqueName": "Skarn, the Twin-Blade Lurker",
+  "Story": "The first warning is the glint of his second blade.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:TwinSlash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Hobgolbin",
+  "File": "Hobgolbin",
+  "UniqueName": "Brugg, the Skullmaul",
+  "Story": "Every blow of his club leaves another scar upon Golbin Forest.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:CrushingBlow",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:OverwhelmingStrength"
+ },
+ {
+  "Id": "MelvorBase:GhelbaktheHobChief",
+  "File": "GhelbaktheHobChief",
+  "UniqueName": "Borgul, the Skull-Tithe Chieftain",
+  "Story": "Every conquered hob pays a tooth; every fallen rival earns a place upon his shoulders.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:CrushingBlow",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:Rage"
+ },
+ {
+  "Id": "MelvorBase:EvilPlant",
+  "File": "EvilPlant",
+  "UniqueName": "Veyra, the Rotbloom",
+  "Story": "Beneath the corrupted furrows, her roots drink whatever falls.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:ThornBlast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:ThornBody"
+ },
+ {
+  "Id": "MelvorBase:GiantChicken",
+  "File": "GiantChicken",
+  "UniqueName": "Orrok, the Granary Tyrant",
+  "Story": "His dawn call silences every living thing in the Corrupted Farmlands.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:HopKick",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.8,
+  "Passive": "MelvorBase:Sharp"
+ },
+ {
+  "Id": "MelvorBase:MagicCow",
+  "File": "MagicCow",
+  "UniqueName": "Mora, the Bell-Yoked",
+  "Story": "Her cracked bell tolls across the Corrupted Farmlands, and every furrow answers.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Charge",
+  "SignatureChance": 0.15,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Scarecrow",
+  "File": "Scarecrow",
+  "UniqueName": "Hobb, the Stitched Sentry",
+  "Story": "He counts the trespassers in his fields with a new stitch across his smile.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:BleedingStrikes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.65,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:JackOLantern",
+  "File": "JackOLantern",
+  "UniqueName": "Orren, the Hollow Harvest",
+  "Story": "Across the Corrupted Farmlands, his hollow grin counts every seed that will never sprout.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:ThornBlast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:ThornBody"
+ },
+ {
+  "Id": "MelvorBase:UndeadFarmer",
+  "File": "UndeadFarmer",
+  "UniqueName": "Pellam, the Fallow Reeve",
+  "Story": "He still counts every sheaf, and every soul that trespasses between the furrows.",
+  "Affixes": [
+   "Vampiric",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:BloodReap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:Bleed25"
+ },
+ {
+  "Id": "MelvorBase:MorgistheGraveCorruptor",
+  "File": "MorgistheGraveCorruptor",
+  "UniqueName": "Belzor, the Grave-Unbinder",
+  "Story": "He breaks the seals of forgotten graves and gathers their restless souls in his burial lantern.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:Soulrip",
+  "SignatureChance": 0.18,
+  "SignaturePeak": -1,
+  "Passive": "MelvorBase:Spirit"
+ },
+ {
+  "Id": "MelvorBase:GreenSlime",
+  "File": "GreenSlime",
+  "UniqueName": "Bolu, the Path-Devourer",
+  "Story": "Where Bolu passes, the forest swallows its paths and the old waymarkers vanish into green silence.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SandDevour",
+  "SignatureChance": 0.15,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RedSlime",
+  "File": "RedSlime",
+  "UniqueName": "Ulozz, the Mire-Gullet",
+  "Story": "Every path swallowed by the Slime Forest finds its end in his hungry depths.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:FlayingGrasp",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.85,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlueSlime",
+  "File": "BlueSlime",
+  "UniqueName": "Ploxx, the Resin-Hoarder",
+  "Story": "It gathers the Slime Forest's golden resin, sealing every stolen drop within its restless blue body.",
+  "Affixes": [
+   "Armoured",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:SharpSpin",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlackSlime",
+  "File": "BlackSlime",
+  "UniqueName": "Ozzul, the Root-Swallower",
+  "Story": "Beneath the Slime Forest, it swallows ancient roots and wears their resin-bound remains.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:TwistedArmour",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RainbowSlime",
+  "File": "RainbowSlime",
+  "UniqueName": "Qivra, the Prism Hoarder",
+  "Story": "It gathers the colours of Slime Forest beneath a shell of swallowed prisms.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:EvasiveMagic",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MangroveStrider",
+  "File": "MangroveStrider",
+  "UniqueName": "Nhal, the Tangle-Reeve",
+  "Story": "Where the green channels narrow, Nhal knots the mangrove roots around every trespasser.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:CoiledTrap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:Ensnare"
+ },
+ {
+  "Id": "MelvorBase:BugSwarm",
+  "File": "BugSwarm",
+  "UniqueName": "Zirr, the Mangrove Chorus",
+  "Story": "Four wingsongs weave through the mangrove roots; by the time they fall silent, the swarm has already struck.",
+  "Affixes": [
+   "Hasted",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:BroodlingSwarm",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:CreeperVines",
+  "File": "CreeperVines",
+  "UniqueName": "Zaruun, the Mangrove Strangler",
+  "Story": "Where Zaruun coils, the mangroves fall silent and even the roots struggle to breathe.",
+  "Affixes": [
+   "Armoured",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:CoiledTrap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MangroveCaterpillar",
+  "File": "MangroveCaterpillar",
+  "UniqueName": "Nymor, the Rootweaver",
+  "Story": "Beneath the mangrove canopy, Nymor binds trespassers in golden silk and carries their cocoons between its roots.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SilkCocoon",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.5,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MangroveMantis",
+  "File": "MangroveMantis",
+  "UniqueName": "Ssilak, the Root-Shearer",
+  "Story": "Among the green mangrove roots, a single click of his shears is the last warning trespassers hear.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SlicingCuts",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Bee",
+  "File": "Bee",
+  "UniqueName": "Izzet, the Honeycomb Castellan",
+  "Story": "Within the Stinging Nest, every waxen wall answers to the beat of his wings.",
+  "Affixes": [
+   "Armoured",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:ViciousStabs",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GiantBee",
+  "File": "GiantBee",
+  "UniqueName": "Vazrik, the Venomcomb Marshal",
+  "Story": "Its wings sound the muster; a thousand hidden stingers answer.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:ScorpionSting",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GiantHornet",
+  "File": "GiantHornet",
+  "UniqueName": "Threx, the Nest-Impaler",
+  "Story": "At the heart of Stinging Nest, Threx pins intruders beneath its barbed sting.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:ViciousStabs",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:AngryWasp",
+  "File": "AngryWasp",
+  "UniqueName": "Dzava, the Needle Choir",
+  "Story": "Within the Stinging Nest, three pairs of wings hum a single warning before the needles strike.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:BlackFang",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.55,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RoyalBee",
+  "File": "RoyalBee",
+  "UniqueName": "Zelith, the Stinging Sovereign",
+  "Story": "One beat of her silver wings sends the Stinging Nest to war.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:ViciousStabs",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BogBloomer",
+  "File": "BogBloomer",
+  "UniqueName": "Eshra, the Mire-Throated",
+  "Story": "Its honeyed venom lures the unwary close enough for the bog to swallow their screams.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:StingingDrain",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:CarrionCrow",
+  "File": "CarrionCrow",
+  "UniqueName": "Kroven, the Bog-Eyed Scavenger",
+  "Story": "Every pale eye watches a different path through the Toxic Bog, waiting for the next traveller to fall.",
+  "Affixes": [
+   "Hasted",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:FeatherRain",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.45,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ToxicRazorfish",
+  "File": "ToxicRazorfish",
+  "UniqueName": "Rhazel, the Bog-Saw",
+  "Story": "Its serrated fins part the poisoned reeds before its jaws claim what hides beneath.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SlicingFins",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ToxicMoth",
+  "File": "ToxicMoth",
+  "UniqueName": "Xevra, the Bog-Eyed",
+  "Story": "Its staring wings lure wanderers into the Toxic Bog, where a single shiver of its ruff releases a killing dust.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:ToxicPowder",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Plaguewing",
+  "File": "Plaguewing",
+  "UniqueName": "Vuln, the Blight-Borne",
+  "Story": "Each beat of Vuln's ragged wings carries the Toxic Bog's sickness beyond its stagnant waters.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:PlagueBlast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:VenomousViper",
+  "File": "VenomousViper",
+  "UniqueName": "Sazhul, the Venomwell",
+  "Story": "Its coils are a living cistern; a single bite empties years of stored venom.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:BlackFang",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.55,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ToxicSludge",
+  "File": "ToxicSludge",
+  "UniqueName": "Yulvox, the Effluent Maw",
+  "Story": "What the drains cannot carry, Yulvox learns to swallow.",
+  "Affixes": [
+   "Colossal",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:Writhe",
+  "SignatureChance": 0.15,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:PoisonousSerpent",
+  "File": "PoisonousSerpent",
+  "UniqueName": "Ophis, the Venom-Siphon",
+  "Story": "Each stolen drop swells the amber reservoirs beneath its frill, waiting to be returned through a single bite.",
+  "Affixes": [
+   "Armoured",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:PoisonousFangs",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KythisstheVenomQueen",
+  "File": "KythisstheVenomQueen",
+  "UniqueName": "Sszira, the Venom-Tithe Matriarch",
+  "Story": "Every coil guards her tribute; every fang collects the debt in venom.",
+  "Affixes": [
+   "Warded",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:PoisonousFangs",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Treant",
+  "File": "Treant",
+  "UniqueName": "Druven, the Thicket Warden",
+  "Story": "Where his roots close, no trespasser leaves the thicket.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:CoiledTrap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:WillOWisp",
+  "File": "WillOWisp",
+  "UniqueName": "Nym, the Mistlight Lure",
+  "Story": "In Misty Thicket, Nym lights the lost path with the souls of those who followed it.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:DebilitatingCurse",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:OakTreant",
+  "File": "OakTreant",
+  "UniqueName": "Ormgar, the Ringbark Elder",
+  "Story": "Every trespass through Misty Thicket is counted in the rings beneath his bark.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:CrushingSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SpiritStag",
+  "File": "SpiritStag",
+  "UniqueName": "Auvrel, the Veil-Antlered",
+  "Story": "Where his antlers part the mist, the lost hear their names among the trees.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:WindDance",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:WillowTreant",
+  "File": "WillowTreant",
+  "UniqueName": "Ylven, the Weeping Bough",
+  "Story": "Beneath the mist, his golden tears bind trespassers to the roots of the thicket.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:ShamblingWhips",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MurkwoodSpider",
+  "File": "MurkwoodSpider",
+  "UniqueName": "Velkith, the Murkwood Snarekeeper",
+  "Story": "Every trail through Murkwoods ends in the silk of its patient keeper.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SilkTrap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MurkwoodTrapper",
+  "File": "MurkwoodTrapper",
+  "UniqueName": "Vuldrek, the Snare-Bough",
+  "Story": "Beneath a cloak of moss, Vuldrek knots the Murkwoods into snares that tighten at the sound of footsteps.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SilkCocoon",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.5,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MurkwoodSpinner",
+  "File": "MurkwoodSpinner",
+  "UniqueName": "Velkra, the Silkbound Huntress",
+  "Story": "In the Murkwoods, every silken thread leads back to her waiting fangs.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SilkCocoon",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 0.5,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MurkwoodBroodlings",
+  "File": "MurkwoodBroodlings",
+  "UniqueName": "Xalvi, the Thornsilk Covenant",
+  "Story": "Three broods swear one hunger, binding the Murkwoods in silk no blade can part.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:BroodlingSwarm",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MurkwoodWeaver",
+  "File": "MurkwoodWeaver",
+  "UniqueName": "Nereth, the Thornsilk Binder",
+  "Story": "Between the Murkwoods’ oldest branches, Nereth weaves thorn-bound silk that tightens with every struggle.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SilkReinforcement",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ZuraxatheBroodMother",
+  "File": "ZuraxatheBroodMother",
+  "UniqueName": "Aulzha, the Thousand-Egg Warden",
+  "Story": "Every silk-bound egg upon her carapace holds another hunter waiting for her command.",
+  "Affixes": [
+   "Warded",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:BroodlingSwarm",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Wolf",
+  "File": "Wolf",
+  "UniqueName": "Kael, the Divide Howler",
+  "Story": "His howl rolls between the peaks of the Towering Divide, and every pack below falls silent.",
+  "Affixes": [
+   "Enraging",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:LungingBite",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Harpy",
+  "File": "Harpy",
+  "UniqueName": "Kethra, the Divide's Talon",
+  "Story": "Her hunting cry rolls through the Towering Divide; the next echo is the snap of her talons.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SlicingWingbash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:WindRider"
+ },
+ {
+  "Id": "MelvorBase:DireWolf",
+  "File": "DireWolf",
+  "UniqueName": "Kaul, the Divide-Fang",
+  "Story": "Across the Towering Divide, every broken fang on his collar marks a challenger who never returned.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:LungingBite",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StoneElemental",
+  "File": "StoneElemental",
+  "UniqueName": "Keldrun, the Divide Sentinel",
+  "Story": "At the narrowest pass of Towering Divide, the mountain itself rises to bar the way.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:BoulderBlast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.725,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SavageDireWolf",
+  "File": "SavageDireWolf",
+  "UniqueName": "Rauth, the Ridgebreaker",
+  "Story": "Across the Towering Divide, even the stone remembers the bite of his pack.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:TearingFlurry",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GreenDragon",
+  "File": "GreenDragon",
+  "UniqueName": "Mavrek, the Passcoil Sovereign",
+  "Story": "His coils bar Dragon's Pass, and the shields of those who challenged his claim hang from his bronze harness.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:Dragonbreath",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Drake",
+  "File": "Drake",
+  "UniqueName": "Zhorak, the Pass-Toll Tyrant",
+  "Story": "The toll through Dragon's Pass is paid in steel; Zhorak wears every failed bargain.",
+  "Affixes": [
+   "Enraging",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:StaggeringLash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlueDragon",
+  "File": "BlueDragon",
+  "UniqueName": "Vordrath, the Sky-Pass Sovereign",
+  "Story": "His wingbeats close the mountain sky, and every traveler through Dragon's Pass owes him tribute.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:HeavyDragonBreath",
+  "SignatureChance": 0.15,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Wyvern",
+  "File": "Wyvern",
+  "UniqueName": "Skyrra, the Sky-Pass Reaver",
+  "Story": "The shadow over Dragon's Pass collects its toll in shattered bone.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SlicingWingbash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RedDragon",
+  "File": "RedDragon",
+  "UniqueName": "Drazhul, the Hoardbound Gatekeeper",
+  "Story": "Every shield on his shoulder belonged to a traveller who tried to cross Dragon's Pass without paying tribute.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Fireball",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GasBall",
+  "File": "GasBall",
+  "UniqueName": "Uvrox, the Basin Suffocator",
+  "Story": "He gathers the Basin's last breath behind a broken collar of blackstone.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:SteamRelease",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlackstoneRoller",
+  "File": "BlackstoneRoller",
+  "UniqueName": "Dromak, the Basin Grindwheel",
+  "Story": "The grooves across Blackstone Basin mark the paths of a siege beast that never learned to stop.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SteamRoller",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SpikySlug",
+  "File": "SpikySlug",
+  "UniqueName": "Yorruk, the Basalt Bastion",
+  "Story": "In Blackstone Basin, every scar on its crawling foot marks another hunter buried beneath its basalt spines.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SteamEruption",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlackstoneShooter",
+  "File": "BlackstoneShooter",
+  "UniqueName": "Qorvash, the Basin Bombardier",
+  "Story": "Every shard it launches carries the crushing weight of Blackstone Basin.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SteamShooter",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 0.45,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlackstoneGolem",
+  "File": "BlackstoneGolem",
+  "UniqueName": "Torvul, the Basin Keystone",
+  "Story": "The oldest stone in Blackstone Basin rises to crush those who would prise its heart from the rock.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SteamRelease",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MagmortheMoltenBehemoth",
+  "File": "MagmortheMoltenBehemoth",
+  "UniqueName": "Dhuram, the Mountain-Shouldered",
+  "Story": "His tusks split the mountain gates, and his shoulders carry their broken walls.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:RockSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.8,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandScorpion",
+  "File": "SandScorpion",
+  "UniqueName": "Naskir, the Dune Pincer",
+  "Story": "Beneath the Desert Plains, the dunes remember every footstep that passed between his pincers.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:ScorpionSting",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandNomad",
+  "File": "SandNomad",
+  "UniqueName": "Zahir, the Caravan Reaper",
+  "Story": "He counts the lost caravans by the route seals hanging from his belt.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SandSlashes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandNomadTrapper",
+  "File": "SandNomadTrapper",
+  "UniqueName": "Azrek, the Dune Snare",
+  "Story": "Across the Desert Plains, every safe-looking path ends in his wire.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:EnsaringScattershot",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.5,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandNomadWarrior",
+  "File": "SandNomadWarrior",
+  "UniqueName": "Zafir, the Caravan Reaver",
+  "Story": "He wears the seals of vanished caravans, and every dune conceals another toll.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:TwinSlash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandNomadMage",
+  "File": "SandNomadMage",
+  "UniqueName": "Zahim, the Mirage Wayfarer",
+  "Story": "He folds the Desert Plains into a maze of false horizons, guiding trespassers toward a destination only he can see.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:SandWall",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlackDragon",
+  "File": "BlackDragon",
+  "UniqueName": "Zorveth, the Gemvault Tyrant",
+  "Story": "Deep within the Gemstone Pinnacles, Zorveth counts every stolen jewel among the scales of his living vault.",
+  "Affixes": [
+   "Warded",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:BlackFlameblast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.315,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:WindDrifter",
+  "File": "WindDrifter",
+  "UniqueName": "Sovrel, the Gale-Sovereign",
+  "Story": "Across the Windy Plains, every wandering gust bends to the will of its ancient sovereign.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SlicingWinds",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Vampire",
+  "File": "Vampire",
+  "UniqueName": "Sareth, the Veinbound Regent",
+  "Story": "Every vein in the Dreary Barrens pays tribute to his thirst.",
+  "Affixes": [
+   "Vampiric",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:VampireBite",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DarkWizard",
+  "File": "DarkWizard",
+  "UniqueName": "Selkris, the Barrens Hexarch",
+  "Story": "Across the Dreary Barrens, every whispered curse finds its way into his chained grimoire.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:Corrupt",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Dreadspine",
+  "File": "Dreadspine",
+  "UniqueName": "Sarn, the Barrens Ossuary",
+  "Story": "Every arrow carries a name the Barrens tried to bury.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:DreadspineVolley",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Nightwing",
+  "File": "Nightwing",
+  "UniqueName": "Osvyr, the Barrens Hush",
+  "Story": "Across the Dreary Barrens, the last sound a traveller hears is the hush of his wings.",
+  "Affixes": [
+   "Hasted",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:Vanish",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ElderVampire",
+  "File": "ElderVampire",
+  "UniqueName": "Ilyss, the Barrens Bloodmatron",
+  "Story": "Across the Dreary Barrens, every stolen heartbeat belongs to her ancient court.",
+  "Affixes": [
+   "Vampiric",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:VampireBite",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BloodImp",
+  "File": "BloodImp",
+  "UniqueName": "Zevrik, the Bloodwing Gaoler",
+  "Story": "Across the Bloodlands, the rattle of his broken manacles is the last warning before his wings blot out escape.",
+  "Affixes": [
+   "Hasted",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:Hemorrhage",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BloodHound",
+  "File": "BloodHound",
+  "UniqueName": "Rovek, the Bloodscent Tyrant",
+  "Story": "Across the Bloodlands, Rovek follows a single drop until its owner joins the fangs upon his collar.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:Maul",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.65,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BloodFiend",
+  "File": "BloodFiend",
+  "UniqueName": "Kharvul, the Bloodlands Goremantle",
+  "Story": "Every rib upon his shoulders belonged to a hunter who thought the Bloodlands could be tamed.",
+  "Affixes": [
+   "Enraging",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:BloodReap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BloodReaper",
+  "File": "BloodReaper",
+  "UniqueName": "Rhevik, the Bloodtithe Harvester",
+  "Story": "Across the Bloodlands, he counts every stolen heartbeat in sealed crimson glass.",
+  "Affixes": [
+   "Colossal",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:BloodReap",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BloodSummoner",
+  "File": "BloodSummoner",
+  "UniqueName": "Yzren, the Sanguine Liturgist",
+  "Story": "Each page he turns calls another blood-bound servant from the silent soil of the Bloodlands.",
+  "Affixes": [
+   "Vampiric",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SanguineVortex",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.42,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SanguistheCrimsonArcanist",
+  "File": "SanguistheCrimsonArcanist",
+  "UniqueName": "Vezhar, the Hemal Sealkeeper",
+  "Story": "Seven blood-bound seals orbit his mantle, each holding a stolen heartbeat until he speaks its final syllable.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:BloodSpikes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.45,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedCrewman",
+  "File": "DrownedCrewman",
+  "UniqueName": "Brelk, the Wreckbound Boatswain",
+  "Story": "Still bound to his sunken ship, Brelk drags every trespasser back to the crew.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:BrutalSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedRifleman",
+  "File": "DrownedRifleman",
+  "UniqueName": "Dask, the Wreckshot",
+  "Story": "From the wrecks of Shipwreck Isles, Dask still takes aim at every living soul who crosses his watch.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:DoubleShot",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedPossessor",
+  "File": "DrownedPossessor",
+  "UniqueName": "Thulvek, the Wreckbound Usurper",
+  "Story": "From the wrecks of Shipwreck Isles, it steals the drowned's last memories and wears their watching souls.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:DrownedControl",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedQuartermaster",
+  "File": "DrownedQuartermaster",
+  "UniqueName": "Odrik, the Sunken Paymaster",
+  "Story": "He counts the drowned among his crew and collects every debt with barnacled steel.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:WildStrikes",
+  "SignatureChance": 0.4,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedPirateCaptain",
+  "File": "DrownedPirateCaptain",
+  "UniqueName": "Malrec, the Keelbound Admiral",
+  "Story": "Chained to the keel of his sunken flagship, Malrec still collects his crew from every wreck in the isles.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:TwinSlash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedOne",
+  "File": "DrownedOne",
+  "UniqueName": "Neruvo, the Abyssal Soulkeeper",
+  "Story": "Deep in the Drowned Abyss, his ship-bell tolls for every soul trapped inside the lantern.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:MindCrush",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedVessel",
+  "File": "DrownedVessel",
+  "UniqueName": "Ulreth, the Abyssal Host",
+  "Story": "The drowned entrust their bones to the coral growing upon its back.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:MindDrain",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Krakeling",
+  "File": "Krakeling",
+  "UniqueName": "Vosk, the Keelcrusher",
+  "Story": "In the Drowned Abyss, Vosk folds sunken keels around the skulls of those who sailed them.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:WildSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedFlayer",
+  "File": "DrownedFlayer",
+  "UniqueName": "Bhaur, the Trench-Shearer",
+  "Story": "In the Drowned Abyss, Bhaur shears anchor chains as easily as the last hope of escape.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SliceAndDice",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.85,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DrownedOvermind",
+  "File": "DrownedOvermind",
+  "UniqueName": "Uthrel, the Drowned Synod",
+  "Story": "Every thought lost beneath the Drowned Abyss returns as a command within its silent council.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:MindCrush",
+  "SignatureChance": 0.4,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KrakentheDrownedOverlord",
+  "File": "KrakentheDrownedOverlord",
+  "UniqueName": "Orvath, the Shipgrave Sovereign",
+  "Story": "He wears the prows of drowned fleets, and his lantern guides the next ship into his grasp.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:MindCrush",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StoneGargoyle",
+  "File": "StoneGargoyle",
+  "UniqueName": "Tholmar, the Mausoleum Sealkeeper",
+  "Story": "Every key at his waist belongs to a tomb that must never open.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:GuardedStrikes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:PhantasmOrb",
+  "File": "PhantasmOrb",
+  "UniqueName": "Ulmeth, the Sepulchral Witness",
+  "Story": "Its unblinking gaze binds the Mausoleum's wandering souls to the lanterns beneath its shroud.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:Soulrip",
+  "SignatureChance": 0.15,
+  "SignaturePeak": -1,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:PhantasmWraith",
+  "File": "PhantasmWraith",
+  "UniqueName": "Qor, the Soulstring Warden",
+  "Story": "Every arrow loosed in the Mausoleum returns with another soul for his lantern.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:SeekingBolts",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:PhantasmKnight",
+  "File": "PhantasmKnight",
+  "UniqueName": "Vauld, the Mausoleum Oathkeeper",
+  "Story": "His oath keeps every tomb sealed, and his lantern holds those who tried to leave.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:PhantasmGuard",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:PhantasmGuardian",
+  "File": "PhantasmGuardian",
+  "UniqueName": "Vaust, the Soulgate Warden",
+  "Story": "Beyond the mausoleum gate, Vaust counts every soul that enters and permits none to leave.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:PhantasmGuard",
+  "SignatureChance": 0.3,
+  "SignaturePeak": 0.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandSpitter",
+  "File": "SandSpitter",
+  "UniqueName": "Urzhek, the Dune-Sieve",
+  "Story": "Through a bronze sieve of stolen caravan metal, Urzhek spits the Sea of Sand into the eyes of its prey.",
+  "Affixes": [
+   "Armoured",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:SandToss",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:SandCovered"
+ },
+ {
+  "Id": "MelvorBase:SandMummy",
+  "File": "SandMummy",
+  "UniqueName": "Neshu, the Dune-Bound Vizier",
+  "Story": "Beneath the Sea of Sand, his burial seals still bind the dead to an undying decree.",
+  "Affixes": [
+   "Warded",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:SandBurial",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.63,
+  "Passive": "MelvorBase:ShiftingSands"
+ },
+ {
+  "Id": "MelvorBase:SandDrake",
+  "File": "SandDrake",
+  "UniqueName": "Thazir, the Dune-Carapaced",
+  "Story": "Beneath its plated hide lie the shattered blades of every caravan that dared cross its dunes.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SandAmbush",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.0,
+  "Passive": "MelvorBase:Sandstorm"
+ },
+ {
+  "Id": "MelvorBase:SandSentinel",
+  "File": "SandSentinel",
+  "UniqueName": "Qesem, the Shifting Seal",
+  "Story": "Beneath the Sea of Sand, Qesem shifts its ancient seals to bar every path to the buried vaults.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SandStrikes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:ShiftingSands"
+ },
+ {
+  "Id": "MelvorBase:BabyWurm",
+  "File": "BabyWurm",
+  "UniqueName": "Qezhul, the Dune-Gullet",
+  "Story": "Beneath the Sea of Sand, three green eyes mark the last turn a caravan will ever take.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SandAmbush",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ShiftsandGuardianSentinel",
+  "File": "ShiftsandGuardianSentinel",
+  "UniqueName": "Aqrem, the Hourglass Bastion",
+  "Story": "Each grain that slips through his hollow core renews the seal no trespasser has broken.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SandWall",
+  "SignatureChance": 0.2,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:ShiftingSands"
+ },
+ {
+  "Id": "MelvorBase:QazaraktheShiftsandGuardian",
+  "File": "QazaraktheShiftsandGuardian",
+  "UniqueName": "Akhem, the Dunehour Colossus",
+  "Story": "Each grain within his heart measures another trespasser buried beneath the shifting dunes.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SandBurial",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.63,
+  "Passive": "MelvorBase:Desert"
+ },
+ {
+  "Id": "MelvorBase:ElderWyvern",
+  "File": "ElderWyvern",
+  "UniqueName": "Ydrak, the Pinnacle Diadem",
+  "Story": "The oldest guardian of Gemstone Pinnacles wears the mountain's stolen jewels as living scales.",
+  "Affixes": [
+   "Warded",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:BrutalSlam",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SapphireDragon",
+  "File": "SapphireDragon",
+  "UniqueName": "Rhyss, the Sapphire Faultkeeper",
+  "Story": "Each sapphire vein beneath the Gemstone Pinnacles answers the sweep of his crystal wings.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:DracolithFireBlast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RubyDragon",
+  "File": "RubyDragon",
+  "UniqueName": "Rhezka, the Rubyvein Sovereign",
+  "Story": "Deep within Gemstone Pinnacles, Rhezka guards the ruby veins as though every crimson facet were a scale torn from her own hide.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Fireball",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:EmeraldDragon",
+  "File": "EmeraldDragon",
+  "UniqueName": "Elyr, the Emerald Bastion",
+  "Story": "No emerald leaves the Gemstone Pinnacles without passing beneath his watchful wings.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Dragonflame",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.375,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BabyBlackDragon",
+  "File": "BabyBlackDragon",
+  "UniqueName": "Nyxul, the Hoardfang Hatchling",
+  "Story": "Too young to count its treasure, Nyxul already knows every scent that comes near it.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:BlackFlameblast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.315,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:YoungBlackDragon",
+  "File": "YoungBlackDragon",
+  "UniqueName": "Zhurik, the Amethyst Fang",
+  "Story": "Still young, he has already taught elder dragons to leave his hoard untouched.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:BlackFlameblast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.315,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KingBlackDragon",
+  "File": "KingBlackDragon",
+  "UniqueName": "Urzath, the Threefold Dominion",
+  "Story": "Three jaws pronounce one decree: all who pass beneath these wings shall kneel.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:HeavyDragonBreath",
+  "SignatureChance": 0.2,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GlowingJellyfish",
+  "File": "GlowingJellyfish",
+  "UniqueName": "Selyth, the Lantern Veil",
+  "Story": "Beneath the Glowing Depths, its golden pulse draws the unwary into a curtain of silent stings.",
+  "Affixes": [
+   "Warded",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:LuminousFlash",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GlowingLurker",
+  "File": "GlowingLurker",
+  "UniqueName": "Othuun, the Glassbrain Leviathan",
+  "Story": "In the Glowing Depths, the last light a diver follows is the thought forming behind its glass.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:MesmerizingGlow",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Glowsquid",
+  "File": "Glowsquid",
+  "UniqueName": "Cyrel, the Depthlight Ensnarer",
+  "Story": "In the Glowing Depths, its golden pulse holds prey motionless until the waiting tentacles close.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:LuminousFlash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GlowingEel",
+  "File": "GlowingEel",
+  "UniqueName": "Suvrill, the Abyssal Beacon",
+  "Story": "In the Glowing Depths, three golden lights promise a path home; only the teeth answer those who follow.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:StormSurge",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:HypnoticGlowsquid",
+  "File": "HypnoticGlowsquid",
+  "UniqueName": "Vesuun, the Mesmeric Lenskeeper",
+  "Story": "In the Glowing Depths, Vesuun turns a single glance into a lifetime circling its light.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:LuminousFlash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DisorientatingGlowsquid",
+  "File": "DisorientatingGlowsquid",
+  "UniqueName": "Ilzari, the False-Horizon",
+  "Story": "Its shifting lights promise a safe passage, then turn every direction into the same endless deep.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:EvasiveMagic",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MesmeristheSlumberingPrincess",
+  "File": "MesmeristheSlumberingPrincess",
+  "UniqueName": "Iovra, the Dream-Tide Regent",
+  "Story": "Each turn of her jeweled tentacles draws another waking mind beneath the tide of dreams.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:EvasiveMagic",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StormLynx",
+  "File": "StormLynx",
+  "UniqueName": "Teyr, the Thunder-Prowler",
+  "Story": "Across Storm Valley, the thunder follows its pawprints a heartbeat too late.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:Skirmish",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StormFang",
+  "File": "StormFang",
+  "UniqueName": "Vaerik, the Thunderjaw",
+  "Story": "In Storm Valley, the thunder is only the echo of his closing jaws.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:Frenzy",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StormElemental",
+  "File": "StormElemental",
+  "UniqueName": "Voltrem, the Thunderlock",
+  "Story": "Every thunderclap above Storm Valley is another captive beating against his bronze-bound heart.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:UnrelentingWind",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.8,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StormBeast",
+  "File": "StormBeast",
+  "UniqueName": "Bront, the Valley Thunderhoof",
+  "Story": "Each strike of his hooves sends the thunder of Storm Valley rolling between the peaks.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:GrandioseCharge",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StormDragon",
+  "File": "StormDragon",
+  "UniqueName": "Vaerun, the Stormspine Sovereign",
+  "Story": "The crystals along his spine gather every thunderclap that rolls through Storm Valley.",
+  "Affixes": [
+   "Warded",
+   "Colossal"
+  ],
+  "Signature": "MelvorBase:StormSurge",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KelsarinWastelander",
+  "File": "KelsarinWastelander",
+  "UniqueName": "Baskor, the Scrapwind Marauder",
+  "Story": "He strips the Kelsarin Wastes of iron and bone, then carries the spoils into his next ambush.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:PowerSlashes",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KelsarinSkirmisher",
+  "File": "KelsarinSkirmisher",
+  "UniqueName": "Dhevran, the Wastes Tollkeeper",
+  "Story": "At every forgotten crossing of the Kelsarin Wastes, Dhevran takes a caravan seal or the hand that carries it.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:PowerSlashes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KelsarinMauler",
+  "File": "KelsarinMauler",
+  "UniqueName": "Gharom, the Wastes Gatebreaker",
+  "Story": "No gate in the Kelsarin Wastes has survived the third swing of his maul.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:CrushingBlow",
+  "SignatureChance": 0.25,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KelsarinArcher",
+  "File": "KelsarinArcher",
+  "UniqueName": "Fenrik, the Wastes Deadeye",
+  "Story": "Across the Kelsarin Wastes, the last sound a trespasser hears is the whisper of his bowstring.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SeekingBolts",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:KelsarinWarmage",
+  "File": "KelsarinWarmage",
+  "UniqueName": "Omreth, the Wastes Spellmarshal",
+  "Story": "Beneath his horned death-mask, Omreth binds the lost war-spells of Kelsarin to a single command.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:BoulderBlast",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.725,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Dracolith",
+  "File": "Dracolith",
+  "UniqueName": "Morduun, the Stalactite Sovereign",
+  "Story": "Deep in Dracolith Caverns, Morduun wears the vaults of fallen chambers upon its molten back.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:DracolithFlameburst",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.625,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DracolithWyrm",
+  "File": "DracolithWyrm",
+  "UniqueName": "Dhurvek, the Faultcoil",
+  "Story": "Deep beneath Dracolith Caverns, each turn of its armoured coils shifts the walls of the mountain.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:DracolithRavage",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DracolithRavager",
+  "File": "DracolithRavager",
+  "UniqueName": "Urdok, the Vault-Rending",
+  "Story": "Deep in the Dracolith Caverns, Urdok hooks his claws into the stone vaults and brings the mountain down upon intruders.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:CrushingSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DracolithSpitfire",
+  "File": "DracolithSpitfire",
+  "UniqueName": "Skorath, the Cavern Maw",
+  "Story": "Deep in the Dracolith Caverns, his stone jaws close upon all who disturb the ancient seams.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:FlameBarrage",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DracolithTyrant",
+  "File": "DracolithTyrant",
+  "UniqueName": "Khazren, the Cavern-Jaw",
+  "Story": "Deep within Dracolith Caverns, his stone-bound jaws grind challengers into the walls of his dominion.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:DracolithFlameburst",
+  "SignatureChance": 0.4,
+  "SignaturePeak": 0.625,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SandWurm",
+  "File": "SandWurm",
+  "UniqueName": "Zuqal, the Dune-Rasp",
+  "Story": "Its hooked rings rasp buried stone to powder, leaving only sinking dunes where ancient roads once lay.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:SandDevour",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Spitterfish",
+  "File": "Spitterfish",
+  "UniqueName": "Pruul, the Crescent Spout",
+  "Story": "Beneath Crescent Lake, Pruul swells his gilded cheeks before a single shot shatters the silence.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:WaterStream",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.3,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Sailfish",
+  "File": "Sailfish",
+  "UniqueName": "Veluun, the Crescent Spearfin",
+  "Story": "Beneath Crescent Lake, a flash of gilded fins is the last warning before Veluun strikes.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:ForwardStab",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.1,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:NightfangFish",
+  "File": "NightfangFish",
+  "UniqueName": "Nerusk, the Moonbite",
+  "Story": "Beneath Crescent Lake, Nerusk shears moonlit prey between ivory fangs and a bronze crescent jaw.",
+  "Affixes": [
+   "Hasted",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:Nightfang",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:Bleed25"
+ },
+ {
+  "Id": "MelvorBase:Culfish",
+  "File": "Culfish",
+  "UniqueName": "Kelvo, the Crescent Inkweaver",
+  "Story": "Beneath Crescent Lake, Kelvo weaves stolen lures into a silent promise that no angler returns.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:GlowingLurker",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:BlightedTorfish",
+  "File": "BlightedTorfish",
+  "UniqueName": "Thessul, the Crescent Undertow",
+  "Story": "Beneath Crescent Lake, its armoured coils drag the unwary into water that never stirs.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:SharpSpin",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StarblightedMage",
+  "File": "StarblightedMage",
+  "UniqueName": "Vaelis, the Crater Astromancer",
+  "Story": "Within the moon-scarred crater, Vaelis reads the broken stars and turns their verdict upon intruders.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:MeteorShower",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.375,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StarblightedWarrior",
+  "File": "StarblightedWarrior",
+  "UniqueName": "Deyrath, the Moonscar Oathbound",
+  "Story": "Bound to the crater by a shattered oath, Deyrath turns fallen starlight against all who cross the Moonscar.",
+  "Affixes": [
+   "Armoured",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:Starslash",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:StarblightMarksman",
+  "File": "StarblightMarksman",
+  "UniqueName": "Ivrin, the Moonscar Deadeye",
+  "Story": "Across Moonscarred Crater, he measures every heartbeat through a crescent sight.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:MeteorShot",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.15,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Moongazer",
+  "File": "Moongazer",
+  "UniqueName": "Ysovar, the Crater Oracle",
+  "Story": "Deep in Moonscarred Crater, Ysovar reads the fate of trespassers in the reflections of its crystal maw.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:MoonRay",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ScarGolem",
+  "File": "ScarGolem",
+  "UniqueName": "Maug, the Moonscar Reliquary",
+  "Story": "Within its stone shoulders, the crater keeps the fragments of a wounded moon.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Starfall",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.15,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:EraxitheBlightedScar",
+  "File": "EraxitheBlightedScar",
+  "UniqueName": "Edras, the Scarbound Judicator",
+  "Story": "Each gilded scar records a sentence, and his star-guarded blade ensures none are forgotten.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:Starslash",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:WindElemental",
+  "File": "WindElemental",
+  "UniqueName": "Oruun, the Stillwind Arbiter",
+  "Story": "His bronze vanes turn, and every wandering gale of the Windy Plains bends to his judgment.",
+  "Affixes": [
+   "Warded",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:WindDance",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Zephyr",
+  "File": "Zephyr",
+  "UniqueName": "Oryx, the Crosswind Talon",
+  "Story": "Above the Windy Plains, his hooked talons turn every crosswind into a hunting path.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SlicingWinds",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:TornadicElemental",
+  "File": "TornadicElemental",
+  "UniqueName": "Azhur, the Gale-Bound Gyre",
+  "Story": "Across the Windy Plains, his broken bronze vanes turn every fleeing breath back into the storm.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Tornado",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.5,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:WindRipperDrake",
+  "File": "WindRipperDrake",
+  "UniqueName": "Rhevon, the Horizon-Cleaver",
+  "Story": "Across the Windy Plains, his blade-ridged wings split the gale before his claws reach their prey.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:WindRipper",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.55,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ArcheryTarget",
+  "File": "ArcheryTarget",
+  "UniqueName": "Tovin, the Unerring Mark",
+  "Story": "Every arrow finds its mark; none has ever persuaded Tovin to fall.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SeekingBolts",
+  "SignatureChance": 0.15,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:EnragedBoar",
+  "File": "EnragedBoar",
+  "UniqueName": "Gorrek, the Spearbreaker",
+  "Story": "Every hunter who challenged his charge left another broken spear upon his shoulders.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:RagingThumps",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:GrumpyGolem",
+  "File": "GrumpyGolem",
+  "UniqueName": "Bhorun, the Rumbleheart",
+  "Story": "Every blow against his chest returns as a tremor through Rocky Rumble.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:RockSlam",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.8,
+  "Passive": "MelvorBase:OverwhelmingStrength"
+ },
+ {
+  "Id": "MelvorBase:TaintedTreant",
+  "File": "TaintedTreant",
+  "UniqueName": "Brevoss, the Skull-Bough",
+  "Story": "Every skull upon his boughs belonged to an axe-bearer who mistook him for timber.",
+  "Affixes": [
+   "Colossal",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:ShamblingWhips",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Ringleader",
+  "File": "Ringleader",
+  "UniqueName": "Gorvuk, the Thicket Ringleader",
+  "Story": "Every ring on his armour belonged to a chief who thought the thicket was theirs.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:RoyalBeatdown",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:DancingCactus",
+  "File": "DancingCactus",
+  "UniqueName": "Tavio, the Thornstep Maestro",
+  "Story": "Every swaying step sets the roadside thorns dancing to a rhythm only Tavio can hear.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:ThornBlast",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.4,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:ArcaneSentinel",
+  "File": "ArcaneSentinel",
+  "UniqueName": "Othrek, the Thousand-Seal Watcher",
+  "Story": "Each eye guards a different binding; none has ever blinked at the same time.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:ExposedSightline",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:IceYeti",
+  "File": "IceYeti",
+  "UniqueName": "Hrokk, the Plungeheart Colossus",
+  "Story": "Beneath the Cold Plunge, Hrokk gathers the tusks of beasts that dared disturb his glacial hall.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:IceChunkBarrage",
+  "SignatureChance": 0.45,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Talm",
+  "File": "Talm",
+  "UniqueName": "Dhalvek, the Tower-Gullet",
+  "Story": "The Sunken Tower lost its gates; Dhalvek still wears them around the hunger in his chest.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:TearingFlurry",
+  "SignatureChance": 0.55,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SilkbackScarab",
+  "File": "SilkbackScarab",
+  "UniqueName": "Ishru, the Silt-Silk Castellan",
+  "Story": "Beneath the oasis silt, Ishru binds stolen gold to its shell with silk that no blade can part.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SilkReinforcement",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:Siltspinner",
+  "File": "Siltspinner",
+  "UniqueName": "Sythra, the Oasis Loomkeeper",
+  "Story": "Beneath the silted oasis, Sythra spins the broken cisterns into a silken prison.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SandTrap",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SiltScuttler",
+  "File": "SiltScuttler",
+  "UniqueName": "Qadru, the Oasis Lockjaw",
+  "Story": "Caravan bronze binds its jagged shell, and every vanished oasis pilgrim has felt the lock of its claw.",
+  "Affixes": [
+   "Armoured",
+   "Hasted"
+  ],
+  "Signature": "MelvorBase:SiltPlunge",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SiltMosquito",
+  "File": "SiltMosquito",
+  "UniqueName": "Ossik, the Oasis Vein-Piercer",
+  "Story": "Above the silt-choked pools, Ossik drinks the oasis one heartbeat at a time.",
+  "Affixes": [
+   "Hasted",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:StingingDrain",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SiltMass",
+  "File": "SiltMass",
+  "UniqueName": "Murn, the Oasis Siltkeeper",
+  "Story": "Every channel the oasis forgets finds its way into Murn’s bottomless maw.",
+  "Affixes": [
+   "Colossal",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SandBurial",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.63,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SeaGriffin",
+  "File": "SeaGriffin",
+  "UniqueName": "Saevor, the Tidecliff Castellan",
+  "Story": "From the sea cliffs above the Big City, Saevor guards its wreck-strewn hunting grounds with a shipbreaker's talons.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:Dive",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SeaPelican",
+  "File": "SeaPelican",
+  "UniqueName": "Pellik, the Cliffside Gullet",
+  "Story": "From its cliffside roost, Pellik can empty a fishing boat with a single sweep of its vast pouch.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:Dive",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SeaGullwing",
+  "File": "SeaGullwing",
+  "UniqueName": "Quillan, the Cliffwake Reaver",
+  "Story": "His shriek rolls along the sea cliffs before his wings sweep the ledges bare.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:FeatherRain",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.45,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SeaPegasus",
+  "File": "SeaPegasus",
+  "UniqueName": "Nacreon, the Breakerwing",
+  "Story": "Each beat of his shell-armoured wings sends the cliffside surf climbing toward the sky.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:SlicingWinds",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 0.6,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SeaDrake",
+  "File": "SeaDrake",
+  "UniqueName": "Nerovar, the Cliffside Undertow",
+  "Story": "From the ledges of Sea Cliffside, Nerovar drags the unwary into the waiting undertow.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:WindRipper",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.55,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:AngryStonehopper",
+  "File": "AngryStonehopper",
+  "UniqueName": "Krathu, the Scree-Leaper",
+  "Story": "Every furious leap sends a shiver through the stone beneath its prey.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:RockSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.8,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MatureStonehopper",
+  "File": "MatureStonehopper",
+  "UniqueName": "Dovrak, the Escarpment Vaulter",
+  "Story": "Each leap carries the weight of the cliffs, and each landing leaves another broken ledge.",
+  "Affixes": [
+   "Hasted",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:BrutalSlam",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MeleeSentinelMinion",
+  "File": "MeleeSentinelMinion",
+  "UniqueName": "Azhvek, the Three-Eyed Bulwark",
+  "Story": "Three unblinking eyes judge every intruder, and no gate opens while its iron oath endures.",
+  "Affixes": [
+   "Armoured",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:PowerSlashes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 1.25,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RangedSentinelMinion",
+  "File": "RangedSentinelMinion",
+  "UniqueName": "Azkiel, the Twin-Eyed Vigil",
+  "Story": "One eye watches the trespasser; the other has already chosen where the arrow will land.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:ExposedSightline",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MagicSentinelMinion",
+  "File": "MagicSentinelMinion",
+  "UniqueName": "Ithrek, the Fourfold Vigil",
+  "Story": "Four hands renew the ancient seals; two unblinking eyes judge every trespasser.",
+  "Affixes": [
+   "Warded",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:GuardedStrikes",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.7,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SoulsmithNovice",
+  "File": "SoulsmithNovice",
+  "UniqueName": "Tovren, the Soul-Anvil",
+  "Story": "Beneath the starlit sky, he hammers stolen souls into blades that remember their owners.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:Soulblast",
+  "SignatureChance": 0.18,
+  "SignaturePeak": -1,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:SoulsmithWhelp",
+  "File": "SoulsmithWhelp",
+  "UniqueName": "Drezh, the Soulchain Fang",
+  "Story": "Every soul bound to his back is another voice snarling through his teeth.",
+  "Affixes": [
+   "Hasted",
+   "Vampiric"
+  ],
+  "Signature": "MelvorBase:LungingBite",
+  "SignatureChance": 0.35,
+  "SignaturePeak": 1.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MeleeAmalgamation",
+  "File": "MeleeAmalgamation",
+  "UniqueName": "Nulgrath, the Tower-Stitched",
+  "Story": "Beneath the Sunken Tower, three stolen voices command a single relentless stride.",
+  "Affixes": [
+   "Colossal",
+   "Armoured"
+  ],
+  "Signature": "MelvorBase:TwistedArmour",
+  "SignatureChance": 0.25,
+  "SignaturePeak": 0.0,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:RangedAmalgamation",
+  "File": "RangedAmalgamation",
+  "UniqueName": "Nerzul, the Sunken Volley",
+  "Story": "Within the Sunken Tower, a dozen stolen faces sight along a single merciless volley.",
+  "Affixes": [
+   "Hasted",
+   "Warded"
+  ],
+  "Signature": "MelvorBase:DoubleShot",
+  "SignatureChance": 0.18,
+  "SignaturePeak": 0.75,
+  "Passive": "MelvorBase:-"
+ },
+ {
+  "Id": "MelvorBase:MagicAmalgamation",
+  "File": "MagicAmalgamation",
+  "UniqueName": "Zhulen, the Manyfold Conclave",
+  "Story": "Beneath the Sunken Tower, a dozen captive wills speak through one unending spell.",
+  "Affixes": [
+   "Warded",
+   "Enraging"
+  ],
+  "Signature": "MelvorBase:Soulblast",
+  "SignatureChance": 0.25,
+  "SignaturePeak": -1,
+  "Passive": "MelvorBase:-"
+ }
+]

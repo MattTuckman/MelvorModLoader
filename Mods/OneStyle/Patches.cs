@@ -47,7 +47,7 @@ namespace OneStyle;
 /// </summary>
 public static partial class Patches
 {
-    sealed class Source(string name) : INamedObject
+    internal sealed class Source(string name) : INamedObject
     {
         public ILocalizedString DisplayName { get; } = new LocalizedString(name);
     }
@@ -124,6 +124,9 @@ public static partial class Patches
             s_key = Store.KeyOf(game);
             s_class = Store.Load(game, s_key);
             Apply();
+            // Monsters are watched whatever the class: elites appear with Off too, and the weak spot comes after them.
+            Step("monsters", () => WatchEnemy());
+            Step("elites", () => Elites.Bind(game, s_key, s_mods));
         }
         Log($"'{game.CharacterName}': class {Classes.Name(s_class)}" + (s_class == Class.None ? "." : $", {s_levels.Count} level lock(s) and {MappedStyles} style lock(s) follow it."));
         Changed?.Invoke();
@@ -137,6 +140,7 @@ public static partial class Patches
         if (s_game == null) return;
         lock (s_lock)
         {
+            Elites.Unbind();
             Forget();
             s_game = null;
             s_mods = null;

@@ -17,6 +17,19 @@ public sealed class ClassWindow
     readonly Dictionary<Class, Button> _cards = new();
     readonly VBoxContainer _body = new();
     readonly Button _close;
+    readonly Button _classTab, _elitesTab;
+    Control _cardsRow = null!;
+    bool _elitesPage;
+
+    /// <summary>The Class page (false) or the Elites page (true); also for tests.</summary>
+    public void ShowPage(bool elites)
+    {
+        _elitesPage = elites;
+        _classTab.SetPressedNoSignal(!elites);
+        _elitesTab.SetPressedNoSignal(elites);
+        _cardsRow.Visible = !elites;
+        Repaint();
+    }
     double _clock;
     string _signature = "";
 
@@ -88,6 +101,13 @@ public sealed class ClassWindow
         sub.SizeFlagsVertical = Control.SizeFlags.Fill;
         header.AddChild(sub);
         header.AddChild(new Control { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill });
+        // the two pages: the class, and the elites (Champion and Unique monsters)
+        _classTab = new Button { Text = "Class", ToggleMode = true, ButtonPressed = true, FocusMode = Control.FocusModeEnum.None };
+        _elitesTab = new Button { Text = "Elites", ToggleMode = true, FocusMode = Control.FocusModeEnum.None };
+        _classTab.Pressed += () => ShowPage(false);
+        _elitesTab.Pressed += () => ShowPage(true);
+        header.AddChild(_classTab);
+        header.AddChild(_elitesTab);
         _close = new Button { Text = "Close" };
         _close.Pressed += Hide;
         header.AddChild(_close);
@@ -131,6 +151,7 @@ public sealed class ClassWindow
             cards.AddChild(card);
         }
         root.AddChild(cards);
+        _cardsRow = cards;
 
         _body.AddThemeConstantOverride("separation", 8);
         _body.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
@@ -170,7 +191,7 @@ public sealed class ClassWindow
         if (Signature() != _signature) Repaint();
     }
 
-    static string Signature() => $"{Patches.Current}|{Patches.ClassLevel}|{Patches.Tier}|{Patches.MappedLevels}|{Patches.Problems.Count}|{Rings.Problems.Count}|{Patches.EquivalentsActive.Count}";
+    static string Signature() => $"{Patches.Current}|{Patches.ClassLevel}|{Patches.Tier}|{Patches.MappedLevels}|{Patches.Problems.Count}|{Rings.Problems.Count}|{Patches.EquivalentsActive.Count}|{Elites.Progress.Ember}|{Elites.Progress.Trophies}|{Elites.Progress.Recent.Count}|{Elites.Tier}|{Elites.Progress.Marked}|{string.Join(";", UniquePowers.StatusLines())}";
 
     void Repaint()
     {
@@ -184,6 +205,11 @@ public sealed class ClassWindow
             card.AddThemeStyleboxOverride("hover", Style.Box(cls == c ? Style.AccentDim : Style.ControlHover, 6, Style.Accent, 1, 8, 8));
         }
         foreach (Node n in _body.GetChildren()) { _body.RemoveChild(n); n.QueueFree(); }
+        if (_elitesPage)
+        {
+            ElitesPage();
+            return;
+        }
 
         if (c == Class.None)
         {
@@ -259,6 +285,118 @@ public sealed class ClassWindow
             _body.AddChild(Text("Not working with this game version: " + string.Join("; ", Patches.Problems), Style.Bad, 12));
     }
 
+    // ================================================================ the Elites page
+
+    void ElitesPage()
+    {
+        EliteProgress p = Elites.Progress;
+        var top = Section();
+        var tv = new VBoxContainer();
+        tv.AddThemeConstantOverride("separation", 6);
+        tv.AddChild(Text("Champion and Unique monsters", Style.Accent, 17));
+        tv.AddChild(Text($"Any monster can come as a Champion (blue, about 6 in 100) or, rarely, as a Unique (orange, its own name and story): "
+                         + "more hit points and damage, one or two affixes, and much better loot. Only while you play, never while the game is closed. "
+                         + "Works with every class, and with Off.", Style.Muted, 12));
+        var toggles = new HBoxContainer();
+        toggles.AddThemeConstantOverride("separation", 16);
+        var on = new CheckBox { Text = "Elites on", ButtonPressed = Elites.Enabled, FocusMode = Control.FocusModeEnum.None };
+        on.Toggled += v => { Elites.Enabled = v; Repaint(); };
+        var safe = new CheckBox { Text = "No death penalty while an elite lives", ButtonPressed = Elites.NoDeathPenalty, FocusMode = Control.FocusModeEnum.None };
+        safe.Toggled += v => { Elites.NoDeathPenalty = v; Repaint(); };
+        toggles.AddChild(on);
+        toggles.AddChild(safe);
+        tv.AddChild(toggles);
+        tv.AddChild(Text($"Ember: {p.Ember:N0}   ·   Trophies: {p.Trophies} / {Elites.Known}", Style.Good, 15));
+        top.AddChild(tv);
+        _body.AddChild(top);
+
+        var rules = Section();
+        var rv = new VBoxContainer();
+        rv.AddThemeConstantOverride("separation", 3);
+        rv.AddChild(Text("How it works", Style.Text, 15));
+        rv.AddChild(Bullet("Chances: combat areas 6% Champion / 0.8% Unique, your slayer task 10% / 1.5%, dungeon waves 8% / 0.6%, a dungeon's last boss 10% / 4%. "
+                           + "After 100 kills of a monster without its Unique the chance climbs until it is certain at 200 (60 and 120 before its first Unique)."));
+        rv.AddChild(Bullet("Champion: 1.35 to 3 times the hit points, +8 to 12% damage, 5% faster, one random affix (two from 1200 hit points). "
+                           + "Unique: 1.7 to 6 times the hit points, +14 to 22% damage, 8% faster, its own two affixes, its own attack and sometimes a passive."));
+        rv.AddChild(Bullet("Affixes: Hasted (faster), Colossal (bigger, slower), Warded (2 to 6 hits of ward), Armoured (-18% damage taken), "
+                           + "Vampiric (heals from its hits, fades after 25 s), Enraging (stronger below 40% hit points)."));
+        rv.AddChild(Bullet("Safety: an elite's hit is never more than 1.3 times the monster's own, and after 60 s it tires (+5% damage taken every 5 s)."));
+        rv.AddChild(Bullet("Rewards: Champion 2 and Unique 5 more rolls of the monster's own loot (gold too), +25% / +50% combat XP, and Ember "
+                           + "(Champion 3 to 11, Unique 16 to 48). The first kill of a monster's Champion or Unique gives more."));
+        rv.AddChild(Bullet("Trophies: your first Unique of a monster gives its trophy. Each trophy: +0.15% elite chance and +0.1% Ember."));
+        foreach (string m in Elites.Milestones()) rv.AddChild(Text("     " + m, m.EndsWith("(reached)") ? Style.Good : Style.Muted, 12));
+        if (p.Trophies >= 100)
+        {
+            var mark = new Button { Text = "Mark the monster I am fighting (+25% Unique chance)", FocusMode = Control.FocusModeEnum.None };
+            mark.Pressed += () => { Elites.MarkCurrent(); Repaint(); };
+            rv.AddChild(mark);
+            if (p.Marked != "") rv.AddChild(Text("Marked: " + p.Marked.Replace("MelvorBase:", ""), Style.Good, 12));
+        }
+        rules.AddChild(rv);
+        _body.AddChild(rules);
+
+        var recent = Section();
+        var cv = new VBoxContainer();
+        cv.AddThemeConstantOverride("separation", 3);
+        cv.AddChild(Text("Last elites", Style.Text, 15));
+        if (p.Recent.Count == 0) cv.AddChild(Text("None yet.", Style.Muted, 12));
+        foreach (string line in p.Recent) cv.AddChild(Text(line, Style.Text, 12));
+        recent.AddChild(cv);
+        _body.AddChild(recent);
+        _body.AddChild(RareSection());
+        if (UniquePowers.StatusLines() is { Count: > 0 } powers)
+        {
+            var box = Section();
+            var pv = new VBoxContainer();
+            pv.AddThemeConstantOverride("separation", 3);
+            pv.AddChild(Text("Your unique items", Style.Text, 15));
+            foreach (string line in powers) pv.AddChild(Text(line, RareItems.Colors[Rarity.Unique], 12));
+            pv.AddChild(Text("Powers work while you play; the numbers here are their counters.", Style.Muted, 11));
+            box.AddChild(pv);
+            _body.AddChild(box);
+        }
+        _body.AddChild(Text("Your Ember, trophies and counts are kept in elites-progress.json next to the mod. Your rare items are kept in your save.",
+            Style.Muted, 12));
+    }
+
+    string _rareNote = "";
+
+    /// <summary>Rare items: the last drops, and "make all normal" for players who remove the mod loader too.</summary>
+    PanelContainer RareSection()
+    {
+        var box = Section();
+        var v = new VBoxContainer();
+        v.AddThemeConstantOverride("separation", 4);
+        v.AddChild(Text("Rare items", Style.Text, 15));
+        v.AddChild(Text("Monsters drop gear as Magic (blue, 2 affixes), Rare (yellow, 3 or 4 affixes) or Unique (orange) items, straight into "
+                        + "your bank with a coloured frame: 0.1% a kill, one from every Champion, two from every Unique, plus the Unique's own item. "
+                        + "Hold Alt over one to see each affix's tier (T1 is the best) and range. The Elites button next to a monster lists what it drops.",
+                        Style.Muted, 12));
+        foreach (RolledItem r in RareItems.LastDrops.GetRange(0, System.Math.Min(8, RareItems.LastDrops.Count)))
+        {
+            Label l = Text($"{RareItems.RarityName(r.Rarity)}: {r.Name}", RareItems.Colors[r.Rarity], 12);
+            v.AddChild(l);
+        }
+        if (RareItems.Data.Pending.Count > 0)
+            v.AddChild(Text($"{RareItems.Data.Pending.Count} item(s) wait for room in your bank.", Style.Bad, 12));
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 10);
+        var normal = new Button { Text = "Make all rare items normal", FocusMode = Control.FocusModeEnum.None,
+            TooltipText = "Only needed before you remove the mod loader itself. When you remove just One Style, the mod loader puts their normal items "
+                          + "(and the rings of Ring Slot 3 to 6) in your bank on its own." };
+        normal.Pressed += () =>
+        {
+            if (MelvorModLoader.GameAccess.CurrentGame is not { IsSaveLoaded: true } game) return;
+            _rareNote = $"{RareItems.MakeAllNormal(game)} item(s) are normal items again.";
+            Repaint();
+        };
+        row.AddChild(normal);
+        if (_rareNote != "") row.AddChild(Text(_rareNote, Style.Good, 12));
+        v.AddChild(row);
+        box.AddChild(v);
+        return box;
+    }
+
     string _ringNote = "";
 
     /// <summary>The six ring slots (every class, and Off too) and the button to empty slots 2 to 6 before removing the mod.</summary>
@@ -283,7 +421,8 @@ public sealed class ClassWindow
         row.AddChild(bank);
         if (_ringNote != "") row.AddChild(Text(_ringNote, Style.Good, 12));
         v.AddChild(row);
-        v.AddChild(Text("Before you remove One Style, press this: without the mod the game drops what Ring Slot 2 to 6 hold.", Style.Bad, 12));
+        v.AddChild(Text("Removing One Style: the mod loader puts the rings of Ring Slot 3 to 6 in your bank by itself (Ring Slot 2 is the game's own "
+                        + "and keeps its ring). Removing the mod loader too: press this first.", Style.Muted, 12));
         if (Rings.Problems.Count > 0) v.AddChild(Text("Ring slots: " + string.Join("; ", Rings.Problems), Style.Bad, 12));
         box.AddChild(v);
         return box;

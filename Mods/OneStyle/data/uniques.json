@@ -1,0 +1,2741 @@
+[
+ {
+  "Id": "OsUCopperOath",
+  "Name": "Copper Oath",
+  "Slot": "Helmet",
+  "Style": "",
+  "Level": 1,
+  "Source": "MelvorBase:Golbin",
+  "SourceName": "Grik, the Copper-Crowned",
+  "BaseId": "MelvorBase:StoneHelmet",
+  "Stats": [
+   {
+    "Text": "+4% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+4% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Usurper's Salute",
+  "Mechanic": "Your first successful hit in each fight deals +40% damage, or +120% against a Champion or Unique. Misses don't use it up; it is lost when the fight ends.",
+  "Flavour": "He had no throne, so he stole the right to strike first.",
+  "Icon": "art/items/CopperOath.webp"
+ },
+ {
+  "Id": "OsUThornshot",
+  "Name": "Thornshot",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Ranged",
+  "Level": 1,
+  "Source": "MelvorBase:GolbinScout",
+  "SourceName": "Snikt, the Thornshot Tracker",
+  "BaseId": "MelvorBase:NormalBow",
+  "Stats": [
+   {
+    "Text": "+6% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "-3% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": -0.03,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Thorn Stagger",
+  "Mechanic": "15% chance on hit (at most once every 6 s) to Stagger: the enemy's next attack comes 25% of its attack interval later.",
+  "Flavour": "Whoever takes a second step in this forest has already taken the first arrow.",
+  "Icon": "art/items/Thornshot.webp"
+ },
+ {
+  "Id": "OsUStitchedFurrows",
+  "Name": "Stitched Furrows",
+  "Slot": "Legs",
+  "Style": "",
+  "Level": 15,
+  "Source": "MelvorBase:Scarecrow",
+  "SourceName": "Hobb, the Stitched Sentry",
+  "BaseId": "MelvorBase:CopperPlatelegs",
+  "Stats": [
+   {
+    "Text": "+8% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% chance to keep food",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "FoodPreservationChance"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Spoiled Rations",
+  "Mechanic": "Each time you eat (preserved food counts), the enemy is poisoned for 8% of the HP healed per second for 6 s. Up to 3 stacks; a new stack at most once every 1.5 s.",
+  "Flavour": "Hobb's pockets hold things older than last year's harvest.",
+  "Icon": "art/items/StitchedFurrows.webp"
+ },
+ {
+  "Id": "OsURingbarkReprisal",
+  "Name": "Ringbark Reprisal",
+  "Slot": "Offhand",
+  "Style": "",
+  "Level": 36,
+  "Source": "MelvorBase:Treant",
+  "SourceName": "Druven, the Thicket Warden",
+  "BaseId": "MelvorBase:SteelShield",
+  "Stats": [
+   {
+    "Text": "-3% damage taken",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentDamageTaken"
+     },
+     "Value": -0.03,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+12% damage reflected",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackReflect"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Bark's Due",
+  "Mechanic": "100% of the damage you reflect is stored and added to your next successful hit, then the pool resets. The pool is capped at 150% of your normal max hit, and reflected damage is never reflected again.",
+  "Flavour": "The forest counts back every axe it has taken.",
+  "Icon": "art/items/RingbarkReprisal.webp"
+ },
+ {
+  "Id": "OsUHoarderSPrism",
+  "Name": "Hoarder's Prism",
+  "Slot": "Ring",
+  "Style": "",
+  "Level": 28,
+  "Source": "MelvorBase:RainbowSlime",
+  "SourceName": "Qivra, the Prism Hoarder",
+  "BaseId": "MelvorBase:SilverRubyRing",
+  "Stats": [
+   {
+    "Text": "+4% chance to double combat loot",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatLoot",
+      "Name": "ItemDoublingChance"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Loot"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+3% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.03,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Hoarder's Eye",
+  "Mechanic": "When a monster drops an item whose drop chance is 5% or less, gain +25% damage for 90 s and your rare item chance is 15% higher (0.1% becomes 0.115%). Triggering again refreshes the time; it does not stack.",
+  "Flavour": "Qivra sees every shiny thing once and never lets it go.",
+  "Icon": "art/items/HoarderSPrism.webp"
+ },
+ {
+  "Id": "OsUCombKnuckles",
+  "Name": "Comb Knuckles",
+  "Slot": "Gloves",
+  "Style": "",
+  "Level": 23,
+  "Source": "MelvorBase:Bee",
+  "SourceName": "Izzet, the Honeycomb Castellan",
+  "BaseId": "MelvorBase:IronGloves",
+  "Stats": [
+   {
+    "Text": "+5% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+5% healing from food",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "PercentHealing"
+     },
+     "Value": 0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Honey Frenzy",
+  "Mechanic": "After you eat (preserved food counts), your next 3 attacks get +25% damage and -15% attack interval; at most once every 8 s, does not stack. Also +15% food preservation chance.",
+  "Flavour": "Every six blows, one drop returns to the hive.",
+  "Icon": "art/items/CombKnuckles.webp"
+ },
+ {
+  "Id": "OsUMireThroat",
+  "Name": "Mire Throat",
+  "Slot": "Amulet",
+  "Style": "",
+  "Level": 28,
+  "Source": "MelvorBase:BogBloomer",
+  "SourceName": "Eshra, the Mire-Throated",
+  "BaseId": "MelvorBase:GoldSapphireAmulet",
+  "Stats": [
+   {
+    "Text": "+6% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+4% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Bog Gullet",
+  "Mechanic": "+8% lifesteal, but food heals 40% less.",
+  "Flavour": "The bog gets in through the deepest wound.",
+  "Icon": "art/items/MireThroat.webp"
+ },
+ {
+  "Id": "OsUSnarestep",
+  "Name": "Snarestep",
+  "Slot": "Boots",
+  "Style": "",
+  "Level": 36,
+  "Source": "MelvorBase:MurkwoodSpider",
+  "SourceName": "Velkith, the Murkwood Snarekeeper",
+  "BaseId": "MelvorBase:SteelBoots",
+  "Stats": [
+   {
+    "Text": "-3% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": -0.03,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% chance to shrug off a stun",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatEffect",
+      "Name": "AvoidanceChance"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      },
+      "Effect": "MelvorBase:Stun"
+     }
+    }
+   }
+  ],
+  "MechanicName": "Step Into Nothing",
+  "Mechanic": "When every hit of an enemy attack misses on its own accuracy roll, gain a Silk Tension charge (max 1): your next successful hit deals +35% damage. Blocks, immunity and item dodges don't count; your own misses don't spend it, and it is lost when the fight ends.",
+  "Flavour": "The web catches not the prey, but the wasted swing.",
+  "Icon": "art/items/Snarestep.webp"
+ },
+ {
+  "Id": "OsUThicketTrophies",
+  "Name": "Thicket Trophies",
+  "Slot": "Cape",
+  "Style": "",
+  "Level": 43,
+  "Source": "MelvorBase:MurkwoodTrapper",
+  "SourceName": "Vuldrek, the Snare-Bough",
+  "BaseId": "MelvorBase:SnakeskinCape",
+  "Stats": [
+   {
+    "Text": "+8% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Headhunter's Boughs",
+  "Mechanic": "Killing a Champion or Unique gives a trophy of 1-2 of its affixes for 90 s of online combat: Hasted -12% attack interval; Colossal +20% max hit points and +8% damage; Warded +15% max hit points; Armoured -12% damage taken; Vampiric +5% lifesteal; Enraging +15% damage and -8% attack interval while you are below 60% HP. Up to 3 trophies (a 4th replaces the oldest) and matching affixes stack, capped at -40% attack interval, -35% damage taken, 8% lifesteal and +60% max hit points.",
+  "Flavour": "Every bone swaying on Vuldrek's branch was once another hunter's pride.",
+  "Icon": "art/items/ThicketTrophies.webp"
+ },
+ {
+  "Id": "OsUCaravanSeals",
+  "Name": "Caravan Seals",
+  "Slot": "Legs",
+  "Style": "",
+  "Level": 63,
+  "Source": "MelvorBase:SandNomad",
+  "SourceName": "Zahir, the Caravan Reaper",
+  "BaseId": "MelvorBase:RunePlatelegs",
+  "Stats": [
+   {
+    "Text": "+10% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+5% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Four-Seal Passage",
+  "Mechanic": "Every 3 normal kills (counted across fights) readies a Passage Seal (1 at most). When a Champion or Unique fight starts the seal is spent, and your first 5 successful hits on that enemy gain +30% crit chance; misses don't use them and unused ones are lost when the fight ends.",
+  "Flavour": "Four lost caravans, one open road.",
+  "Icon": "art/items/CaravanSeals.webp"
+ },
+ {
+  "Id": "OsUVeilRebuttal",
+  "Name": "Veil Rebuttal",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Magic",
+  "Level": 79,
+  "Source": "MelvorBase:DarkWizard",
+  "SourceName": "Selkris, the Barrens Hexarch",
+  "BaseId": "MelvorBase:PhantomStaff",
+  "Stats": [
+   {
+    "Text": "+18% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.18,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+12% chance to keep runes",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Veil's Refusal",
+  "Mechanic": "Magic only. 15% chance that an enemy attack does no damage at all, and you strike back with a free hit of your spell (it cannot crit and triggers no items).",
+  "Flavour": "Selkris lets no blow go unanswered.",
+  "Icon": "art/items/VeilRebuttal.webp"
+ },
+ {
+  "Id": "OsUOathlockedPlate",
+  "Name": "Oathlocked Plate",
+  "Slot": "Torso",
+  "Style": "",
+  "Level": 62,
+  "Source": "MelvorBase:PhantasmKnight",
+  "SourceName": "Vauld, the Mausoleum Oathkeeper",
+  "BaseId": "MelvorBase:RunePlatebody",
+  "Stats": [
+   {
+    "Text": "+40% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.4,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "-5% damage taken",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentDamageTaken"
+     },
+     "Value": -0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Sealed Oath",
+  "Mechanic": "Above half your hit points you take 15% less damage; at half or below you deal 15% more damage.",
+  "Flavour": "There is no room in this breastplate for a second oath.",
+  "Icon": "art/items/OathlockedPlate.webp"
+ },
+ {
+  "Id": "OsUSkytoll",
+  "Name": "Skytoll",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Melee",
+  "Level": 51,
+  "Source": "MelvorBase:Wyvern",
+  "SourceName": "Skyrra, the Sky-Pass Reaver",
+  "BaseId": "MelvorBase:AdamantSword",
+  "Stats": [
+   {
+    "Text": "+18% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.18,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+4% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Rising Toll",
+  "Mechanic": "When your hit kills an enemy, its overkill damage plus 8% of that enemy's max HP is stored (1 charge). When the next enemy spawns it takes that as physical damage, capped at 40% of its max HP; ward and damage reduction apply, and the charge is lost when combat stops.",
+  "Flavour": "The pass's debt does not die with the debtor.",
+  "Icon": "art/items/Skytoll.webp"
+ },
+ {
+  "Id": "OsUBreakerHooves",
+  "Name": "Breaker Hooves",
+  "Slot": "Boots",
+  "Style": "",
+  "Level": 62,
+  "Source": "MelvorBase:SeaPegasus",
+  "SourceName": "Nacreon, the Breakerwing",
+  "BaseId": "MelvorBase:RuneBoots",
+  "Stats": [
+   {
+    "Text": "-6% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": -0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% healing from food",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "PercentHealing"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Eighth Wave",
+  "Mechanic": "Every 6 successful hits in a fight remove one damage-over-time effect from you with all its stacks: Poison first, then Bleed, then Burn. With none on you, the wave heals you for 2% of your max HP instead.",
+  "Flavour": "The sea does not take everything; Nacreon chooses what to leave.",
+  "Icon": "art/items/BreakerHooves.webp"
+ },
+ {
+  "Id": "OsUSovereignDiadem",
+  "Name": "Sovereign Diadem",
+  "Slot": "Helmet",
+  "Style": "",
+  "Level": 43,
+  "Source": "MelvorBase:RoyalBee",
+  "SourceName": "Zelith, the Stinging Sovereign",
+  "BaseId": "MelvorBase:SiltspinnerCoif",
+  "Stats": [
+   {
+    "Text": "+8% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Queen's Charge",
+  "Mechanic": "The first time in a fight your hit drops a living enemy from above 50% HP to 50% or below, gain -25% attack interval for 4 s. Once per fight; damage over time or a killing blow won't trigger it, and the bonus ends when the enemy dies.",
+  "Flavour": "The guards take the first half; the sovereign takes the rest.",
+  "Icon": "art/items/SovereignDiadem.webp"
+ },
+ {
+  "Id": "OsULanternVeil",
+  "Name": "Lantern Veil",
+  "Slot": "Amulet",
+  "Style": "",
+  "Level": 70,
+  "Source": "MelvorBase:GlowingJellyfish",
+  "SourceName": "Selyth, the Lantern Veil",
+  "BaseId": "MelvorBase:BloodhawkAmulet",
+  "Stats": [
+   {
+    "Text": "+12% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% chance to keep food",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "FoodPreservationChance"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Light's Share",
+  "Mechanic": "20% chance on hit to Burn the enemy for 4% of that hit's damage per second for 4 s. Killing an enemy that carries a Poison, Bleed or Burn grants a Ration Light charge (max 1, kept between fights): your next meal is not used up.",
+  "Flavour": "Those who follow Selyth's light never run short of rations.",
+  "Icon": "art/items/LanternVeil.webp"
+ },
+ {
+  "Id": "OsUWreckshot",
+  "Name": "Wreckshot",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Ranged",
+  "Level": 90,
+  "Source": "MelvorBase:DrownedRifleman",
+  "SourceName": "Dask, the Wreckshot",
+  "BaseId": "MelvorBase:GriffinCrossbow",
+  "Stats": [
+   {
+    "Text": "+26% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.26,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Sunken Reckoning",
+  "Mechanic": "Grows with your Champion and Unique kills while you wear it (kept with the character); each step adds to the ones before: 25 = +10% damage, 50 = +6% crit chance, 75 = -8% attack interval, 100 = +25% damage against elites, 125 = +1 loot roll per elite kill.",
+  "Flavour": "Dask gives the first shot to the sea and puts the second on his tab.",
+  "Icon": "art/items/Wreckshot.webp"
+ },
+ {
+  "Id": "OsUGatebreaker",
+  "Name": "Gatebreaker",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Melee",
+  "Level": 93,
+  "Source": "MelvorBase:KelsarinMauler",
+  "SourceName": "Gharom, the Wastes Gatebreaker",
+  "BaseId": "MelvorBase:KelsarinMaul",
+  "Stats": [
+   {
+    "Text": "+35% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.35000000000000003,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+12% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+20% critical hit damage",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitMultiplier"
+     },
+     "Value": 0.2,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Gate's Verdict",
+  "Mechanic": "+40% damage while the current enemy is a Champion or Unique, on top of this item's +35% max hit. Breaking one opens the gate: your next fight starts with +40% damage for 10 s.",
+  "Flavour": "In Kelsarin, a gate is just a wall that hasn't taken its first blow.",
+  "Icon": "art/items/Gatebreaker.webp"
+ },
+ {
+  "Id": "OsUCavernBastion",
+  "Name": "Cavern Bastion",
+  "Slot": "Offhand",
+  "Style": "",
+  "Level": 95,
+  "Source": "MelvorBase:DracolithTyrant",
+  "SourceName": "Khazren, the Cavern-Jaw",
+  "BaseId": "MelvorBase:KrakelingShield",
+  "Stats": [
+   {
+    "Text": "-8% damage taken",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentDamageTaken"
+     },
+     "Value": -0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+18% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.18,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Fifth Stratum",
+  "Mechanic": "Every 5th enemy attack that lands at least one direct hit deals 50% less direct damage (after normal defences); the count carries between fights. Full misses and damage over time don't count, and a multi-hit attack counts once.",
+  "Flavour": "The mountain's first four answers are echoes; the fifth is stone.",
+  "Icon": "art/items/CavernBastion.webp"
+ },
+ {
+  "Id": "OsUPinnacleDiadem",
+  "Name": "Pinnacle Diadem",
+  "Slot": "Helmet",
+  "Style": "",
+  "Level": 83,
+  "Source": "MelvorBase:ElderWyvern",
+  "SourceName": "Ydrak, the Pinnacle Diadem",
+  "BaseId": "MelvorBase:WakingHelmet",
+  "Stats": [
+   {
+    "Text": "+10% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+15% chance to double combat loot",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatLoot",
+      "Name": "ItemDoublingChance"
+     },
+     "Value": 0.15,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Loot"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Stolen Bulwark",
+  "Mechanic": "Your first successful hit in each fight also takes up to 2 hits of the enemy's ward (besides its normal damage) and gives you 2 hits of ward for 10 s, or 4 if the enemy had any ward.",
+  "Flavour": "Every stone in Ydrak's crown was once someone else's last refuge.",
+  "Icon": "art/items/PinnacleDiadem.webp"
+ },
+ {
+  "Id": "OsUGoremantle",
+  "Name": "Goremantle",
+  "Slot": "Torso",
+  "Style": "",
+  "Level": 90,
+  "Source": "MelvorBase:BloodFiend",
+  "SourceName": "Kharvul, the Bloodlands Goremantle",
+  "BaseId": "MelvorBase:BloodBody",
+  "Stats": [
+   {
+    "Text": "+25% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.25,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "-6% damage taken",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentDamageTaken"
+     },
+     "Value": -0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Unsated Triumph",
+  "Mechanic": "Each kill grants a Hunger stack (max 10) giving +3% damage each (max +30%); stacks carry over to new enemies. Eating any food clears all stacks, but lifesteal and other healing do not.",
+  "Flavour": "The more ribs it gathers, the hungrier it grows.",
+  "Icon": "art/items/Goremantle.webp"
+ },
+ {
+  "Id": "OsUThunderTraces",
+  "Name": "Thunder Traces",
+  "Slot": "Gloves",
+  "Style": "",
+  "Level": 92,
+  "Source": "MelvorBase:StormLynx",
+  "SourceName": "Teyr, the Thunder-Prowler",
+  "BaseId": "MelvorBase:KelsarinGloves",
+  "Stats": [
+   {
+    "Text": "-10% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": -0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+7% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.07,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Delayed Thunder",
+  "Mechanic": "Every 4th successful hit in a fight records 70% of the HP it removed (capped at 15% of the enemy's max HP). 2 s later, if the same enemy is still alive, that amount strikes again; it cannot crit.",
+  "Flavour": "Teyr's claw has passed; its thunder has yet to settle the score.",
+  "Icon": "art/items/ThunderTraces.webp"
+ },
+ {
+  "Id": "OsUStarboundMantle",
+  "Name": "Starbound Mantle",
+  "Slot": "Cape",
+  "Style": "",
+  "Level": 80,
+  "Source": "MelvorBase:StarblightedMage",
+  "SourceName": "Vaelis, the Crater Astromancer",
+  "BaseId": "MelvorBase:VampireCloak",
+  "Stats": [
+   {
+    "Text": "+16% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.16,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+18% chance to keep runes",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": 0.18,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Sum of Stars",
+  "Mechanic": "Each successful hit grants an Orbit stack after it lands (max 20), each giving +2% damage to later attacks (max +40%). Misses neither grant nor remove stacks; all stacks reset when the fight ends.",
+  "Flavour": "In Vaelis's sky, no star rules alone.",
+  "Icon": "art/items/StarboundMantle.webp"
+ },
+ {
+  "Id": "OsUUsurperSCircle",
+  "Name": "Usurper's Circle",
+  "Slot": "Ring",
+  "Style": "",
+  "Level": 91,
+  "Source": "MelvorBase:DrownedPossessor",
+  "SourceName": "Thulvek, the Wreckbound Usurper",
+  "BaseId": "MelvorBase:SilverJadestoneRing",
+  "Stats": [
+   {
+    "Text": "+8% chance to double combat loot",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatLoot",
+      "Name": "ItemDoublingChance"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Loot"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Other Hand's Echo",
+  "Mechanic": "Copies the bonuses (not the equipment stats) of the ring in its paired ring slot (1-2, 3-4, 5-6). Unique rings are not copied; two Usurper's Circles copy nothing.",
+  "Flavour": "Thulvek mimics not your face, but the worth you leave behind.",
+  "Icon": "art/items/UsurperSCircle.webp"
+ },
+ {
+  "Id": "OsUSoulstringQuiver",
+  "Name": "Soulstring Quiver",
+  "Slot": "Ammo",
+  "Style": "MelvorBase:Ranged",
+  "Level": 62,
+  "Source": "MelvorBase:PhantasmWraith",
+  "SourceName": "Qor, the Soulstring Warden",
+  "BaseId": "MelvorBase:RuneArrows",
+  "Stats": [
+   {
+    "Text": "+12% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Returning Arrow",
+  "Mechanic": "Ranged only. Never used up when you shoot. Every 5th successful ranged attack (every 4th against elites) fires a free extra shot at 75% damage that can crit.",
+  "Flavour": "Every arrow Qor looses comes back with a soul beside it.",
+  "Icon": "art/items/SoulstringQuiver.webp"
+ },
+ {
+  "Id": "OsUFourfoldWrit",
+  "Name": "Fourfold Writ",
+  "Slot": "Offhand",
+  "Style": "MelvorBase:Magic",
+  "Level": 45,
+  "Source": "MelvorBase:MagicSentinelMinion",
+  "SourceName": "Ithrek, the Fourfold Vigil",
+  "BaseId": "MelvorBase:MantisDefender",
+  "Stats": [
+   {
+    "Text": "+10% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+15% chance to keep runes",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": 0.15,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Four Seals",
+  "Mechanic": "Magic only. Every 6th spell keeps its runes and prayer points and opens the next seal in order: 1) +40% damage on that spell; 2) Burn for 3% of your max hit per second for 5 s; 3) heal 5% of your max HP; 4) the enemy's next attack deals 50% less damage. The cycle is kept between fights.",
+  "Flavour": "Ithrek's four hands renew four seals; the book never forgets whose turn it is.",
+  "Icon": "art/items/FourfoldWrit.webp"
+ },
+ {
+  "Id": "OsUThreevoiceCleaver",
+  "Name": "Threevoice Cleaver",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Melee",
+  "Level": 67,
+  "Source": "MelvorBase:MeleeAmalgamation",
+  "SourceName": "Nulgrath, the Tower-Stitched",
+  "BaseId": "MelvorBase:Rune2HSword",
+  "Stats": [
+   {
+    "Text": "+20% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.2,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% accuracy",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Three Voices",
+  "Mechanic": "After every 2 successful hits, your next attack deals +35% damage and the enemy's evasion is 30% lower for it (a miss does not use it up; it starts over each fight).",
+  "Flavour": "Three throats, one blade, and none of them ever agreed.",
+  "Icon": "art/items/ThreevoiceCleaver.webp"
+ },
+ {
+  "Id": "OsURootShearClaws",
+  "Name": "Root-Shear Claws",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Melee",
+  "Level": 45,
+  "Source": "MelvorBase:MangroveMantis",
+  "SourceName": "Ssilak, the Root-Shearer",
+  "BaseId": "MelvorBase:MithrilDagger",
+  "Stats": [
+   {
+    "Text": "+12% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "-6% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": -0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Deep Wound",
+  "Mechanic": "25% chance on hit to Bleed for 30% of the hit's damage over 4 s (max 5 stacks); each bleed tick can crit. Hitting a bleeding enemy refreshes your bleeds, but direct hit damage is -20%.",
+  "Flavour": "It cut the roots first, so nothing could hold on.",
+  "Icon": "art/items/RootShearClaws.webp"
+ },
+ {
+  "Id": "OsUThornstepSpinecoat",
+  "Name": "Thornstep Spinecoat",
+  "Slot": "Torso",
+  "Style": "",
+  "Level": 40,
+  "Source": "MelvorBase:DancingCactus",
+  "SourceName": "Tavio, the Thornstep Maestro",
+  "BaseId": "MelvorBase:ChainmailBody",
+  "Stats": [
+   {
+    "Text": "+10% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+20% damage reflected",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackReflect"
+     },
+     "Value": 0.2,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Thorn Dance",
+  "Mechanic": "The damage you reflect hits 2.5 times (it can crit) and has a 25% chance to Bleed for 30% of it over 4 s (3 stacks at most); these hits trigger no other items. Your own attacks deal 10% less damage.",
+  "Flavour": "Tavio never stopped dancing; the thorns kept time.",
+  "Icon": "art/items/ThornstepSpinecoat.webp"
+ },
+ {
+  "Id": "OsUTollkeeperGreaves",
+  "Name": "Tollkeeper Greaves",
+  "Slot": "Legs",
+  "Style": "",
+  "Level": 92,
+  "Source": "MelvorBase:KelsarinSkirmisher",
+  "SourceName": "Dhevran, the Wastes Tollkeeper",
+  "BaseId": "MelvorBase:BeastslayerBottomsV",
+  "Stats": [
+   {
+    "Text": "+45% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.45,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Last Breath",
+  "Mechanic": "Your HP cannot go above 50% of your max HP (auto-eat still uses your full max HP). 15% of the direct damage you take is given back and taken over 4 s instead; that delayed damage cannot kill you.",
+  "Flavour": "Everyone pays the toll. Some just pay it slower.",
+  "Icon": "art/items/TollkeeperGreaves.webp"
+ },
+ {
+  "Id": "OsUSunkenVolley",
+  "Name": "Sunken Volley",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Ranged",
+  "Level": 67,
+  "Source": "MelvorBase:RangedAmalgamation",
+  "SourceName": "Nerzul, the Sunken Volley",
+  "BaseId": "MelvorBase:SteamShooterCrossbow",
+  "Stats": [
+   {
+    "Text": "+14% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.14,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% accuracy",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Twin Volley",
+  "Mechanic": "Each attack fires a second arrow: both deal 60% damage. The second uses one more ammo and rolls its own hit and crit.",
+  "Flavour": "Two arrows to a string, drowned and still drawn.",
+  "Icon": "art/items/SunkenVolley.webp"
+ },
+ {
+  "Id": "OsUTwinEyeLongwatch",
+  "Name": "Twin-Eye Longwatch",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Ranged",
+  "Level": 45,
+  "Source": "MelvorBase:RangedSentinelMinion",
+  "SourceName": "Azkiel, the Twin-Eyed Vigil",
+  "BaseId": "MelvorBase:MithrilCrossbow",
+  "Stats": [
+   {
+    "Text": "+30% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.3,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+15% critical hit damage",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitMultiplier"
+     },
+     "Value": 0.15,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Still Heartbeat",
+  "Mechanic": "+60% attack interval, but your shots almost never miss and hit for at least 80% of your max hit. The first shot of each fight is a guaranteed crit.",
+  "Flavour": "One eye to find you, one eye to never miss.",
+  "Icon": "art/items/TwinEyeLongwatch.webp"
+ },
+ {
+  "Id": "OsUConclaveSpire",
+  "Name": "Conclave Spire",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Magic",
+  "Level": 67,
+  "Source": "MelvorBase:MagicAmalgamation",
+  "SourceName": "Zhulen, the Manyfold Conclave",
+  "BaseId": "MelvorBase:WaterFuryStaff",
+  "Stats": [
+   {
+    "Text": "+16% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.16,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+15% chance to keep runes",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": 0.15,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Council's Voice",
+  "Mechanic": "Magic only. At the start of each fight your spell's element switches to the enemy's weakness (the spell's effects and rune costs stay; nothing changes against Neutral enemies). Hits with elemental advantage deal +15% damage on top of the normal bonus.",
+  "Flavour": "Four voices argue; the right one always wins.",
+  "Icon": "art/items/ConclaveSpire.webp"
+ },
+ {
+  "Id": "OsUSanguineLiturgy",
+  "Name": "Sanguine Liturgy",
+  "Slot": "Offhand",
+  "Style": "MelvorBase:Magic",
+  "Level": 90,
+  "Source": "MelvorBase:BloodSummoner",
+  "SourceName": "Yzren, the Sanguine Liturgist",
+  "BaseId": "MelvorBase:DrownedDefender",
+  "Stats": [
+   {
+    "Text": "+12% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Blood Rite",
+  "Mechanic": "Spells keep their runes (you still need one cast's runes in the bank); each cast costs 3% of your current HP instead (never below 1 HP). With magic, +1% damage per 2% of missing HP (max +30%).",
+  "Flavour": "Runes are a poor man's blood.",
+  "Icon": "art/items/SanguineLiturgy.webp"
+ },
+ {
+  "Id": "OsUPlungeheartTusk",
+  "Name": "Plungeheart Tusk",
+  "Slot": "Weapon",
+  "Style": "MelvorBase:Magic",
+  "Level": 60,
+  "Source": "MelvorBase:IceYeti",
+  "SourceName": "Hrokk, the Plungeheart Colossus",
+  "BaseId": "MelvorBase:AirFuryWand",
+  "Stats": [
+   {
+    "Text": "+10% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% accuracy",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Ice Shatter",
+  "Mechanic": "Every 5th hit freezes the enemy for 1 turn (count kept between enemies), and frozen enemies take +40% damage. When your freeze ends on a living enemy it shatters for 6% of its max HP (max 200% of your max hit, halved vs elites); enemies that can't be frozen become Brittle for 1 turn (+20% damage taken) and take a 3% shatter instead.",
+  "Flavour": "Cold enough to stop a heart, sharp enough to break it.",
+  "Icon": "art/items/PlungeheartTusk.webp"
+ },
+ {
+  "Id": "OsUHollowHarvestCrown",
+  "Name": "Hollow Harvest Crown",
+  "Slot": "Helmet",
+  "Style": "",
+  "Level": 21,
+  "Source": "MelvorBase:JackOLantern",
+  "SourceName": "Orren, the Hollow Harvest",
+  "BaseId": "MelvorBase:IronHelmet",
+  "Stats": [
+   {
+    "Text": "+6% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10 protection",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatProtectionRating"
+     },
+     "Value": 10.0,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Hollow Harvest",
+  "Mechanic": "Your max hit points are 35% lower, and you gain +6 ward. Your ward is full at the start of each fight, regains 1 every 4 s (not for 2 s after you are hit), and eating gives 1 back (once in 2 s).",
+  "Flavour": "Empty inside, and harder for it.",
+  "Icon": "art/items/HollowHarvestCrown.webp"
+ },
+ {
+  "Id": "OsUVeilAntlerReprieve",
+  "Name": "Veil-Antler Reprieve",
+  "Slot": "Amulet",
+  "Style": "",
+  "Level": 50,
+  "Source": "MelvorBase:SpiritStag",
+  "SourceName": "Auvrel, the Veil-Antlered",
+  "BaseId": "MelvorBase:WolfFangAmulet",
+  "Stats": [
+   {
+    "Text": "+8% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% healing from food",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "PercentHealing"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Back From the Veil",
+  "Mechanic": "Once every 3 minutes of fighting (the wait is kept when you stop or restart): when you drop below 20% HP or take a fatal blow you survive, heal 40% of your max HP, enemy attacks do no damage for 3 s, and you gain +30% damage and -15% attack interval for 15 s.",
+  "Flavour": "The stag walked out of the veil once. It can show you the way.",
+  "Icon": "art/items/VeilAntlerReprieve.webp"
+ },
+ {
+  "Id": "OsUThreefoldDecree",
+  "Name": "Threefold Decree",
+  "Slot": "Ring",
+  "Style": "",
+  "Level": 90,
+  "Source": "MelvorBase:KingBlackDragon",
+  "SourceName": "Urzath, the Threefold Dominion",
+  "BaseId": "MelvorBase:SilverJadestoneRing",
+  "Stats": [
+   {
+    "Text": "+6% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% accuracy",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Three Jaws' Edict",
+  "Mechanic": "The combat triangle always favours you, with One Style's class too (which otherwise turns the triangle off): you get its advantage (+10% max hit and less damage taken) against every enemy and never its penalty.",
+  "Flavour": "Urzath ruled three ways at once, and every way was his.",
+  "Icon": "art/items/ThreefoldDecree.webp"
+ },
+ {
+  "Id": "OsURingleaderSTally",
+  "Name": "Ringleader's Tally",
+  "Slot": "Ring",
+  "Style": "",
+  "Level": 39,
+  "Source": "MelvorBase:Ringleader",
+  "SourceName": "Gorvuk, the Thicket Ringleader",
+  "BaseId": "MelvorBase:GoldRubyRing",
+  "Stats": [
+   {
+    "Text": "+4% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+4% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Ringmaster's Count",
+  "Mechanic": "Every equipment set you wear at least 2 real pieces of counts as one piece more (wizard sets, Dawnsteel, Meteorite, Ironsteel...). Sets with 0-1 pieces get nothing, and the extra piece never starts another set.",
+  "Flavour": "He never counted the pieces, only the sets.",
+  "Icon": "art/items/RingleaderSTally.webp"
+ },
+ {
+  "Id": "OsUAmberReservoir",
+  "Name": "Amber Reservoir",
+  "Slot": "Amulet",
+  "Style": "",
+  "Level": 43,
+  "Source": "MelvorBase:PoisonousSerpent",
+  "SourceName": "Ophis, the Venom-Siphon",
+  "BaseId": "MelvorBase:GoldRubyAmulet",
+  "Stats": [
+   {
+    "Text": "+5% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+5% healing from food",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatFood",
+      "Name": "PercentHealing"
+     },
+     "Value": 0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Food"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Amber Vault",
+  "Mechanic": "Combat potions in your toolbelt are never used up, and their stat bonuses (damage, accuracy, evasion, protection, healing...) are 1.5 times; chances, intervals and durations stay the same.",
+  "Flavour": "A drop of venom, kept forever in gold.",
+  "Icon": "art/items/AmberReservoir.webp"
+ },
+ {
+  "Id": "OsUDuneVizierWrappings",
+  "Name": "Dune-Vizier Wrappings",
+  "Slot": "Torso",
+  "Style": "",
+  "Level": 68,
+  "Source": "MelvorBase:SandMummy",
+  "SourceName": "Neshu, the Dune-Bound Vizier",
+  "BaseId": "MelvorBase:SmokeWizardRobes",
+  "Stats": [
+   {
+    "Text": "+12% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.12,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "-4% damage taken",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentDamageTaken"
+     },
+     "Value": -0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Sealed Prayers",
+  "Mechanic": "Prayers cost 50% fewer points (at least 1) and their bonuses are 30% stronger. Each kill gives 15 prayer points.",
+  "Flavour": "The sand keeps prayers the way it keeps the dead.",
+  "Icon": "art/items/DuneVizierWrappings.webp"
+ },
+ {
+  "Id": "OsUOathboundGauntlets",
+  "Name": "Oathbound Gauntlets",
+  "Slot": "Gloves",
+  "Style": "",
+  "Level": 80,
+  "Source": "MelvorBase:StarblightedWarrior",
+  "SourceName": "Deyrath, the Moonscar Oathbound",
+  "BaseId": "MelvorBase:DragonGloves",
+  "Stats": [
+   {
+    "Text": "+8% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+4% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.04,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Soul Anvil",
+  "Mechanic": "When an on-hit effect of your gear (bleed, burn, stun, wither...) does not happen on a hit, it rolls once more: a 20% chance becomes 36%.",
+  "Flavour": "An oath sworn twice is never broken.",
+  "Icon": "art/items/OathboundGauntlets.webp"
+ },
+ {
+  "Id": "OsUAbyssalBeacon",
+  "Name": "Abyssal Beacon",
+  "Slot": "Helmet",
+  "Style": "",
+  "Level": 73,
+  "Source": "MelvorBase:GlowingEel",
+  "SourceName": "Suvrill, the Abyssal Beacon",
+  "BaseId": "MelvorBase:MistWizardHat",
+  "Stats": [
+   {
+    "Text": "+10% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% chance to double combat loot",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:CombatLoot",
+      "Name": "ItemDoublingChance"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Loot"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Deep Signal",
+  "Mechanic": "Twice the chance of Champions and Uniques (with your other elite bonuses, at most 2.5 times). Every elite gets one more affix and +20% HP, and drops one more Rare (3-affix) item.",
+  "Flavour": "Light in the deep does not guide. It calls.",
+  "Icon": "art/items/AbyssalBeacon.webp"
+ },
+ {
+  "Id": "OsUScrapwindTreads",
+  "Name": "Scrapwind Treads",
+  "Slot": "Boots",
+  "Style": "",
+  "Level": 93,
+  "Source": "MelvorBase:KelsarinWastelander",
+  "SourceName": "Baskor, the Scrapwind Marauder",
+  "BaseId": "MelvorBase:DrownedBoots",
+  "Stats": [
+   {
+    "Text": "-6% attack interval",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAttackInterval"
+     },
+     "Value": -0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% evasion",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentEvasionRating"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Scrap Hunter",
+  "Mechanic": "On a Slayer task each task monster you kill gives +1% damage and makes your rare item chance 1% higher (up to +30%, so 0.1% becomes 0.13%), and task monsters come 30% faster. When the task ends the stacks go and you keep 1 token (1 at most): your next elite kill drops one more Rare (3-affix) item.",
+  "Flavour": "Baskor walked where the hunt was, and took what was left.",
+  "Icon": "art/items/ScrapwindTreads.webp"
+ },
+ {
+  "Id": "OsUDreamtideOrb",
+  "Name": "Dreamtide Orb",
+  "Slot": "Offhand",
+  "Style": "",
+  "Level": 75,
+  "Source": "MelvorBase:MesmeristheSlumberingPrincess",
+  "SourceName": "Iovra, the Dream-Tide Regent",
+  "BaseId": "MelvorBase:PhantomShield",
+  "Stats": [
+   {
+    "Text": "+10% accuracy",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+8% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Dream Tide",
+  "Mechanic": "Every 4th hit puts the enemy to sleep for 1 turn (at most once every 8 s per enemy); immune enemies become Drowsy instead and their next attack deals -25% damage. Your first hit on a sleeping or stunned enemy deals +80% damage and cannot miss.",
+  "Flavour": "She sleeps; the tide does the rest.",
+  "Icon": "art/items/DreamtideOrb.webp"
+ },
+ {
+  "Id": "OsUOssuaryMagazine",
+  "Name": "Ossuary Magazine",
+  "Slot": "Ammo",
+  "Style": "MelvorBase:Ranged",
+  "Level": 81,
+  "Source": "MelvorBase:Dreadspine",
+  "SourceName": "Sarn, the Barrens Ossuary",
+  "BaseId": "MelvorBase:DragonArrows",
+  "Stats": [
+   {
+    "Text": "+10% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+5% critical hit chance",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "FlatCriticalHitChance"
+     },
+     "Value": 0.05,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Bone Rain",
+  "Mechanic": "Ranged only. Never used up when you shoot. Every 4th ranged attack deals double damage.",
+  "Flavour": "The bones always come back to the quiver.",
+  "Icon": "art/items/OssuaryMagazine.webp"
+ },
+ {
+  "Id": "OsUBroodSignGrips",
+  "Name": "Brood-Sign Grips",
+  "Slot": "Gloves",
+  "Style": "",
+  "Level": 62,
+  "Source": "MelvorBase:ZuraxatheBroodMother",
+  "SourceName": "Aulzha, the Thousand-Egg Warden",
+  "BaseId": "MelvorBase:RuneGloves",
+  "Stats": [
+   {
+    "Text": "+6% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% accuracy",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentAccuracyRating"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Thousand Eggs",
+  "Mechanic": "Every 3rd hit summons a spiderling (max 3) that lives 8 s and attacks every 2 s for 20% of your max hit, using your accuracy. Spiderlings cannot crit or trigger items.",
+  "Flavour": "A thousand eggs, and every one hatches hungry.",
+  "Icon": "art/items/BroodSignGrips.webp"
+ },
+ {
+  "Id": "OsUHemalPalimpsest",
+  "Name": "Hemal Palimpsest",
+  "Slot": "Offhand",
+  "Style": "MelvorBase:Magic",
+  "Level": 91,
+  "Source": "MelvorBase:SanguistheCrimsonArcanist",
+  "SourceName": "Vezhar, the Hemal Sealkeeper",
+  "BaseId": "MelvorBase:DrownedDefender",
+  "Stats": [
+   {
+    "Text": "+10% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+10% chance to keep runes",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Fifth Seal",
+  "Mechanic": "Magic only. Every 5th spell is followed by a free echo: one more hit of your spell (its own hit roll, can crit).",
+  "Flavour": "Written over and over, in the same red ink.",
+  "Icon": "art/items/HemalPalimpsest.webp"
+ },
+ {
+  "Id": "OsUMirageAstrolabe",
+  "Name": "Mirage Astrolabe",
+  "Slot": "Amulet",
+  "Style": "",
+  "Level": 74,
+  "Source": "MelvorBase:SandNomadMage",
+  "SourceName": "Zahim, the Mirage Wayfarer",
+  "BaseId": "MelvorBase:BloodhawkAmulet",
+  "Stats": [
+   {
+    "Text": "+10% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.1,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+15% chance to keep runes",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:MagicSpell",
+      "Name": "RunePreservationChance"
+     },
+     "Value": 0.15,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "MagicSpells"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "False Horizon",
+  "Mechanic": "Your spell imbuement's bonuses are multiplied by 1.8, or by 2.7 on every 6th spell.",
+  "Flavour": "It points where the stars should be.",
+  "Icon": "art/items/MirageAstrolabe.webp"
+ },
+ {
+  "Id": "OsUCaravanWarcloak",
+  "Name": "Caravan Warcloak",
+  "Slot": "Cape",
+  "Style": "",
+  "Level": 70,
+  "Source": "MelvorBase:SandNomadWarrior",
+  "SourceName": "Zafir, the Caravan Reaver",
+  "BaseId": "MelvorBase:StripedCape",
+  "Stats": [
+   {
+    "Text": "+8% max hit points",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHitpoints"
+     },
+     "Value": 0.08,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   },
+   {
+    "Text": "+6% max hit",
+    "Bonus": {
+     "Stat": {
+      "StatsType": "MelvorBase:Character",
+      "Name": "PercentMaxHit"
+     },
+     "Value": 0.06,
+     "FromContext": null,
+     "Condition": null,
+     "Scaling": null,
+     "LocalContext": {
+      "Component": {
+       "Entity": "MelvorBase:Combat",
+       "Component": "Player"
+      }
+     }
+    }
+   }
+  ],
+  "MechanicName": "Caravan Road",
+  "Mechanic": "Melee only, by stance: Stab +30% accuracy; Slash 20% chance on hit to cause Bleed; Crush stuns for 1 turn on every 4th successful hit (once in 8 s). Nothing in Block stance, or with ranged or magic.",
+  "Flavour": "Zafir's road had three turns: stab, slash or crush.",
+  "Icon": "art/items/CaravanWarcloak.webp"
+ }
+]

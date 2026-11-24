@@ -787,6 +787,10 @@ def main():
             if m["id"] in done["monsters"]:
                 m["img"] = 1
         print(f"pictures: {len(done['items'])} items, {len(done['monsters'])} monsters")
+    # One Style's unique items and rarities (Dev/ItemDb/onestyle.py)
+    sys.path.insert(0, HERE)
+    import onestyle
+    print(f"One Style: {onestyle.add(db, os.path.join(os.path.dirname(args.out), 'img') if not args.no_images else '')} unique items and 3 rarities")
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, separators=(",", ":"))

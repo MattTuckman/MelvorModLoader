@@ -151,9 +151,10 @@ public static class Rings
     {
         if (SaveManagerValue("ActiveSaveId") is not Guid id || id == Guid.Empty) return;
         if (SaveManagerValue("ActiveSaveSource") is not ISaveSource source) return;
-        int backup = SaveManagerValue("BackupNumberToLoad") is int b ? b : -1;
         Stream file;
-        try { file = backup == -1 ? source.GetReadStreamForId(id) : source.GetBackupStream(id, backup); }
+        // always the active save: after loading a backup the game has already written it over the active save and
+        // renumbered its backups, so the backup number would now point at another file
+        try { file = source.GetReadStreamForId(id); }
         catch (Exception) { return; }   // a new character has no file yet
         using (file)
         using (var unpacked = new BrotliStream(file, CompressionMode.Decompress))
@@ -305,6 +306,23 @@ public static class Rings
             if (active.IsEmpty) moved++;
         }
         return moved;
+    }
+
+    /// <summary>
+    /// The rings in Ring Slot 3 to 6, worn now and in every loadout: without the mod the game skips those slots, so
+    /// One Style's part of the save lists them and the mod loader gives them back (Ring Slot 2 is the game's own and keeps its ring).
+    /// </summary>
+    public static List<(Item Item, int Quantity)> InAddedSlots(Game game)
+    {
+        var list = new List<(Item, int)>();
+        if (Combat(game) is not { } combat) return list;
+        var ids = Added.Select(a => "MelvorBase:" + a.Id).ToHashSet();
+        foreach (IActiveEquipmentSlot active in Slots(game))
+            if (ids.Contains(active.Slot.Id) && !active.IsEmpty && !active.IsOccupied && active.Equipped is { } e) list.Add((e.Item, Math.Max(1, active.Quantity)));
+        foreach (EquipmentLoadout loadout in Loadouts(combat.Equipment).Values)
+            foreach (var (slot, saved) in loadout.Slots)
+                if (ids.Contains(slot.Id) && !saved.IsOccupied && saved.Equipped is { } e) list.Add((e.Item, Math.Max(1, saved.Quantity)));
+        return list;
     }
 
     /// <summary>How many rings Ring Slot 2 to 6 hold now.</summary>

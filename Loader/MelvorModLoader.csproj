@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>MelvorModLoader</AssemblyName>
     <RootNamespace>MelvorModLoader</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <!-- Kept fixed so mods built against an older loader keep loading; Version above is what users see. -->
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>

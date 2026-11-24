@@ -15,14 +15,18 @@ GEREKSINIM (Requirements):
 None.
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:      dist\MelvorModLoader-0.2.0.zip      (name: Melvor Mod Loader, version 0.2.0)
-OPTIONAL FILE:  dist\MelvorModLoader-ModdersKit-0.2.0.zip   (name: Modder's Kit - guide and example mod, version 0.2.0)
+MAIN FILE:      dist\MelvorModLoader-0.3.0.zip      (name: Melvor Mod Loader, version 0.3.0)
+OPTIONAL FILE:  dist\MelvorModLoader-ModdersKit-0.3.0.zip   (name: Modder's Kit - guide and example mod, version 0.3.0)
 OPTIONAL FILE:  dist\DebugMenu-1.0.3.zip            (name: Debug Menu (F9), version 1.0.3)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
 Dev\shots\0-oyun.png, Dev\shots\ornek-mod.png, Dev\shots\menu-5-combat.png, Dev\shots\banka-2-toplu-satis.png, Dev\shots\sira-2-pencere.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.3.0
+- New: items come back when you remove a mod. A mod that keeps its own items in your save (One Style's rare items and the rings in its extra ring slots) leaves a list in the save; open that character without the mod and the loader puts the normal items in your bank, once
+- A mod that also works with another mod (when that one is installed) now loads without it too
+
 0.2.0
 - New: the Mods menu. A "Mods" button in the game's top bar (or F1) lists every mod window; click to open one
 - Every mod key can be changed or switched off there (press the new key, Ctrl/Shift/Alt allowed); two windows on one key are shown in orange; kept in mods\hotkeys.json
@@ -52,7 +56,7 @@ For players it is a one-time install. For mod authors it is a small, typed C# AP
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is Melvor Mod Loader [b]0.2.0[/b] for Windows / Steam, tested on game version [b]0.11.6-alpha.1[/b]. Melvor Idle 2 is in alpha: a game update can break the loader or a mod until they are updated. If the game ever fails to start, delete [b]override.cfg[/b] and it runs without mods again.
+This is Melvor Mod Loader [b]0.3.0[/b] for Windows / Steam, tested on game version [b]0.11.6-alpha.1[/b]. Melvor Idle 2 is in alpha: a game update can break the loader or a mod until they are updated. If the game ever fails to start, delete [b]override.cfg[/b] and it runs without mods again.
 
 [size=5][b]What it does[/b][/size]
 [list]
@@ -61,6 +65,7 @@ This is Melvor Mod Loader [b]0.2.0[/b] for Windows / Steam, tested on game versi
 [*][b]Keeps mods apart.[/b] A mod that fails is reported in the log and skipped. The game and the other mods keep running.
 [*][b]Stays out of the way.[/b] A green line in the top-left corner shows the loader version and the number of mods for 15 seconds at start. That is all you see of it.
 [*][b]Protects offline progress.[/b] While the game computes offline progress, mods are held back so nothing interferes with it.
+[*][b]Gives items back (new in 0.3.0).[/b] Remove a mod that keeps its own items in your save, such as One Style's rare items, and the next time you open that character the loader puts their normal versions in your bank. Nothing is lost, nothing is doubled.
 [*][b]One menu for all mods (new in 0.2.0).[/b] A [b]Mods[/b] button in the top bar (or F1) lists every mod window. Click a name to open it, click its key to give it another one, or press Off to free the key. Two mods on one key? Both rows turn orange.
 [/list]
 
@@ -78,7 +83,7 @@ Each has its own page: click a name above.
 [size=5][b]Install[/b][/size]
 [list=1]
 [*]Open the game folder: Steam > right-click Melvor Idle 2 > Manage > Browse local files.
-[*]Extract [b]MelvorModLoader-0.2.0.zip[/b] there. [b]override.cfg[/b] must end up next to [b]Melvor2.exe[/b].
+[*]Extract [b]MelvorModLoader-0.3.0.zip[/b] there. [b]override.cfg[/b] must end up next to [b]Melvor2.exe[/b].
 [*]Start the game from Steam as usual.
 [/list]
 No installer, no .exe, no script. Nothing is written outside the game folder.

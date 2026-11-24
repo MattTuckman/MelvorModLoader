@@ -9,18 +9,30 @@ KATEGORI ONERISI (Category):
 Gameplay
 
 KISA ACIKLAMA (Summary / Brief overview, 240 karakter):
-Play Melvor Idle 2 with one combat style only: melee, ranged or magic. Immune monsters, quest locks and level locks follow your class, every class is on an equal footing, and you get six ring slots.
+One combat style for the whole game on an equal footing, Champion and Unique monsters with their own art, rare items with random affixes and tiers, 50 Unique items, and six ring slots.
 
 GEREKSINIM (Requirements):
-Melvor Mod Loader (link the loader's mod page)
+Melvor Mod Loader 0.3.0 or newer (link the loader's mod page)
 
 YUKLENECEK DOSYALAR (MelvorModLoader_src klasorunden):
-MAIN FILE:  dist\OneStyle-0.2.0.zip   (name: One Style, version 0.2.0)   -  henuz paketlenmedi
+MAIN FILE:  dist\OneStyle-0.4.0.zip   (name: One Style, version 0.4.0)   -  henuz paketlenmedi (data\ ve art\ klasorleri de zip'e girmeli: data\affixes.json, data\uniques.json, art\items)
 
 YUKLENECEK GORUNTULER (MelvorModLoader_src klasorunden):
-Dev\shots\denge-pencere.png (main image), yuzuk-1-alti-slot.png
+Dev\shots\elit-2-unique.png (main image), nadir-3-banka.png, nadir-2-elit-penceresi.png, nadir-1-rozet.png, elit-1-champion.png, elit-3-pencere.png, denge-pencere.png, yuzuk-1-alti-slot.png
 
 DEGISIKLIK LISTESI (Changelogs sekmesi):
+0.4.0
+- Rare items: monsters drop gear as Magic (blue), Rare (yellow) and Unique (orange) items with random affixes (48 of them), tiers by item level (T1 the best, ranges never overlap) and coloured names and bank frames. Hold Alt to see the tiers
+- 50 Unique items, each from one monster's Unique: 15% a Unique kill (no guarantee). Each has its stats and a special power of its own (50 powers: free extra shots, a ward thief, a death save, elite magnets...)
+- Rare and unique items in the game's drop lists (fight screen chest tab, monster cards in the area list, View all Stats & Drops); "Found in: Combat"; requirements by item level
+- Badges under an elite's health bar (CHAMPION / UNIQUE and its affixes), a framed bar that turns red when enraged and flashes green when it heals, ward hits shown
+- "Elites" button in every monster list: the normal, Champion and Unique version side by side, with what each drops
+- Uninstall is automatic: delete the folder and Melvor Mod Loader 0.3.0 gives your rare items back as normal items, and the rings of Ring Slot 3 to 6 back into the bank
+
+0.3.0
+- Champion and Unique monsters: 179 monsters can come as a Champion (blue) or a Unique (orange, its own name, story and picture), with affixes, signature attacks, better loot, Ember and 179 trophies. Only while you play, never offline
+- The window has two pages: Class and Elites
+
 0.2.0
 - Equal footing for the three classes: weak spot (your style meets every monster's lowest evasion), combat triangle off, +15% max hit against elemental monsters for melee and ranged, melee shares Attack and Strength XP, guild and astrology equivalents for ranged and magic, class identity bonuses, the pets Fen and Bruno for ranged and magic
 - Six ring slots for every character, with a button that puts rings 2-6 back in the bank before you remove the mod
@@ -38,7 +50,7 @@ No more training two styles you do not care about to get past one monster, one q
 [center][b][url=https://discord.gg/q6aexZZSAf]Join Discord for updates, support and feedback[/url]  |  [url=https://falorfrozen-cmd.github.io/MelvorModLoader/]Wiki and guides[/url]  |  [url=https://github.com/falorfrozen-cmd/MelvorModLoader]Source on GitHub[/url][/b][/center]
 
 [size=5][b]Start here[/b][/size]
-This is One Style [b]0.2.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.2.0. Open a character, press the [b]Mods[/b] button in the top bar and pick [b]One Style[/b]. Click Melee, Ranged or Magic. [b]Off[/b] gives you the normal game back. The class is kept per character and can be changed at any time, for free.
+This is One Style [b]0.4.0[/b], tested on game version [b]0.11.6-alpha.1[/b] with Melvor Mod Loader 0.3.0. Open a character, press the [b]Mods[/b] button in the top bar and pick [b]One Style[/b]. Click Melee, Ranged or Magic. [b]Off[/b] gives you the normal game back. The class is kept per character and can be changed at any time, for free.
 
 [size=5][b]What your class opens[/b][/size]
 [list]
@@ -69,6 +81,30 @@ Syllia major 4 (Ranged) or Arachi major 4 (Magic): +15% accuracy
 [*][b]Pets:[/b] Fen and Bruno drop from Attack and Strength XP. For Ranged and Magic they drop from your class's XP.
 [/list]
 
+[size=5][b]Champions and Uniques[/b][/size]
+Any of 179 monsters can come as a [b]Champion[/b] (blue outline) or, rarely, as a [b]Unique[/b] (orange, its own name, story and hand-made picture). Works with every class, and with Off. Switch it off on the Elites page. Elites only appear while you play, never while the game works out the time it was closed.
+Under an elite's health bar you see CHAMPION or UNIQUE and a badge for every affix. The bar gets a frame, turns red while it is enraged, flashes green when it heals and shows its ward hits. The [b]Elites[/b] button next to "View Stats" in any monster list shows the monster's three versions side by side and what each one drops.
+[list]
+[*][b]How often:[/b] combat areas 6% Champion / 0.8% Unique, your slayer task 10% / 1.5%, dungeon waves 8% / 0.6%, a dungeon's last boss 10% / 4%. After 100 kills of a monster without its Unique the chance climbs until it is certain at 200 (60 and 120 before its first Unique).
+[*][b]Champion:[/b] 1.35 to 3 times the hit points, +8 to 12% damage, 5% faster, one random affix (two from 1200 hit points).
+[*][b]Unique:[/b] 1.7 to 6 times the hit points, +14 to 22% damage, 8% faster, its own two affixes, its own signature attack and sometimes a passive.
+[*][b]Affixes:[/b] Hasted, Colossal, Warded (2 to 6 hits of ward), Armoured, Vampiric (fades after 25 s), Enraging (below 40% hit points).
+[*][b]Safety:[/b] a single hit is never more than 1.3 times the normal monster's, damage per second is capped, after 60 s an elite tires (+5% damage taken every 5 s), and while an elite lives you have no death penalty (setting).
+[*][b]Rewards:[/b] Champion 2 and Unique 5 more rolls of the monster's own loot (gold too), +25% / +50% combat XP, Ember (the mod's currency for rare item crafting, coming next). First kills give more; the first Unique of a monster gives its trophy.
+[*][b]Trophies:[/b] 179 to collect. Each: +0.15% elite chance and +0.1% Ember. Milestones at 10, 25, 50, 100 and 179.
+[/list]
+
+[size=5][b]Rare items (new in 0.4)[/b][/size]
+Monsters drop gear straight at its rarity, with random affixes, as in other hack and slash games. Into your bank, for every class.
+[list]
+[*][b]Magic[/b] (blue): 2 affixes. [b]Rare[/b] (yellow): 3, and 1 in 5 has 4. [b]Unique[/b] (orange): a fixed item of one monster's Unique. The colour is on the name, and as a frame in the bank and on worn slots.
+[*][b]Drops:[/b] any monster 0.1% a kill (Rare). Champion: 1 item (Magic 60%, Rare 33%, Rare with 4 affixes 7%). Unique: 2 items plus its own Unique item. Your slayer task and a dungeon's last boss: +5 item level and one more item from an elite.
+[*][b]Tiers:[/b] the item level is the monster's combat level and sets the best tier: T5 below 15, T4 from 15, T3 from 35, T2 from 60, T1 from 85. T1 is the highest; the tiers' ranges never overlap. [b]Hold Alt[/b] over an item to see each affix's tier, prefix or suffix and range.
+[*][b]48 affixes:[/b] max hit, attack speed, accuracy, critical hits, lifesteal, poison / bleed / burn / stun / freeze / blind on hit, damage against elites, executing low enemies, armour, ward, hit points, protection, evasion, keeping runes, ammo, food and prayer points, double loot and gold, XP, faster respawns, more elites, more Ember and more. Caps keep the strongest ones in check.
+[*][b]50 Unique items[/b] (weapons, armour, rings, amulets, two quivers that are never used up): 15% on every kill of a monster's Unique (no guarantee, they are worth farming). Each has its stats and a special power written on it: a free extra shot every 5th attack, a fatal blow survived once in 3 minutes, a sleeping enemy that takes +80%, elites twice as often with an extra affix and drop, and 46 more. The powers work while you play, not offline.
+[*][b]Safe in your save:[/b] rare items stay in the same bank tab and place (locked if you locked them), worn and in every loadout. Save copies and cloud saves carry them.
+[/list]
+
 [size=5][b]Six ring slots[/b][/size]
 Every character gets six ring slots instead of one, whatever the class. Ring Slot 2 is open (the game has it behind Crafting 150), and four more sit on the equipment grid. Wear six different rings. They stay on in every loadout and after you close the game.
 
@@ -77,5 +113,5 @@ Every character gets six ring slots instead of one, whatever the class. Ring Slo
 [*]Weapons and armour of other styles keep their own requirements: a class stays a class.
 [*]The class is not written into your save. It lives in onestyle.json next to the mod.
 [*]Mastery Guild tasks that ask for another style are not changed yet.
-[*][b]Before you remove the mod:[/b] open its window and press "Put rings 2-6 in the bank" (in every loadout). Without the mod the game drops what those slots hold.
+[*][b]Removing the mod:[/b] just delete its folder. Melvor Mod Loader 0.3.0 gives your rare items back as normal items (a Rare Bronze Sword comes back as a Bronze Sword) and the rings of Ring Slot 3 to 6 back into the bank, the next time you open each character. Nothing is lost, nothing is doubled. Removing the mod loader too? First press "Make all rare items normal" and "Put rings 2-6 in the bank" in the One Style window.
 [/list]

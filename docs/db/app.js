@@ -25,7 +25,12 @@ const CATS = [
   { id: 'potions', name: 'Potions', glyph: 'potion', test: (i) => i.cat === 'Potion' },
   { id: 'tools', name: 'Tools & utility', glyph: 'tool', test: (i) => TOOL_CATS.includes(i.cat) },
   { id: 'materials', name: 'Materials', glyph: 'material', test: (i) => MAT_CATS.includes(i.cat) },
+  // the One Style mod's unique items and rarities (Dev/ItemDb/onestyle.py)
+  { id: 'onestyle', name: 'One Style', glyph: 'ring', test: (i) => i.mod === 'OneStyle' },
 ];
+// One Style's rarity colours, as in the game
+const RARITY = { Magic: '#5a8dff', Rare: '#ffd84a', Rare4: '#ffd84a', Unique: '#ea8538' };
+const nameStyle = (i) => (i.rarity ? ` style="color:${RARITY[i.rarity]}"` : '');
 
 const S = (key) => (i) => i.stats?.[key] ?? 0;
 const COL = {
@@ -221,7 +226,7 @@ function tile(i, big = false) {
 }
 function nameCell(i) {
   const sub = [i.kind, i.hands ? `${i.hands}-handed` : ''].filter(Boolean).join(' · ');
-  return `<span class="name">${tile(i)}<span><b>${esc(i.name)}</b><small>${esc(sub)}</small></span></span>`;
+  return `<span class="name">${tile(i)}<span><b${nameStyle(i)}>${esc(i.name)}</b><small>${esc(sub)}</small></span></span>`;
 }
 function reqCell(i) {
   if (!i.lvl) return '<span class="zero">–</span>';
@@ -577,11 +582,11 @@ function itemDetail(i, inPanel = false) {
     i.bury && `<div class="stat"><span class="k">Bury for</span><span class="v">${fmt(i.bury.q)} ${esc(i.bury.cur)}</span><span class="meter"></span></div>`,
     i.trap && `<div class="stat"><span class="k">Trap type</span><span class="v">${esc(i.trap)}</span><span class="meter"></span></div>`,
     i.tool && `<div class="stat"><span class="k">Toolbelt slot</span><span class="v">${esc(i.tool)}</span><span class="meter"></span></div>`,
-    `<div class="stat"><span class="k">Sells for</span><span class="v">${fmt(i.sell)} ${esc(i.sellCur === 'Gold Pieces' ? 'GP' : i.sellCur)}</span><span class="meter"></span></div>`,
+    i.cat !== 'One Style rarity' && `<div class="stat"><span class="k">Sells for</span><span class="v">${fmt(i.sell)} ${esc(i.sellCur === 'Gold Pieces' ? 'GP' : i.sellCur)}</span><span class="meter"></span></div>`,
   ].filter(Boolean).join('');
   return `
     <div class="detail-head">${tile(i, true)}
-      <div><h2>${esc(i.name)}</h2><div class="sub">${esc(i.kind)} ${badges}</div></div>
+      <div><h2${nameStyle(i)}>${esc(i.name)}</h2><div class="sub">${esc(i.kind)}${i.mod ? ' · One Style mod' + (i.rarity ? ' · ' + (i.rarity === 'Rare4' ? 'Rare (4 affixes)' : i.rarity) : '') : ''} ${badges}</div></div>
       <div class="detail-actions">
         <button class="icon-btn" data-compare="${esc(i.id)}" title="Add to compare" aria-label="Add to compare">${svg('compare')}</button>
         <a class="icon-btn" href="#/item/${encodeURIComponent(i.id)}" title="Open as a page (link)" aria-label="Open as a page">${svg('link')}</a>

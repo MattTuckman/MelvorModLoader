@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>OneStyle</AssemblyName>
     <RootNamespace>OneStyle</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.4.0</Version>
     <Product>Melvor Idle 2 One Style</Product>
     <AssemblyTitle>One Style</AssemblyTitle>
     <Description>Play Melvor Idle 2 with one combat style only: melee, ranged or magic (requires Melvor Mod Loader).</Description>

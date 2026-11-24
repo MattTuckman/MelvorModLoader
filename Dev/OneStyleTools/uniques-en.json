@@ -1,0 +1,260 @@
+{
+ "Copper Oath": {
+  "MechanicName": "Usurper's Salute",
+  "Mechanic": "Your first successful hit in each fight deals +40% damage, or +120% against a Champion or Unique. Misses don't use it up; it is lost when the fight ends.",
+  "Flavour": "He had no throne, so he stole the right to strike first."
+ },
+ "Thornshot": {
+  "MechanicName": "Thorn Stagger",
+  "Mechanic": "15% chance on hit (at most once every 6 s) to Stagger: the enemy's next attack comes 25% of its attack interval later.",
+  "Flavour": "Whoever takes a second step in this forest has already taken the first arrow."
+ },
+ "Stitched Furrows": {
+  "MechanicName": "Spoiled Rations",
+  "Mechanic": "Each time you eat (preserved food counts), the enemy is poisoned for 8% of the HP healed per second for 6 s. Up to 3 stacks; a new stack at most once every 1.5 s.",
+  "Flavour": "Hobb's pockets hold things older than last year's harvest."
+ },
+ "Ringbark Reprisal": {
+  "MechanicName": "Bark's Due",
+  "Mechanic": "100% of the damage you reflect is stored and added to your next successful hit, then the pool resets. The pool is capped at 150% of your normal max hit, and reflected damage is never reflected again.",
+  "Flavour": "The forest counts back every axe it has taken."
+ },
+ "Hoarder's Prism": {
+  "MechanicName": "Hoarder's Eye",
+  "Mechanic": "When a monster drops an item whose drop chance is 5% or less, gain +25% damage for 90 s and your rare item chance is 15% higher (0.1% becomes 0.115%). Triggering again refreshes the time; it does not stack.",
+  "Flavour": "Qivra sees every shiny thing once and never lets it go."
+ },
+ "Comb Knuckles": {
+  "MechanicName": "Honey Frenzy",
+  "Mechanic": "After you eat (preserved food counts), your next 3 attacks get +25% damage and -15% attack interval; at most once every 8 s, does not stack. Also +15% food preservation chance.",
+  "Flavour": "Every six blows, one drop returns to the hive."
+ },
+ "Mire Throat": {
+  "MechanicName": "Bog Gullet",
+  "Mechanic": "+8% lifesteal, but food heals 40% less.",
+  "Flavour": "The bog gets in through the deepest wound.",
+  "Stats": [
+   "+6% PercentMaxHitpoints",
+   "+4% PercentMaxHit"
+  ]
+ },
+ "Snarestep": {
+  "MechanicName": "Step Into Nothing",
+  "Mechanic": "When every hit of an enemy attack misses on its own accuracy roll, gain a Silk Tension charge (max 1): your next successful hit deals +35% damage. Blocks, immunity and item dodges don't count; your own misses don't spend it, and it is lost when the fight ends.",
+  "Flavour": "The web catches not the prey, but the wasted swing."
+ },
+ "Thicket Trophies": {
+  "MechanicName": "Headhunter's Boughs",
+  "Mechanic": "Killing a Champion or Unique gives a trophy of 1-2 of its affixes for 90 s of online combat: Hasted -12% attack interval; Colossal +20% max hit points and +8% damage; Warded +15% max hit points; Armoured -12% damage taken; Vampiric +5% lifesteal; Enraging +15% damage and -8% attack interval while you are below 60% HP. Up to 3 trophies (a 4th replaces the oldest) and matching affixes stack, capped at -40% attack interval, -35% damage taken, 8% lifesteal and +60% max hit points.",
+  "Flavour": "Every bone swaying on Vuldrek's branch was once another hunter's pride."
+ },
+ "Caravan Seals": {
+  "MechanicName": "Four-Seal Passage",
+  "Mechanic": "Every 3 normal kills (counted across fights) readies a Passage Seal (1 at most). When a Champion or Unique fight starts the seal is spent, and your first 5 successful hits on that enemy gain +30% crit chance; misses don't use them and unused ones are lost when the fight ends.",
+  "Flavour": "Four lost caravans, one open road."
+ },
+ "Veil Rebuttal": {
+  "MechanicName": "Veil's Refusal",
+  "Mechanic": "Magic only. 15% chance that an enemy attack does no damage at all, and you strike back with a free hit of your spell (it cannot crit and triggers no items).",
+  "Flavour": "Selkris lets no blow go unanswered."
+ },
+ "Oathlocked Plate": {
+  "MechanicName": "Sealed Oath",
+  "Mechanic": "Above half your hit points you take 15% less damage; at half or below you deal 15% more damage.",
+  "Flavour": "There is no room in this breastplate for a second oath."
+ },
+ "Skytoll": {
+  "MechanicName": "Rising Toll",
+  "Mechanic": "When your hit kills an enemy, its overkill damage plus 8% of that enemy's max HP is stored (1 charge). When the next enemy spawns it takes that as physical damage, capped at 40% of its max HP; ward and damage reduction apply, and the charge is lost when combat stops.",
+  "Flavour": "The pass's debt does not die with the debtor."
+ },
+ "Breaker Hooves": {
+  "MechanicName": "Eighth Wave",
+  "Mechanic": "Every 6 successful hits in a fight remove one damage-over-time effect from you with all its stacks: Poison first, then Bleed, then Burn. With none on you, the wave heals you for 2% of your max HP instead.",
+  "Flavour": "The sea does not take everything; Nacreon chooses what to leave."
+ },
+ "Sovereign Diadem": {
+  "MechanicName": "Queen's Charge",
+  "Mechanic": "The first time in a fight your hit drops a living enemy from above 50% HP to 50% or below, gain -25% attack interval for 4 s. Once per fight; damage over time or a killing blow won't trigger it, and the bonus ends when the enemy dies.",
+  "Flavour": "The guards take the first half; the sovereign takes the rest."
+ },
+ "Lantern Veil": {
+  "MechanicName": "Light's Share",
+  "Mechanic": "20% chance on hit to Burn the enemy for 4% of that hit's damage per second for 4 s. Killing an enemy that carries a Poison, Bleed or Burn grants a Ration Light charge (max 1, kept between fights): your next meal is not used up.",
+  "Flavour": "Those who follow Selyth's light never run short of rations."
+ },
+ "Wreckshot": {
+  "MechanicName": "Sunken Reckoning",
+  "Mechanic": "Grows with your Champion and Unique kills while you wear it (kept with the character); each step adds to the ones before: 25 = +10% damage, 50 = +6% crit chance, 75 = -8% attack interval, 100 = +25% damage against elites, 125 = +1 loot roll per elite kill.",
+  "Flavour": "Dask gives the first shot to the sea and puts the second on his tab."
+ },
+ "Gatebreaker": {
+  "MechanicName": "Gate's Verdict",
+  "Mechanic": "+40% damage while the current enemy is a Champion or Unique, on top of this item's +35% max hit. Breaking one opens the gate: your next fight starts with +40% damage for 10 s.",
+  "Flavour": "In Kelsarin, a gate is just a wall that hasn't taken its first blow."
+ },
+ "Cavern Bastion": {
+  "MechanicName": "Fifth Stratum",
+  "Mechanic": "Every 5th enemy attack that lands at least one direct hit deals 50% less direct damage (after normal defences); the count carries between fights. Full misses and damage over time don't count, and a multi-hit attack counts once.",
+  "Flavour": "The mountain's first four answers are echoes; the fifth is stone."
+ },
+ "Pinnacle Diadem": {
+  "MechanicName": "Stolen Bulwark",
+  "Mechanic": "Your first successful hit in each fight also takes up to 2 hits of the enemy's ward (besides its normal damage) and gives you 2 hits of ward for 10 s, or 4 if the enemy had any ward.",
+  "Flavour": "Every stone in Ydrak's crown was once someone else's last refuge."
+ },
+ "Goremantle": {
+  "MechanicName": "Unsated Triumph",
+  "Mechanic": "Each kill grants a Hunger stack (max 10) giving +3% damage each (max +30%); stacks carry over to new enemies. Eating any food clears all stacks, but lifesteal and other healing do not.",
+  "Flavour": "The more ribs it gathers, the hungrier it grows."
+ },
+ "Thunder Traces": {
+  "MechanicName": "Delayed Thunder",
+  "Mechanic": "Every 4th successful hit in a fight records 70% of the HP it removed (capped at 15% of the enemy's max HP). 2 s later, if the same enemy is still alive, that amount strikes again; it cannot crit.",
+  "Flavour": "Teyr's claw has passed; its thunder has yet to settle the score."
+ },
+ "Starbound Mantle": {
+  "MechanicName": "Sum of Stars",
+  "Mechanic": "Each successful hit grants an Orbit stack after it lands (max 20), each giving +2% damage to later attacks (max +40%). Misses neither grant nor remove stacks; all stacks reset when the fight ends.",
+  "Flavour": "In Vaelis's sky, no star rules alone."
+ },
+ "Usurper's Circle": {
+  "MechanicName": "Other Hand's Echo",
+  "Mechanic": "Copies the bonuses (not the equipment stats) of the ring in its paired ring slot (1-2, 3-4, 5-6). Unique rings are not copied; two Usurper's Circles copy nothing.",
+  "Flavour": "Thulvek mimics not your face, but the worth you leave behind."
+ },
+ "Soulstring Quiver": {
+  "MechanicName": "Returning Arrow",
+  "Mechanic": "Ranged only. Never used up when you shoot. Every 5th successful ranged attack (every 4th against elites) fires a free extra shot at 75% damage that can crit.",
+  "Flavour": "Every arrow Qor looses comes back with a soul beside it."
+ },
+ "Fourfold Writ": {
+  "MechanicName": "Four Seals",
+  "Mechanic": "Magic only. Every 6th spell keeps its runes and prayer points and opens the next seal in order: 1) +40% damage on that spell; 2) Burn for 3% of your max hit per second for 5 s; 3) heal 5% of your max HP; 4) the enemy's next attack deals 50% less damage. The cycle is kept between fights.",
+  "Flavour": "Ithrek's four hands renew four seals; the book never forgets whose turn it is."
+ },
+ "Threevoice Cleaver": {
+  "MechanicName": "Three Voices",
+  "Mechanic": "After every 2 successful hits, your next attack deals +35% damage and the enemy's evasion is 30% lower for it (a miss does not use it up; it starts over each fight).",
+  "Flavour": "Three throats, one blade, and none of them ever agreed."
+ },
+ "Root-Shear Claws": {
+  "MechanicName": "Deep Wound",
+  "Mechanic": "25% chance on hit to Bleed for 30% of the hit's damage over 4 s (max 5 stacks); each bleed tick can crit. Hitting a bleeding enemy refreshes your bleeds, but direct hit damage is -20%.",
+  "Flavour": "It cut the roots first, so nothing could hold on."
+ },
+ "Thornstep Spinecoat": {
+  "MechanicName": "Thorn Dance",
+  "Mechanic": "The damage you reflect hits 2.5 times (it can crit) and has a 25% chance to Bleed for 30% of it over 4 s (3 stacks at most); these hits trigger no other items. Your own attacks deal 10% less damage.",
+  "Flavour": "Tavio never stopped dancing; the thorns kept time."
+ },
+ "Tollkeeper Greaves": {
+  "MechanicName": "Last Breath",
+  "Mechanic": "Your HP cannot go above 50% of your max HP (auto-eat still uses your full max HP). 15% of the direct damage you take is given back and taken over 4 s instead; that delayed damage cannot kill you.",
+  "Flavour": "Everyone pays the toll. Some just pay it slower."
+ },
+ "Sunken Volley": {
+  "MechanicName": "Twin Volley",
+  "Mechanic": "Each attack fires a second arrow: both deal 60% damage. The second uses one more ammo and rolls its own hit and crit.",
+  "Flavour": "Two arrows to a string, drowned and still drawn."
+ },
+ "Twin-Eye Longwatch": {
+  "MechanicName": "Still Heartbeat",
+  "Mechanic": "+60% attack interval, but your shots almost never miss and hit for at least 80% of your max hit. The first shot of each fight is a guaranteed crit.",
+  "Flavour": "One eye to find you, one eye to never miss."
+ },
+ "Conclave Spire": {
+  "MechanicName": "Council's Voice",
+  "Mechanic": "Magic only. At the start of each fight your spell's element switches to the enemy's weakness (the spell's effects and rune costs stay; nothing changes against Neutral enemies). Hits with elemental advantage deal +15% damage on top of the normal bonus.",
+  "Flavour": "Four voices argue; the right one always wins."
+ },
+ "Sanguine Liturgy": {
+  "MechanicName": "Blood Rite",
+  "Mechanic": "Spells keep their runes (you still need one cast's runes in the bank); each cast costs 3% of your current HP instead (never below 1 HP). With magic, +1% damage per 2% of missing HP (max +30%).",
+  "Flavour": "Runes are a poor man's blood."
+ },
+ "Plungeheart Tusk": {
+  "MechanicName": "Ice Shatter",
+  "Mechanic": "Every 5th hit freezes the enemy for 1 turn (count kept between enemies), and frozen enemies take +40% damage. When your freeze ends on a living enemy it shatters for 6% of its max HP (max 200% of your max hit, halved vs elites); enemies that can't be frozen become Brittle for 1 turn (+20% damage taken) and take a 3% shatter instead.",
+  "Flavour": "Cold enough to stop a heart, sharp enough to break it."
+ },
+ "Hollow Harvest Crown": {
+  "MechanicName": "Hollow Harvest",
+  "Mechanic": "Your max hit points are 35% lower, and you gain +6 ward. Your ward is full at the start of each fight, regains 1 every 4 s (not for 2 s after you are hit), and eating gives 1 back (once in 2 s).",
+  "Flavour": "Empty inside, and harder for it."
+ },
+ "Veil-Antler Reprieve": {
+  "MechanicName": "Back From the Veil",
+  "Mechanic": "Once every 3 minutes of fighting (the wait is kept when you stop or restart): when you drop below 20% HP or take a fatal blow you survive, heal 40% of your max HP, enemy attacks do no damage for 3 s, and you gain +30% damage and -15% attack interval for 15 s.",
+  "Flavour": "The stag walked out of the veil once. It can show you the way."
+ },
+ "Threefold Decree": {
+  "MechanicName": "Three Jaws' Edict",
+  "Mechanic": "The combat triangle always favours you, with One Style's class too (which otherwise turns the triangle off): you get its advantage (+10% max hit and less damage taken) against every enemy and never its penalty.",
+  "Flavour": "Urzath ruled three ways at once, and every way was his."
+ },
+ "Ringleader's Tally": {
+  "MechanicName": "Ringmaster's Count",
+  "Mechanic": "Every equipment set you wear at least 2 real pieces of counts as one piece more (wizard sets, Dawnsteel, Meteorite, Ironsteel...). Sets with 0-1 pieces get nothing, and the extra piece never starts another set.",
+  "Flavour": "He never counted the pieces, only the sets."
+ },
+ "Amber Reservoir": {
+  "MechanicName": "Amber Vault",
+  "Mechanic": "Combat potions in your toolbelt are never used up, and their stat bonuses (damage, accuracy, evasion, protection, healing...) are 1.5 times; chances, intervals and durations stay the same.",
+  "Flavour": "A drop of venom, kept forever in gold."
+ },
+ "Dune-Vizier Wrappings": {
+  "MechanicName": "Sealed Prayers",
+  "Mechanic": "Prayers cost 50% fewer points (at least 1) and their bonuses are 30% stronger. Each kill gives 15 prayer points.",
+  "Flavour": "The sand keeps prayers the way it keeps the dead."
+ },
+ "Oathbound Gauntlets": {
+  "MechanicName": "Soul Anvil",
+  "Mechanic": "When an on-hit effect of your gear (bleed, burn, stun, wither...) does not happen on a hit, it rolls once more: a 20% chance becomes 36%.",
+  "Flavour": "An oath sworn twice is never broken."
+ },
+ "Abyssal Beacon": {
+  "MechanicName": "Deep Signal",
+  "Mechanic": "Twice the chance of Champions and Uniques (with your other elite bonuses, at most 2.5 times). Every elite gets one more affix and +20% HP, and drops one more Rare (3-affix) item.",
+  "Flavour": "Light in the deep does not guide. It calls."
+ },
+ "Scrapwind Treads": {
+  "MechanicName": "Scrap Hunter",
+  "Mechanic": "On a Slayer task each task monster you kill gives +1% damage and makes your rare item chance 1% higher (up to +30%, so 0.1% becomes 0.13%), and task monsters come 30% faster. When the task ends the stacks go and you keep 1 token (1 at most): your next elite kill drops one more Rare (3-affix) item.",
+  "Flavour": "Baskor walked where the hunt was, and took what was left."
+ },
+ "Dreamtide Orb": {
+  "MechanicName": "Dream Tide",
+  "Mechanic": "Every 4th hit puts the enemy to sleep for 1 turn (at most once every 8 s per enemy); immune enemies become Drowsy instead and their next attack deals -25% damage. Your first hit on a sleeping or stunned enemy deals +80% damage and cannot miss.",
+  "Flavour": "She sleeps; the tide does the rest."
+ },
+ "Ossuary Magazine": {
+  "MechanicName": "Bone Rain",
+  "Mechanic": "Ranged only. Never used up when you shoot. Every 4th ranged attack deals double damage.",
+  "Flavour": "The bones always come back to the quiver.",
+  "Stats": [
+   "+10% PercentMaxHit",
+   "+5% FlatCriticalHitChance"
+  ]
+ },
+ "Brood-Sign Grips": {
+  "MechanicName": "Thousand Eggs",
+  "Mechanic": "Every 3rd hit summons a spiderling (max 3) that lives 8 s and attacks every 2 s for 20% of your max hit, using your accuracy. Spiderlings cannot crit or trigger items.",
+  "Flavour": "A thousand eggs, and every one hatches hungry."
+ },
+ "Hemal Palimpsest": {
+  "MechanicName": "Fifth Seal",
+  "Mechanic": "Magic only. Every 5th spell is followed by a free echo: one more hit of your spell (its own hit roll, can crit).",
+  "Flavour": "Written over and over, in the same red ink."
+ },
+ "Mirage Astrolabe": {
+  "MechanicName": "False Horizon",
+  "Mechanic": "Your spell imbuement's bonuses are multiplied by 1.8, or by 2.7 on every 6th spell.",
+  "Flavour": "It points where the stars should be."
+ },
+ "Caravan Warcloak": {
+  "MechanicName": "Caravan Road",
+  "Mechanic": "Melee only, by stance: Stab +30% accuracy; Slash 20% chance on hit to cause Bleed; Crush stuns for 1 turn on every 4th successful hit (once in 8 s). Nothing in Block stance, or with ranged or magic.",
+  "Flavour": "Zafir's road had three turns: stab, slash or crush."
+ }
+}
